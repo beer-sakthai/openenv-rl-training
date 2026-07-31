@@ -1,0 +1,13 @@
+a2a-sdk
+uvicorn
+httpx
+torch
+transformers
+echo_env @ git+https://huggingface.co/spaces/openenv/echo_env
+textarena_env @ git+https://huggingface.co/spaces/openenv/sudoku
+coding_env @ git+https://huggingface.co/spaces/openenv/coding_env
+chat_env @ git+https://huggingface.co/spaces/openenv/chat_env
+atari_env @ git+https://huggingface.co/spaces/openenv/atari_env
+openspiel_env @ git+https://huggingface.co/spaces/openenv/openspiel_env
+repl_env @ git+https://huggingface.co/spaces/openenv/repl
+sumo_rl_env @ git+https://huggingface.co/spaces/openenv/sumo_rl_env

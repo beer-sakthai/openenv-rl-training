@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Env / secrets
+.env
+*.env
+auth.json
+.git-credentials
+
+# Local run artifacts
+*.log
+.eval_results/
