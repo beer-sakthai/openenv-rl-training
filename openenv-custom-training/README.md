@@ -4,8 +4,7 @@ Companion to the catalog-only workspace at `../openenv-multi-catalog-training/`.
 That workspace trains across the 8 `openenv/*` **catalog** environments; this
 one designs **custom** environments — the task and reward are yours.
 
-Two environment shapes live here, matching `references/custom-environment.md`
-in the `openenv-rl-training` skill:
+Two environment shapes live here:
 
 | Tier | File | When to use | Isolation |
 |------|------|-------------|-----------|

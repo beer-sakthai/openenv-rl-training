@@ -1,5 +1,7 @@
 # OpenEnv + TRL GRPO training — SakThai family
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 Reinforcement-learning (GRPO) fine-tuning of SakThai-family models with
 [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv) (sandboxed,
 Gymnasium-style environments) and [TRL](https://huggingface.co/docs/trl)'s
@@ -9,8 +11,8 @@ Two companion workspaces:
 
 | Directory | What it is |
 |-----------|------------|
-| `openenv-custom-training/` | **Custom environments** — Tier A (inline plain-Python logic, no server) and Tier B (sandboxed OpenEnv server for agent tool-use tasks), plus `train.py` (single-env) and `multi_env.py` (TRL-native dict-form multi-env) runners. Default base: `Nanthasit/sakthai-context-1.5b-merged`. |
-| `openenv-multi-catalog-training/` | **Catalog run** — trains one small model across all 8 `openenv/*` catalog environments (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in a single GRPO run via the multi-environment pattern. |
+| [`openenv-custom-training/`](openenv-custom-training/) | **Custom environments** — Tier A (inline plain-Python logic, no server) and Tier B (sandboxed OpenEnv server for agent tool-use tasks), plus `train.py` (single-env) and `multi_env.py` (TRL-native dict-form multi-env) runners. Default base: `Nanthasit/sakthai-context-1.5b-merged`. |
+| [`openenv-multi-catalog-training/`](openenv-multi-catalog-training/) | **Catalog run** — trains one small model across all 8 `openenv/*` catalog environments (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in a single GRPO run via the multi-environment pattern. |
 
 Each directory has its own README with setup, run-elsewhere instructions, and
 known rough edges.
@@ -38,5 +40,5 @@ its README, and run.
 
 ## License
 
-Apache-2.0, consistent with the SakThai family's published artifacts
+[Apache-2.0](LICENSE), consistent with the SakThai family's published artifacts
 (see the `LICENSE` on the base models and the Kaggle-notebooks dataset).
