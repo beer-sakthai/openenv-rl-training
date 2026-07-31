@@ -44,8 +44,11 @@ hf jobs uv run --flavor a100-large --secrets HF_TOKEN --timeout 60m \
 ```
 
 ### Free
-- **Colab / Kaggle**: open `sakthai_grpo_colab.ipynb`, set a GPU runtime + `HF_TOKEN`, run.
-  This is the free way to do the *real* 7B GRPO (sustained GPU that HF Jobs and ZeroGPU can't provide).
+- **Colab / Kaggle** — the free way to do the *real* 7B GRPO (sustained GPU that HF Jobs and
+  ZeroGPU can't provide). GitHub only shows a static preview of the notebook — click to open it
+  in a runnable environment, then set a GPU runtime + `HF_TOKEN` and run:
+
+  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb) [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb)
 - **ZeroGPU Spaces** (built from these scripts):
   - Eval: <https://huggingface.co/spaces/Nanthasit/sakthai-agentic-eval>
   - SFT: <https://huggingface.co/spaces/Nanthasit/sakthai-sft-trainer> (private)
