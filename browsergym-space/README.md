@@ -7,6 +7,7 @@ sdk: docker
 pinned: false
 license: apache-2.0
 short_description: BrowserGym OpenEnv server for SakThai GRPO RL training
+app_port: 7860
 ---
 
 # Nanthasit/browsergym-env
