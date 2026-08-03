@@ -1,16 +1,71 @@
-"""GRPO training entrypoint for the two custom environments.
+"""GRPO training entrypoint for custom environments.
 
-    python train.py --env simple                       # Tier A, inline, no server
-    python train.py --env agent_tools --vllm-mode colocate   # Tier B, sandbox server must be up
+    python train.py --env simple                            # Tier A, inline, no server
+    python train.py --env agent_tools --vllm-mode colocate  # Tier B, sandbox server must be up
+    python train.py --env browsergym                        # BrowserGym MiniWoB++ (Nanthasit Space)
+    python train.py --env browsergym --browsergym-task email-inbox  # harder task
 
 Model is configurable (--model) — defaults are task-appropriate. See README.md
 for model-size guidance and the whole-episode max_completion_length caveat.
+
+BrowserGym Space: https://huggingface.co/spaces/Nanthasit/browsergym-env
+BrowserGym URL:   https://nanthasit-browsergym-env.hf.space
 """
 
 import argparse
 
 from datasets import Dataset
 from trl import GRPOConfig, GRPOTrainer
+
+# Default BrowserGym Space URL (Nanthasit-owned)
+BROWSERGYM_SPACE_URL = "https://nanthasit-browsergym-env.hf.space"
+
+
+def _make_browsergym_factory(task_name: str, space_url: str):
+    """Build a GRPOTrainer-compatible environment factory for BrowserGym."""
+    def factory():
+        try:
+            from browsergym_env import BrowserGymEnv
+            return BrowserGymEnv(
+                base_url=space_url,
+                environment={
+                    "BROWSERGYM_BENCHMARK": "miniwob",
+                    "BROWSERGYM_TASK_NAME": task_name,
+                    "BROWSERGYM_HEADLESS": "true",
+                },
+            )
+        except ImportError:
+            raise ImportError(
+                "browsergym_env not installed. "
+                "Run: pip install git+https://github.com/huggingface/OpenEnv.git"
+            )
+    return factory
+
+
+def _browsergym_reward(completions, **kwargs):
+    """Reward function: pass BrowserGym step reward back to GRPO."""
+    # completions is a list of model response strings
+    # BrowserGym rewards come via env.step(); extract from kwargs["env_outputs"]
+    rewards = []
+    for env_output in kwargs.get("env_outputs", []):
+        rewards.append(float(env_output.get("reward", 0.0)))
+    # Fallback if env_outputs not present
+    if not rewards:
+        rewards = [0.0] * len(completions)
+    return rewards
+
+
+def _browsergym_dataset(n_episodes: int):
+    """Minimal prompt dataset for BrowserGym web navigation tasks."""
+    prompts = [
+        {"prompt": "You are a web navigation agent. Complete the task shown in the browser. "
+                   "Use click(), fill(), goto(), press(), scroll() actions. "
+                   "Observe the page carefully and act step by step."}
+    ] * n_episodes
+    return Dataset.from_list(prompts)
+
+
+BROWSERGYM_DEFAULT_MODEL = "Nanthasit/sakthai-context-7b-tools"
 
 
 def _select(args: argparse.Namespace):
@@ -23,14 +78,25 @@ def _select(args: argparse.Namespace):
         from agent_tools.wrapper import (
             DEFAULT_MODEL, ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET,
         )
+    elif args.env == "browsergym":
+        task = getattr(args, "browsergym_task", "click-test")
+        url  = getattr(args, "browsergym_url", BROWSERGYM_SPACE_URL)
+        ENVIRONMENT_FACTORY = _make_browsergym_factory(task, url)
+        REWARD_FUNCS        = [_browsergym_reward]
+        TRAIN_DATASET       = _browsergym_dataset
+        DEFAULT_MODEL       = BROWSERGYM_DEFAULT_MODEL
     else:
-        raise SystemExit(f"unknown --env {args.env!r}; choose 'simple' or 'agent_tools'")
+        raise SystemExit(f"unknown --env {args.env!r}; choose 'simple', 'agent_tools', or 'browsergym'")
     return ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", choices=["simple", "agent_tools"], required=True)
+    parser.add_argument("--env", choices=["simple", "agent_tools", "browsergym"], required=True)
+    parser.add_argument("--browsergym-task", default="click-test",
+                        help="MiniWoB task name (default: click-test). e.g. click-button, email-inbox")
+    parser.add_argument("--browsergym-url", default=BROWSERGYM_SPACE_URL,
+                        help=f"BrowserGym Space URL (default: {BROWSERGYM_SPACE_URL})")
     parser.add_argument("--model", default=None,
                         help="defaults to Nanthasit/sakthai-context-7b-tools (or task default)")
     parser.add_argument("--vllm-mode", choices=["colocate", "server"], default="colocate")
