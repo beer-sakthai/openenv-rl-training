@@ -1,3 +1,14 @@
+# /// script
+# dependencies = [
+#   "torch",
+#   "transformers",
+#   "datasets",
+#   "trl",
+#   "peft",
+#   "accelerate",
+# ]
+# ///
+
 """GRPO training entrypoint for custom environments.
 
     python train.py --env simple                            # Tier A, inline, no server
