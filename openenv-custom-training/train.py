@@ -32,9 +32,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", choices=["simple", "agent_tools"], required=True)
     parser.add_argument("--model", default=None,
-                        help="defaults to Nanthasit/sakthai-context-1.5b-merged")
+                        help="defaults to Nanthasit/sakthai-context-7b-tools (or task default)")
     parser.add_argument("--vllm-mode", choices=["colocate", "server"], default="colocate")
-    parser.add_argument("--vllm-server-url", default="http://localhost:8000")
+    parser.add_argument("--vllm-server-host", default="localhost")
+    parser.add_argument("--vllm-server-port", type=int, default=8000)
     # Caps tokens across the WHOLE multi-turn episode (generations + tool
     # results summed), not one turn — raise if episodes truncate mid-task.
     parser.add_argument("--max-completion-length", type=int, default=1024)
@@ -58,13 +59,12 @@ def main():
         max_completion_length=args.max_completion_length,
         num_generations=args.num_generations,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        # enable_thinking is a Qwen3-template kwarg; the SakThai Qwen2 base
-        # ignores it (harmless) and it matters only if you swap in a Qwen3 model.
         chat_template_kwargs={"enable_thinking": args.enable_thinking},
         log_completions=True,
     )
     if args.vllm_mode == "server":
-        grpo_kwargs["vllm_server_url"] = args.vllm_server_url
+        grpo_kwargs["vllm_server_host"] = args.vllm_server_host
+        grpo_kwargs["vllm_server_port"] = args.vllm_server_port
 
     trainer = GRPOTrainer(
         model=model,

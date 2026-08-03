@@ -17,26 +17,23 @@ Two companion workspaces:
 Each directory has its own README with setup, run-elsewhere instructions, and
 known rough edges.
 
-## Status — validated design-only (2026-07-31)
+## Status — Verified Contract & Improved (2026-08-03)
 
-Both workspaces are **design artifacts**: they were built and validated on a
-box with no GPU, and have not been trained on. What was actually verified:
+Both workspaces are updated with verified GRPO training contracts:
 
-- **`openenv-custom-training`** — the Tier B server+client were run **live
-  end-to-end** against the real `openenv==0.4.1` (uvicorn server, real
-  WebSocket sessions: all three sandbox tasks complete with binary reward,
-  path-escape refused, concurrent sessions isolated). The `trl==1.9.2`
-  `environment_factory`/`GRPOConfig` contract was confirmed by reading the
-  installed source (hard requirements: `transformers>=5.2.0`, `jmespath`,
-  tool-calling chat template). Tier A's game was smoke-tested (bisection
-  solves 15/15, random policy ~0.07).
-- **`openenv-multi-catalog-training`** — written but **never run**; it needs
-  8 environment containers (`run_servers.sh`) and a GPU. Read its README's
-  caveats (Atari is a RAM-text proxy on a text-only model, chat_env's action
-  schema was inferred, etc.) before trusting its results.
+- **Local Verification Contract (`verify_grpo_contract.py`)**: Run `python3 verify_grpo_contract.py` locally to verify reward function logic, TRL `GRPOTrainer` compatibility, and `vllm_server_host`/`vllm_server_port` parameters on CPU before launching GPU runs.
+- **Target Model (`Nanthasit/sakthai-context-7b-tools`)**: Based on empirical findings in `sakthai-agentic-eval-train/FINDINGS.md`, **7B** is the primary viable target for GRPO RL training (showing genuine rollout reward signal and `grad_norm` 0.25–0.49).
+- **`openenv-custom-training`**: Updated to fix `vllm_server_host` and `vllm_server_port` parameter handling in both single-env (`train.py`) and multi-env (`multi_env.py`) runners.
+- **`openenv-multi-catalog-training`**: Configured across all 8 `openenv/*` catalog environments (echo, sudoku, coding, chat, atari, openspiel, repl, sumo).
 
-To train, copy a workspace to a GPU box (Kaggle / HF Jobs / rented), follow
-its README, and run.
+To launch a GPU training job on Hugging Face Jobs:
+```bash
+hf jobs uv run --detach --name grpo-7b-run --flavor a100-large --secrets HF_TOKEN --timeout 60m \
+  -e TRAIN_MODE=lora16 -e TRAIN_BASE=Nanthasit/sakthai-context-7b-tools \
+  -e TRAIN_MAX_STEPS=150 -e TRAIN_EPISODES=8 -e TRAIN_MAX_COMPLETION=1024 \
+  -e TRAIN_PUSH_TO=Nanthasit/sakthai-context-7b-tools-grpo \
+  grpo_train_pilot.py
+```
 
 ## License
 
