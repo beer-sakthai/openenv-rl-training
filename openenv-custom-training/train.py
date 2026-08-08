@@ -16,7 +16,11 @@
     python train.py --env browsergym                        # BrowserGym MiniWoB++ (Nanthasit Space)
     python train.py --env browsergym --browsergym-task email-inbox  # harder task
 
-Model is configurable (--model) — defaults are task-appropriate. See README.md
+Every CLI flag also accepts a TRAIN_* environment variable so the
+sakthai-jobs-dispatcher can drive this script without translating env
+vars into CLI args at submit time.
+
+Model is configurable (--model) - defaults are task-appropriate. See README.md
 for model-size guidance and the whole-episode max_completion_length caveat.
 
 BrowserGym Space: https://huggingface.co/spaces/Nanthasit/browsergym-env
@@ -24,12 +28,20 @@ BrowserGym URL:   https://nanthasit-browsergym-env.hf.space
 """
 
 import argparse
+import os
 
 from datasets import Dataset
 from trl import GRPOConfig, GRPOTrainer
 
 # Default BrowserGym Space URL (Nanthasit-owned)
 BROWSERGYM_SPACE_URL = "https://nanthasit-browsergym-env.hf.space"
+
+
+def _bool_env(name: str, default: bool = False) -> bool:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    return v.strip().lower() in ("1", "true", "yes", "on")
 
 
 def _make_browsergym_factory(task_name: str, space_url: str):
@@ -55,12 +67,9 @@ def _make_browsergym_factory(task_name: str, space_url: str):
 
 def _browsergym_reward(completions, **kwargs):
     """Reward function: pass BrowserGym step reward back to GRPO."""
-    # completions is a list of model response strings
-    # BrowserGym rewards come via env.step(); extract from kwargs["env_outputs"]
     rewards = []
     for env_output in kwargs.get("env_outputs", []):
         rewards.append(float(env_output.get("reward", 0.0)))
-    # Fallback if env_outputs not present
     if not rewards:
         rewards = [0.0] * len(completions)
     return rewards
@@ -102,28 +111,42 @@ def _select(args: argparse.Namespace):
 
 
 def main():
+    env_default = os.environ.get("TRAIN_ENV")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env", choices=["simple", "agent_tools", "browsergym"], required=True)
-    parser.add_argument("--browsergym-task", default="click-test",
+    parser.add_argument("--env", choices=["simple", "agent_tools", "browsergym"],
+                        default=env_default, required=(env_default is None))
+    parser.add_argument("--browsergym-task",
+                        default=os.environ.get("TRAIN_BROWSERGYM_TASK", "click-test"),
                         help="MiniWoB task name (default: click-test). e.g. click-button, email-inbox")
-    parser.add_argument("--browsergym-url", default=BROWSERGYM_SPACE_URL,
+    parser.add_argument("--browsergym-url",
+                        default=os.environ.get("TRAIN_BROWSERGYM_URL", BROWSERGYM_SPACE_URL),
                         help=f"BrowserGym Space URL (default: {BROWSERGYM_SPACE_URL})")
-    parser.add_argument("--model", default=None,
-                        help="defaults to Nanthasit/sakthai-context-7b-tools (or task default)")
-    parser.add_argument("--vllm-mode", choices=["colocate", "server"], default="colocate")
-    parser.add_argument("--vllm-server-host", default="localhost")
-    parser.add_argument("--vllm-server-port", type=int, default=8000)
+    parser.add_argument("--model",
+                        default=os.environ.get("TRAIN_BASE"),
+                        help="defaults to Nanthasit/sakthai-context-7b-tools (or task default). Env: TRAIN_BASE")
+    parser.add_argument("--vllm-mode", choices=["colocate", "server"],
+                        default=os.environ.get("TRAIN_VLLM_MODE", "colocate"))
+    parser.add_argument("--vllm-server-host",
+                        default=os.environ.get("TRAIN_VLLM_HOST", "localhost"))
+    parser.add_argument("--vllm-server-port", type=int,
+                        default=int(os.environ.get("TRAIN_VLLM_PORT", "8000")))
     # Caps tokens across the WHOLE multi-turn episode (generations + tool
-    # results summed), not one turn — raise if episodes truncate mid-task.
-    parser.add_argument("--max-completion-length", type=int, default=1024)
-    parser.add_argument("--num-generations", type=int, default=4)
-    parser.add_argument("--gradient-accumulation-steps", type=int, default=64)
-    parser.add_argument("--n-episodes", type=int, default=64)
+    # results summed), not one turn - raise if episodes truncate mid-task.
+    parser.add_argument("--max-completion-length", type=int,
+                        default=int(os.environ.get("TRAIN_MAX_COMPLETION", "1024")))
+    parser.add_argument("--num-generations", type=int,
+                        default=int(os.environ.get("TRAIN_NUM_GENERATIONS", "4")))
+    parser.add_argument("--gradient-accumulation-steps", type=int,
+                        default=int(os.environ.get("TRAIN_GRAD_ACCUM", "64")))
+    parser.add_argument("--n-episodes", type=int,
+                        default=int(os.environ.get("TRAIN_EPISODES", "64")))
     parser.add_argument("--enable-thinking", action="store_true",
+                        default=_bool_env("TRAIN_ENABLE_THINKING", False),
                         help="flip on for harder tasks; costs more tokens/turn. "
                              "Only Qwen3-template bases act on this; Qwen2 templates ignore it.")
-    parser.add_argument("--push-to-hub", default=None,
-                        help="repo id to push the trained model to (optional)")
+    parser.add_argument("--push-to-hub",
+                        default=os.environ.get("TRAIN_PUSH_TO"),
+                        help="repo id to push the trained model to (optional). Env: TRAIN_PUSH_TO")
     args = parser.parse_args()
 
     factory, rewards, dataset_builder, default_model = _select(args)
@@ -146,9 +169,9 @@ def main():
     trainer = GRPOTrainer(
         model=model,
         train_dataset=dataset,
-        reward_funcs=rewards,          # one func (or a list, as in multi_env.py)
+        reward_funcs=rewards,
         args=GRPOConfig(**grpo_kwargs),
-        environment_factory=factory,   # the CLASS, not an instance
+        environment_factory=factory,
     )
     trainer.train()
 
