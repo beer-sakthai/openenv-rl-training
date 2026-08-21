@@ -1,3 +1,10 @@
+datasets
+httpx
+a2a-sdk
+pytest
+black
+isort
+flake8
 pytest
 datasets
 httpx
