@@ -17,7 +17,7 @@ sys.modules["peft"] = MagicMock()
 sys.modules["huggingface_hub"] = MagicMock()
 
 
-from scripts.eval_bench_peft import is_degenerate
+from scripts.eval_bench_peft import is_degenerate  # noqa: E402
 
 
 def test_is_degenerate_short_string():
