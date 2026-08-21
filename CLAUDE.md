@@ -19,6 +19,9 @@ its own dependencies (via `requirements.txt` or a PEP 723 inline header) and is 
 with `python <script>.py`, `uv run`, or `hf jobs uv run`. CI (`.github/workflows/`) exists
 but only `verify-contracts.yml` runs inside GitHub Actions itself — the other five
 workflows dispatch `hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret.
+Do not re-add the GitHub-suggested `pylint.yml` / `python-app.yml` / `python-package.yml` /
+`super-linter.yml` / `cache.yml` templates that were removed 2026-08-21 — they hardcode
+`pip install -r requirements.txt` at the root, which is why they never passed here.
 
 The heavy work (GRPO training, evaluation) runs **elsewhere** — HF Jobs, Colab/Kaggle,
 or a rented GPU box. This checkout has no GPU and typically no `torch`/`trl`/`datasets`
