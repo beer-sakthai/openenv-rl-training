@@ -1,0 +1,12 @@
+# Add 'scripts' label to any changes within 'sakthai-agentic-eval-train/scripts' folder
+scripts:
+  - sakthai-agentic-eval-train/scripts/*
+
+# Add 'tests' label to any changes within '*test*' or 'test_*' files
+tests:
+  - '*test*'
+  - 'test_*'
+
+# Add 'docs' label to any docs changes
+docs:
+  - '**/*.md'
