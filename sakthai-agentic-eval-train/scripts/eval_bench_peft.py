@@ -85,6 +85,8 @@ def render_prompt(messages, tools):
 _TC = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
 
 def parse_calls(text):
+    if "<tool_call>" not in text:
+        return []
     out = []
     for m in _TC.findall(text):
         try:
@@ -100,10 +102,25 @@ def parse_calls(text):
     return out
 
 def is_degenerate(raw):
-    s = "".join(raw.split())
-    if len(s) < 20:
+    if len(raw) < 20:
         return False
-    return max(collections.Counter(s).values()) / len(s) >= 0.9
+    s = "".join(raw.split())
+    l = len(s)
+    if l < 20:
+        return False
+
+    threshold = l * 0.9
+
+    c1 = s[l // 4]
+    if s.count(c1) >= threshold: return True
+
+    c2 = s[l // 2]
+    if c2 != c1 and s.count(c2) >= threshold: return True
+
+    c3 = s[3 * l // 4]
+    if c3 != c1 and c3 != c2 and s.count(c3) >= threshold: return True
+
+    return False
 
 
 # ── Scoring: verbatim from eval_bench.py, unchanged ────────────────────────
