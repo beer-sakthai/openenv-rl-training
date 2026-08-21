@@ -9,7 +9,7 @@ trl==1.9.2
 # HARD requirements for environment_factory / tools, from trl 1.9.2 source:
 #   grpo_trainer.py raises if transformers < 5.2.0 when environment_factory is
 #   used, and requires `jmespath` for response parsing.
-transformers>=5.2.0
+transformers>=5.15.0
 jmespath
 datasets>=5.0.1
 # vLLM is only needed where GRPO generation runs (training box). For 2+ GPUs
