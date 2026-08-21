@@ -17,7 +17,7 @@ for _mod in ("hermes_tool_env", "models", "tasks"):
 
 # Mock os.environ to avoid the AssertionError from SAK_MODELS
 with mock.patch.dict(os.environ, {"SAK_MODELS": "dummy"}):
-    from eval_hermes_env import _tools_block
+    from eval_hermes_env import _tools_block, parse_tool_call
 
 
 def test_tools_block_empty():
@@ -52,3 +52,30 @@ def test_tools_block_unicode_chars():
     expected_sig = json.dumps(tools[0], ensure_ascii=False)
     assert f"<tools>\n{expected_sig}\n</tools>" in result
     assert "\\u" not in result  # Ensure Unicode isn't escaped
+
+
+def test_parse_tool_call_valid():
+    text = '<tool_call>\n{"name": "get_weather", "arguments": {"location": "Bangkok"}}\n</tool_call>'
+    expected = {"name": "get_weather", "arguments": {"location": "Bangkok"}}
+    assert parse_tool_call(text) == expected
+
+
+def test_parse_tool_call_with_surrounding_text():
+    text = 'Here is the weather tool call:\n<tool_call>\n{"name": "get_weather", "arguments": {"location": "Bangkok"}}\n</tool_call>\nI hope this helps.'
+    expected = {"name": "get_weather", "arguments": {"location": "Bangkok"}}
+    assert parse_tool_call(text) == expected
+
+
+def test_parse_tool_call_no_match():
+    text = 'There is no tool call here.'
+    assert parse_tool_call(text) is None
+
+
+def test_parse_tool_call_invalid_json():
+    text = '<tool_call>\n{"name": "get_weather", "arguments": {location": "Bangkok"}\n</tool_call>'
+    assert parse_tool_call(text) is None
+
+
+def test_parse_tool_call_missing_tags():
+    text = '{"name": "get_weather", "arguments": {"location": "Bangkok"}}'
+    assert parse_tool_call(text) is None
