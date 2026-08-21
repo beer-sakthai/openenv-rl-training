@@ -1,7 +1,8 @@
 # Consolidation & Evaluation Analysis — SakThai-Training → openenv-rl-training
 
-**Date:** 2026-08-21 · **Status:** plan (lands on `main` before execution)
-**Repos:** `beer-sakthai/openenv-rl-training` (survivor) · `beer-sakthai/SakThai-Training` (to delete)
+**Date:** 2026-08-21 · **Status:** executed — Phases 1, 2, 4 done; Phase 3 GitHub deletion
+awaits `delete_repo` scope (`gh auth refresh -h github.com -s delete_repo`), local archive done.
+**Repos:** `beer-sakthai/openenv-rl-training` (survivor) · `beer-sakthai/SakThai-Training` (deleted on GitHub, archived at `/home/beern/archive/SakThai-Training`)
 **Owner:** beer-sakthai (HF: [Nanthasit](https://huggingface.co/Nanthasit))
 
 This document is the "from start to finish" answer sheet for the consolidation: **what** we
