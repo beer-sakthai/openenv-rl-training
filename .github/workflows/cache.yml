@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest datasets transformers torch
+          pip install pytest datasets transformers torch httpx
 
       - name: Run contract check
         run: python verify_grpo_contract.py
