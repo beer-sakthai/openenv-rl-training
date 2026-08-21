@@ -13,11 +13,11 @@ import os
 
 def test_reward_function():
     print("[Contract Test] Verifying reward function logic...")
-    
+
     # Mock trajectories
     success_trajectory = [{"role": "assistant", "content": '{"name": "fix_failing_test"}'}]
     failure_trajectory = [{"role": "assistant", "content": '{"name": "unknown_tool"}'}]
-    
+
     def calculate_reward(completions, **kwargs):
         rewards = []
         for c in completions:
@@ -29,7 +29,7 @@ def test_reward_function():
 
     completions = [c[0]["content"] for c in [success_trajectory, failure_trajectory]]
     rewards = calculate_reward(completions)
-    
+
     assert rewards == [1.0, 0.0], f"Expected [1.0, 0.0], got {rewards}"
     print("✅ Reward calculation contract passed.")
 
@@ -37,6 +37,10 @@ def test_grpo_config_contract():
     print("[Contract Test] Verifying GRPOConfig field compatibility...")
     try:
         from trl import GRPOConfig
+        if not isinstance(GRPOConfig, type):
+            print("⚠️ TRL is mocked; skipping class instantiation test.")
+            return
+
         # Check valid vLLM server parameters
         config = GRPOConfig(
             output_dir="./tmp_checkpoints",
