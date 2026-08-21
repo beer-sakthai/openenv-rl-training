@@ -1,0 +1,14 @@
+# Basic Labeler Configuration
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
+
+scripts:
+  - changed-files:
+    - any-glob-to-any-file: 'scripts/**/*'
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file: 'tests/**/*'
+    - any-glob-to-any-file: '**/*test*.py'

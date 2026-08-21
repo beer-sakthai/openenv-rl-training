@@ -1,0 +1,2 @@
+# Placeholder requirements file to allow cache.yml workflow to succeed
+pytest>=7.0.0
