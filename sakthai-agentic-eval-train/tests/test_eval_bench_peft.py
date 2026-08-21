@@ -5,6 +5,10 @@ from unittest import mock
 # Setup mock so we can import eval_bench_peft without failing on datasets
 sys.modules["datasets"] = mock.MagicMock()
 
+# Heavy deps are GPU-box imports; mock them so the suite runs in a CPU checkout.
+for _mod in ("torch", "transformers"):
+    sys.modules[_mod] = mock.MagicMock()
+
 # Setup environ mock so we don't trigger validation asserts during import
 with mock.patch.dict(os.environ, {"SAK_MODELS": "test_model"}):
     # Add the scripts directory to path to allow import
