@@ -56,12 +56,17 @@ def _tools_block(tools):
 
 
 def _assistant_body(m):
-    body = _text(m.get("content"))
+    parts = []
+    content = _text(m.get("content"))
+    if content:
+        parts.append(content)
     for tc in (m.get("tool_calls") or []):
-        fn = tc.get("function", tc); a = fn.get("arguments", "{}")
-        if not isinstance(a, str): a = json.dumps(a, ensure_ascii=False)
-        body += ("\n" if body else "") + '<tool_call>\n{"name": "%s", "arguments": %s}\n</tool_call>' % (fn.get("name", ""), a)
-    return body
+        fn = tc.get("function", tc)
+        a = fn.get("arguments", "{}")
+        if not isinstance(a, str):
+            a = json.dumps(a, ensure_ascii=False)
+        parts.append(f'<tool_call>\n{{"name": "{fn.get("name", "")}", "arguments": {a}}}\n</tool_call>')
+    return "\n".join(parts)
 
 
 def _render_msg(m, tools_sys):
