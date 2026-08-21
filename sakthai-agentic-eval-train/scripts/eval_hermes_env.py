@@ -39,6 +39,7 @@ Env vars:
   SAK_FORCE_CPU 1 = force CPU even if CUDA available (default: 0)
   SAK_DUMP      1 = print the full first-task transcript per model, for sanity-checking (default: 0)
 """
+
 import json
 import os
 import re
@@ -63,25 +64,33 @@ env_dir = Path(snapshot_download(ENV_REPO, repo_type="dataset"))
 sys.path.insert(0, str(env_dir))
 sys.path.insert(0, str(env_dir / "server"))
 
+from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 from models import HermesToolAction  # noqa: E402
 from tasks import TASKS_BY_ID  # noqa: E402
-from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 
 TASK_IDS = sorted(TASKS_BY_ID)
+
 
 # ── Renderer: copied verbatim from Nanthasit/sakthai-bench-v2's eval_bench.py
 # so these models see prompts in exactly the format they were trained/scored
 # on. Do not hand-roll a different tool-listing format here.
 def _text(c):
-    return "" if c is None else (c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
+    return (
+        ""
+        if c is None
+        else (c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
+    )
 
 
 def _tools_block(tools):
-    if not tools: return ""
+    if not tools:
+        return ""
     sigs = "\n".join(json.dumps(t, ensure_ascii=False) for t in tools)
-    return ("\n\n# Tools\n\nYou may call one or more functions. Signatures are within "
-            "<tools></tools>:\n<tools>\n" + sigs + "\n</tools>\n\nFor each call return:\n"
-            "<tool_call>\n{\"name\": <name>, \"arguments\": <json>}\n</tool_call>")
+    return (
+        "\n\n# Tools\n\nYou may call one or more functions. Signatures are within "
+        "<tools></tools>:\n<tools>\n" + sigs + "\n</tools>\n\nFor each call return:\n"
+        '<tool_call>\n{"name": <name>, "arguments": <json>}\n</tool_call>'
+    )
 
 
 def _assistant_body(m):
@@ -89,31 +98,52 @@ def _assistant_body(m):
     content = _text(m.get("content"))
     if content:
         parts.append(content)
-    for tc in (m.get("tool_calls") or []):
+    for tc in m.get("tool_calls") or []:
         fn = tc.get("function", tc)
         a = fn.get("arguments", "{}")
         if not isinstance(a, str):
             a = json.dumps(a, ensure_ascii=False)
         name = fn.get("name", "")
-        parts.append(f'<tool_call>\n{{"name": "{name}", "arguments": {a}}}\n</tool_call>')
+        parts.append(
+            f'<tool_call>\n{{"name": "{name}", "arguments": {a}}}\n</tool_call>'
+        )
     return "\n".join(parts)
 
 
 def _render_msg(m, tools_sys):
     r = m.get("role")
-    if r == "system": return "<|im_start|>system\n" + _text(m.get("content")) + _tools_block(tools_sys) + "<|im_end|>\n"
-    if r == "user":   return "<|im_start|>user\n" + _text(m.get("content")) + "<|im_end|>\n"
-    if r == "tool":   return "<|im_start|>user\n<tool_response>\n" + _text(m.get("content")) + "\n</tool_response><|im_end|>\n"
-    if r == "assistant": return "<|im_start|>assistant\n" + _assistant_body(m) + "<|im_end|>\n"
+    if r == "system":
+        return (
+            "<|im_start|>system\n"
+            + _text(m.get("content"))
+            + _tools_block(tools_sys)
+            + "<|im_end|>\n"
+        )
+    if r == "user":
+        return "<|im_start|>user\n" + _text(m.get("content")) + "<|im_end|>\n"
+    if r == "tool":
+        return (
+            "<|im_start|>user\n<tool_response>\n"
+            + _text(m.get("content"))
+            + "\n</tool_response><|im_end|>\n"
+        )
+    if r == "assistant":
+        return "<|im_start|>assistant\n" + _assistant_body(m) + "<|im_end|>\n"
     return ""
 
 
 def render_prompt(messages, tools):
     out = []
     if not (messages and messages[0].get("role") == "system") and tools:
-        out.append("<|im_start|>system\nYou are a helpful assistant." + _tools_block(tools) + "<|im_end|>\n")
+        out.append(
+            "<|im_start|>system\nYou are a helpful assistant."
+            + _tools_block(tools)
+            + "<|im_end|>\n"
+        )
     for i, m in enumerate(messages):
-        out.append(_render_msg(m, tools if (i == 0 and m.get("role") == "system") else None))
+        out.append(
+            _render_msg(m, tools if (i == 0 and m.get("role") == "system") else None)
+        )
     out.append("<|im_start|>assistant\n")
     return "".join(out)
 
@@ -132,48 +162,109 @@ def parse_tool_call(text):
 
 
 def to_hermes_action(tool_call):
-    return HermesToolAction(tool=tool_call["name"], **(tool_call.get("arguments") or {}))
+    return HermesToolAction(
+        tool=tool_call["name"], **(tool_call.get("arguments") or {})
+    )
 
 
-SYSTEM_CONTENT = ("You are a coding agent working in a sandboxed workspace. Use the "
-                   "available tools to complete the task, then call submit when you "
-                   "believe it is solved.")
+SYSTEM_CONTENT = (
+    "You are a coding agent working in a sandboxed workspace. Use the "
+    "available tools to complete the task, then call submit when you "
+    "believe it is solved."
+)
 
 # OpenAI-function-schema form of the 5 real Hermes tools (select_task is
 # env-internal/harness-only, never offered to the model -- it's used once as
 # a free bootstrap step before the episode's first real turn).
 TOOLS = [
-    {"type": "function", "function": {
-        "name": "terminal",
-        "description": "Run a shell command in the task workspace; returns combined stdout/stderr.",
-        "parameters": {"type": "object", "properties": {
-            "command": {"type": "string", "description": "Shell command to run."}},
-            "required": ["command"]}}},
-    {"type": "function", "function": {
-        "name": "read_file",
-        "description": "Read a file from the task workspace.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to read."}},
-            "required": ["path"]}}},
-    {"type": "function", "function": {
-        "name": "write_file",
-        "description": "Write or overwrite a file in the task workspace.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to write."},
-            "content": {"type": "string", "description": "Full content to write to the file."}},
-            "required": ["path", "content"]}}},
-    {"type": "function", "function": {
-        "name": "patch",
-        "description": "Find-and-replace a unique substring in a file.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to patch."},
-            "old_string": {"type": "string", "description": "Exact unique substring to replace."},
-            "new_string": {"type": "string", "description": "Replacement text."}},
-            "required": ["path", "old_string", "new_string"]}}},
-    {"type": "function", "function": {
-        "name": "submit",
-        "description": "End the episode and grade the task. Call this only when you believe the task is solved.",
-        "parameters": {"type": "object", "properties": {}}}},
+    {
+        "type": "function",
+        "function": {
+            "name": "terminal",
+            "description": "Run a shell command in the task workspace; returns combined stdout/stderr.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "Shell command to run.",
+                    }
+                },
+                "required": ["command"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a file from the task workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to read.",
+                    }
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Write or overwrite a file in the task workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to write.",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Full content to write to the file.",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "patch",
+            "description": "Find-and-replace a unique substring in a file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to patch.",
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "Exact unique substring to replace.",
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "Replacement text.",
+                    },
+                },
+                "required": ["path", "old_string", "new_string"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "submit",
+            "description": "End the episode and grade the task. Call this only when you believe the task is solved.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
 ]
 
 
@@ -181,6 +272,7 @@ TOOLS = [
 def _peft_base_model(repo_id):
     try:
         from huggingface_hub import hf_hub_download
+
         cfg_path = hf_hub_download(repo_id, "adapter_config.json")
     except Exception:
         return None
@@ -188,14 +280,19 @@ def _peft_base_model(repo_id):
         cfg = json.load(f)
     base = cfg.get("base_model_name_or_path")
     if not base:
-        raise ValueError(f"{repo_id}: adapter_config.json has no base_model_name_or_path")
+        raise ValueError(
+            f"{repo_id}: adapter_config.json has no base_model_name_or_path"
+        )
     return base
 
 
 def load_model_and_tokenizer(repo_id):
     device = "cuda" if torch.cuda.is_available() and not FORCE_CPU else "cpu"
-    dtype = torch.bfloat16 if (device == "cuda" and torch.cuda.is_bf16_supported()) else (
-        torch.float16 if device == "cuda" else torch.float32)
+    dtype = (
+        torch.bfloat16
+        if (device == "cuda" and torch.cuda.is_bf16_supported())
+        else (torch.float16 if device == "cuda" else torch.float32)
+    )
     base_id = _peft_base_model(repo_id)
     load_id = base_id or repo_id
 
@@ -208,12 +305,17 @@ def load_model_and_tokenizer(repo_id):
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
 
-    print(f"  loading {load_id} in {dtype} on {device}"
-          + (f" (+ adapter {repo_id})" if base_id else "") + "...")
+    print(
+        f"  loading {load_id} in {dtype} on {device}"
+        + (f" (+ adapter {repo_id})" if base_id else "")
+        + "..."
+    )
     m = AutoModelForCausalLM.from_pretrained(
-        load_id, torch_dtype=dtype, device_map=device if device == "cuda" else None)
+        load_id, torch_dtype=dtype, device_map=device if device == "cuda" else None
+    )
     if base_id:
         from peft import PeftModel
+
         m = PeftModel.from_pretrained(m, repo_id)
     if device == "cpu":
         m = m.to("cpu")
@@ -221,7 +323,9 @@ def load_model_and_tokenizer(repo_id):
     return m, tok
 
 
-RENDER_MODE = os.environ.get("SAK_RENDER", "handrolled").strip()  # "handrolled" | "native"
+RENDER_MODE = os.environ.get(
+    "SAK_RENDER", "handrolled"
+).strip()  # "handrolled" | "native"
 
 
 def make_step_fn(model, tok):
@@ -231,19 +335,30 @@ def make_step_fn(model, tok):
             # the model's own apply_chat_template with tools). Use this to eval
             # SFT/GRPO-trained checkpoints on the SAME format they were trained on.
             enc = tok.apply_chat_template(
-                messages, tools=TOOLS, add_generation_prompt=True,
-                return_dict=True, return_tensors="pt").to(model.device)
+                messages,
+                tools=TOOLS,
+                add_generation_prompt=True,
+                return_dict=True,
+                return_tensors="pt",
+            ).to(model.device)
             input_len = enc["input_ids"].shape[-1]
         else:
             # bench-v2's hand-rolled renderer -- matches the ORIGINAL -tools models'
             # training format (they score 91% single-shot with it).
             prompt = render_prompt(messages, TOOLS)
-            enc = tok(prompt, return_tensors="pt", add_special_tokens=False).to(model.device)
+            enc = tok(prompt, return_tensors="pt", add_special_tokens=False).to(
+                model.device
+            )
             input_len = enc["input_ids"].shape[-1]
         with torch.no_grad():
-            out = model.generate(**enc, max_new_tokens=512, do_sample=False,
-                                  pad_token_id=tok.pad_token_id)
+            out = model.generate(
+                **enc,
+                max_new_tokens=512,
+                do_sample=False,
+                pad_token_id=tok.pad_token_id,
+            )
         return tok.decode(out[0, input_len:], skip_special_tokens=True)
+
     return step_fn
 
 
@@ -254,8 +369,10 @@ def run_episode(task_id, step_fn, max_steps=MAX_STEPS):
     # First turn is the task briefing -> "user". All later env feedback is
     # real tool output -> "tool" (rendered as <tool_response>...</tool_response>,
     # matching how eval_bench.py renders "tool" role messages).
-    messages = [{"role": "system", "content": SYSTEM_CONTENT},
-                {"role": "user", "content": obs.result}]
+    messages = [
+        {"role": "system", "content": SYSTEM_CONTENT},
+        {"role": "user", "content": obs.result},
+    ]
     transcript = [{"role": "user", "text": obs.result}]
 
     for _ in range(max_steps):
@@ -324,7 +441,9 @@ for repo in MODELS:
     except Exception as e:
         tb = traceback.format_exc()
         print(f"[FAILED {repo}] {type(e).__name__}: {e}\n{tb}")
-        results.append({"model": repo, "error": f"{type(e).__name__}: {e}", "traceback": tb})
+        results.append(
+            {"model": repo, "error": f"{type(e).__name__}: {e}", "traceback": tb}
+        )
 
 print("\n" + "=" * 60)
 print(f"{'model':<40}{'pass':>8}{'mean reward':>14}")
@@ -332,11 +451,17 @@ for r in results:
     if "error" in r:
         print(f"{r['model'][-39:]:<40}{'ERROR':>8}")
         continue
-    print(f"{r['model'][-39:]:<40}{r['pass_count']}/{r['total_tasks']:<6}"
-          f"{r['mean_reward']:13.2f}")
+    print(
+        f"{r['model'][-39:]:<40}{r['pass_count']}/{r['total_tasks']:<6}"
+        f"{r['mean_reward']:13.2f}"
+    )
 
-payload = {"benchmark": ENV_REPO, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-           "max_steps": MAX_STEPS, "results": results}
+payload = {
+    "benchmark": ENV_REPO,
+    "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "max_steps": MAX_STEPS,
+    "results": results,
+}
 with open("hermes_env_results.json", "w") as f:
     json.dump(payload, f, indent=2)
 print("\nwrote hermes_env_results.json")

@@ -15,7 +15,6 @@ false sense of security; the policy will find a spelling you didn't block.
 """
 
 import os
-import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -127,14 +126,16 @@ class SandboxEnvironment(Environment):
         if (seed := TASKS[task_key].get("seed")) is not None:
             (self._workdir / "words.txt").write_text(seed)
         prompt = TASKS[task_key]["prompt"]
-        return AgentToolObservation(
-            result=prompt, success=True, done=False, reward=0.0
-        )
+        return AgentToolObservation(result=prompt, success=True, done=False, reward=0.0)
 
-    def step(self, action: AgentToolAction, timeout_s: float | None = None, **kwargs) -> AgentToolObservation:
+    def step(
+        self, action: AgentToolAction, timeout_s: float | None = None, **kwargs
+    ) -> AgentToolObservation:
         if self._done:
             return AgentToolObservation(
-                result="Episode already ended.", success=False, done=True,
+                result="Episode already ended.",
+                success=False,
+                done=True,
                 reward=self._reward,
             )
         self._state.step_count += 1
@@ -178,11 +179,18 @@ class SandboxEnvironment(Environment):
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
         proc = subprocess.run(
             ["bash", "-lc", command],
-            cwd=self._workdir, env=env, capture_output=True, text=True,
+            cwd=self._workdir,
+            env=env,
+            capture_output=True,
+            text=True,
             timeout=CMD_TIMEOUT_S,
         )
-        stdout = proc.stdout[:MAX_STDOUT] + ("…" if len(proc.stdout) > MAX_STDOUT else "")
-        stderr = proc.stderr[:MAX_STDERR] + ("…" if len(proc.stderr) > MAX_STDERR else "")
+        stdout = proc.stdout[:MAX_STDOUT] + (
+            "…" if len(proc.stdout) > MAX_STDOUT else ""
+        )
+        stderr = proc.stderr[:MAX_STDERR] + (
+            "…" if len(proc.stderr) > MAX_STDERR else ""
+        )
         out = f"exit_code: {proc.returncode}\nstdout:\n{stdout or '(none)'}\nstderr:\n{stderr or '(none)'}"
         return out, proc.returncode == 0
 

@@ -24,6 +24,7 @@ Env vars:
   SFT_EPOCHS     training epochs (default: 3)
   SFT_PUSH_TO    repo to push the SFT adapter to (default: none)
 """
+
 import os
 import sys
 import time
@@ -41,45 +42,114 @@ env_dir = Path(snapshot_download(ENV_REPO, repo_type="dataset"))
 sys.path.insert(0, str(env_dir))
 sys.path.insert(0, str(env_dir / "server"))
 
+from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 from models import HermesToolAction  # noqa: E402
 from tasks import TASKS_BY_ID  # noqa: E402
-from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 
-SYSTEM = ("You are a coding agent working in a sandboxed workspace. Inspect the "
-          "files, make the change the task asks for, then call submit to have it "
-          "graded. Call exactly one tool per turn.")
+SYSTEM = (
+    "You are a coding agent working in a sandboxed workspace. Inspect the "
+    "files, make the change the task asks for, then call submit to have it "
+    "graded. Call exactly one tool per turn."
+)
 
 TOOLS = [
-    {"type": "function", "function": {"name": "terminal",
-        "description": "Run a shell command in the task workspace; returns combined stdout/stderr.",
-        "parameters": {"type": "object", "properties": {
-            "command": {"type": "string", "description": "Shell command to run."}}, "required": ["command"]}}},
-    {"type": "function", "function": {"name": "read_file",
-        "description": "Read a file from the task workspace.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to read."}}, "required": ["path"]}}},
-    {"type": "function", "function": {"name": "write_file",
-        "description": "Write or overwrite a file in the task workspace.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to write."},
-            "content": {"type": "string", "description": "Full content to write to the file."}},
-            "required": ["path", "content"]}}},
-    {"type": "function", "function": {"name": "patch",
-        "description": "Find-and-replace a unique substring in a file.",
-        "parameters": {"type": "object", "properties": {
-            "path": {"type": "string", "description": "Relative path of the file to patch."},
-            "old_string": {"type": "string", "description": "Exact unique substring to replace."},
-            "new_string": {"type": "string", "description": "Replacement text."}},
-            "required": ["path", "old_string", "new_string"]}}},
-    {"type": "function", "function": {"name": "submit",
-        "description": "End the episode and grade the task. Call this only when you believe the task is solved.",
-        "parameters": {"type": "object", "properties": {}}}},
+    {
+        "type": "function",
+        "function": {
+            "name": "terminal",
+            "description": "Run a shell command in the task workspace; returns combined stdout/stderr.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "Shell command to run.",
+                    }
+                },
+                "required": ["command"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a file from the task workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to read.",
+                    }
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Write or overwrite a file in the task workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to write.",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Full content to write to the file.",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "patch",
+            "description": "Find-and-replace a unique substring in a file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path of the file to patch.",
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "Exact unique substring to replace.",
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "Replacement text.",
+                    },
+                },
+                "required": ["path", "old_string", "new_string"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "submit",
+            "description": "End the episode and grade the task. Call this only when you believe the task is solved.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
 ]
 
 ORACLES = {
     "fix_failing_test": [
         ("read_file", {"path": "calc.py"}),
-        ("write_file", {"path": "calc.py", "content": "def add(a, b):\n    return a + b\n"}),
+        (
+            "write_file",
+            {"path": "calc.py", "content": "def add(a, b):\n    return a + b\n"},
+        ),
         ("submit", {}),
     ],
     "extract_and_summarize": [
@@ -90,23 +160,51 @@ ORACLES = {
     "rename_across_files": [
         ("read_file", {"path": "app.py"}),
         ("read_file", {"path": "helper.py"}),
-        ("write_file", {"path": "helper.py", "content": "def new_name():\n    return 'hello world'\n"}),
-        ("write_file", {"path": "app.py", "content":
-            "from helper import new_name\n\ndef main():\n    print(new_name())\n\n"
-            "if __name__ == '__main__':\n    main()\n"}),
+        (
+            "write_file",
+            {
+                "path": "helper.py",
+                "content": "def new_name():\n    return 'hello world'\n",
+            },
+        ),
+        (
+            "write_file",
+            {
+                "path": "app.py",
+                "content": "from helper import new_name\n\ndef main():\n    print(new_name())\n\n"
+                "if __name__ == '__main__':\n    main()\n",
+            },
+        ),
         ("submit", {}),
     ],
     "fix_broken_imports": [
         ("read_file", {"path": "step1.py"}),
-        ("write_file", {"path": "step1.py", "content": "from utils import double\nprint(double(3))\n"}),
-        ("write_file", {"path": "step2.py", "content": "from utils import double\nprint(double(21))\n"}),
+        (
+            "write_file",
+            {
+                "path": "step1.py",
+                "content": "from utils import double\nprint(double(3))\n",
+            },
+        ),
+        (
+            "write_file",
+            {
+                "path": "step2.py",
+                "content": "from utils import double\nprint(double(21))\n",
+            },
+        ),
         ("submit", {}),
     ],
     "add_verbose_flag": [
         ("read_file", {"path": "greet.py"}),
-        ("write_file", {"path": "greet.py", "content":
-            "import sys\n\ndef main():\n    print('hello')\n    if '--verbose' in sys.argv:\n"
-            "        print('DEBUG: verbose mode enabled')\n\nif __name__ == '__main__':\n    main()\n"}),
+        (
+            "write_file",
+            {
+                "path": "greet.py",
+                "content": "import sys\n\ndef main():\n    print('hello')\n    if '--verbose' in sys.argv:\n"
+                "        print('DEBUG: verbose mode enabled')\n\nif __name__ == '__main__':\n    main()\n",
+            },
+        ),
         ("submit", {}),
     ],
     "count_log_errors": [
@@ -121,11 +219,20 @@ def run_oracle(task_id):
     env = HermesToolEnvironment()
     env.reset()
     obs = env.step(HermesToolAction(tool="select_task", task_id=task_id))
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": obs.result}]
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": obs.result},
+    ]
     reward = 0.0
     for name, args in ORACLES[task_id]:
-        messages.append({"role": "assistant", "tool_calls": [
-            {"type": "function", "function": {"name": name, "arguments": args}}]})
+        messages.append(
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {"type": "function", "function": {"name": name, "arguments": args}}
+                ],
+            }
+        )
         obs = env.step(HermesToolAction(tool=name, **args))
         messages.append({"role": "tool", "name": name, "content": obs.result})
         if obs.done:
@@ -136,10 +243,13 @@ def run_oracle(task_id):
 
 def build_sft_dataset():
     from datasets import Dataset
+
     rows = []
     for task_id in sorted(TASKS_BY_ID):
         reward, messages = run_oracle(task_id)
-        assert reward >= 1.0, f"oracle for {task_id} did not reach reward 1.0 (got {reward}) -- aborting SFT"
+        assert (
+            reward >= 1.0
+        ), f"oracle for {task_id} did not reach reward 1.0 (got {reward}) -- aborting SFT"
         for _ in range(REPEAT):
             rows.append({"messages": messages, "tools": TOOLS})
     return Dataset.from_list(rows)
@@ -152,11 +262,16 @@ def main():
 
     print(f"=== SFT bootstrap: base={BASE} repeat={REPEAT} epochs={EPOCHS} ===")
     dataset = build_sft_dataset()
-    print(f"SFT dataset: {len(dataset)} rows (6 verified oracle trajectories x{REPEAT})")
+    print(
+        f"SFT dataset: {len(dataset)} rows (6 verified oracle trajectories x{REPEAT})"
+    )
 
-    peft_config = LoraConfig(r=16, lora_alpha=32,
-                             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                             task_type="CAUSAL_LM")
+    peft_config = LoraConfig(
+        r=16,
+        lora_alpha=32,
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+        task_type="CAUSAL_LM",
+    )
 
     args = SFTConfig(
         output_dir="./sft-bootstrap",
@@ -185,7 +300,9 @@ def main():
 
     if PUSH_TO:
         trainer.save_model("./sft-bootstrap-final")
-        trainer.push_to_hub(commit_message=f"SFT bootstrap on 6 oracle hermes trajectories (x{REPEAT}, {EPOCHS} epochs)")
+        trainer.push_to_hub(
+            commit_message=f"SFT bootstrap on 6 oracle hermes trajectories (x{REPEAT}, {EPOCHS} epochs)"
+        )
         print(f"pushed -> {PUSH_TO}")
     else:
         print("SFT_PUSH_TO not set -- not pushing, mechanics/timing only")

@@ -1,0 +1,15 @@
+# Add 'eval' label to any changes within the sakthai-agentic-eval-train directory
+eval:
+  - 'sakthai-agentic-eval-train/**/*'
+
+# Add 'env' label to any changes within the openenv-custom-training directory
+env:
+  - 'openenv-custom-training/**/*'
+
+# Add 'multi-agent' label to any changes within the openenv-multi-catalog-training directory
+multi-agent:
+  - 'openenv-multi-catalog-training/**/*'
+
+# Add 'docs' label to any changes to markdown files
+docs:
+  - '**/*.md'
