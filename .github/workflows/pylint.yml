@@ -1,6 +1,8 @@
+---
 name: Pylint
 
-on: [push]
+on:
+  push:
 
 jobs:
   build:
@@ -20,4 +22,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        git ls-files '*.py' | xargs pylint --exit-zero

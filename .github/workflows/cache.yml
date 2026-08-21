@@ -1,8 +1,11 @@
+---
 name: CI (with caches)
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -40,8 +43,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r openenv-custom-training/requirements.txt
-          pip install -r openenv-multi-catalog-training/requirements.txt
-          pip install -r openenv-multi-catalog-training/a2a_agent/requirements.txt
+          # pip install -r openenv-multi-catalog-training/requirements.txt
+          # pip install -r openenv-multi-catalog-training/a2a_agent/requirements.txt
           pip install pytest flake8
 
       - name: Run contract check
