@@ -1,0 +1,9 @@
+# Configuration for actions/labeler
+
+# Add 'bug' label to any pull request that modifies files in the 'src' directory
+bug:
+  - 'src/**/*'
+
+# Add 'documentation' label to any pull request that modifies markdown files
+documentation:
+  - '**/*.md'
