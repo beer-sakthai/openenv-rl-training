@@ -6,6 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # The only workflow in this repo that runs entirely in GH Actions.
 # Everything else dispatches to HF Jobs (needs HF_TOKEN + a paid HF Jobs plan).
 

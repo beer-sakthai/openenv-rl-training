@@ -2,6 +2,9 @@ name: MCP-Bench
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   mcp-bench:
     runs-on: ubuntu-latest

@@ -103,9 +103,15 @@ def main() -> None:
         "secrets": args.secrets,
         "timeout": args.timeout,
     }
+    # Redact env values and secret names — a plan can carry --env HF_TOKEN=...
+    # or a real secret name, and this line lands in job logs / stdout.
+    _REDACT_KEYS = {"env", "secrets"}
     print("[submit] resolved plan:")
     for k, v in plan.items():
-        print(f"    {k}: {v}")
+        if k in _REDACT_KEYS:
+            print(f"    {k}: <redacted {len(v)} entries>")
+        else:
+            print(f"    {k}: {v}")
 
     if args.dry_run:
         print("[submit] --dry-run set; not submitting")
