@@ -1,0 +1,71 @@
+
+name: Auto Update PR Branches
+
+on:
+  push:
+    branches:
+      - main
+
+# Read-only at the top level so the default grant every job inherits is the
+# narrow one; the single job below re-declares the writes it actually needs.
+# Scorecard scores a top-level `contents: write` as 0 (TokenPermissionsID)
+# because it hands every future job in the file a push-capable token by
+# default — including one added later that has no reason to write.
+permissions:
+  contents: read
+
+# `cancel-in-progress: false`, not the usual pull-request expression: this
+# workflow walks every open PR in a loop, so cancelling a run mid-loop leaves
+# some branches updated against the new `main` and the rest against the old
+# one. Two pushes to `main` are two complete batches; queue the second.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update-prs:
+    runs-on: ubuntu-latest
+    # `contents: write` because the update-branch API pushes a merge commit onto
+    # each contributor branch; `pull-requests: write` to call it. Job-scoped, so
+    # the grant ends with this job rather than covering the whole file.
+    permissions:
+      contents: write
+      pull-requests: write
+    # The loop makes one API call per open PR. Bounded so a hung `gh api` call
+    # cannot hold the runner for GitHub's six-hour default.
+    timeout-minutes: 15
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Update Open PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching open PRs targeting main..."
+          # Get list of open PR numbers targeting main
+          PR_LIST=$(gh pr list --base main --state open --json number --jq '.[].number')
+          
+          if [ -z "$PR_LIST" ]; then
+            echo "No open PRs targeting main."
+            exit 0
+          fi
+          
+          echo "Found PRs: $PR_LIST"
+          
+          for PR in $PR_LIST; do
+            echo "Attempting to update PR #$PR..."
+            # gh pr update-branch returns non-zero if it fails (e.g. conflicts)
+            # We catch it so the whole workflow doesn't fail
+            if gh api -X PUT /repos/${{ github.repository }}/pulls/$PR/update-branch; then
+              echo "✅ Successfully updated PR #$PR"
+            else
+              echo "⚠️ Failed to update PR #$PR (Likely merge conflicts or already up-to-date)"
+            fi
+          done
