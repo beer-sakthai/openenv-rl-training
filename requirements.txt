@@ -6,3 +6,4 @@ transformers
 huggingface_hub
 peft
 accelerate
+a2a-sdk

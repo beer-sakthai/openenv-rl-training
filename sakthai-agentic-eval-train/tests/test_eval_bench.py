@@ -2,8 +2,10 @@ import os
 import sys
 import unittest.mock as mock
 
-# Mock load_dataset before importing
-sys.modules["datasets"] = mock.MagicMock()
+# Remove the sys.modules["datasets"] mock, we install datasets via requirements.txt now.
+# However, eval_bench_peft.py executes load_dataset on import, so we need to mock it.
+import datasets
+datasets.load_dataset = mock.MagicMock()
 
 # Set required environment variables for module initialization
 os.environ["SAK_MODELS"] = "dummy/model"
