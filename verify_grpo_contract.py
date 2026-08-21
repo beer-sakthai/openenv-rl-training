@@ -9,7 +9,6 @@ Verifies:
 """
 
 import sys
-import os
 
 def test_reward_function():
     print("[Contract Test] Verifying reward function logic...")
