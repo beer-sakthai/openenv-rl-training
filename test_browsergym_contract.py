@@ -1,7 +1,6 @@
 import sys
 import os
 import unittest.mock as mock
-import pytest
 
 # Mock trl before importing train.py if trl is not installed locally
 sys.modules['trl'] = mock.MagicMock()
