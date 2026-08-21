@@ -24,6 +24,20 @@ async def send(client: Client, context_id: str | None, task_id: str | None, text
             metadata=metadata,
         )
     )
+from a2a.client import A2ACardResolver, Client as A2AClient
+from a2a.types import Message, Part, SendMessageRequest
+
+
+async def send(client: A2AClient, context_id: str | None, task_id: str | None, text: str, metadata=None):
+    message = Message(
+        role="user",
+        parts=[Part(text=text)],
+        message_id=str(uuid.uuid4()),
+        context_id=context_id,
+        task_id=task_id,
+        metadata=metadata,
+    )
+    request = SendMessageRequest(message=message)
     response = await client.send_message(request)
     return response
 
