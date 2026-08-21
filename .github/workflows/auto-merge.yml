@@ -1,0 +1,83 @@
+# Label-gated automatic merge.
+#
+# Applying the `automerge` label to a pull request turns on GitHub's *native*
+# auto-merge for it. GitHub then performs the merge itself, but only once every
+# branch-protection requirement on `main` is satisfied: required checks green
+# **and** the approving review from someone other than the author that
+# docs/CONTRIBUTING.md requires. Removing the label turns auto-merge back off.
+#
+# This does not weaken the review policy and must not be made to. The label
+# means "merge this once it is allowed to merge" — not "merge this". Nothing
+# here approves a pull request and nothing here waives a check; see the
+# "Do not automate the approval" note in docs/CONTRIBUTING.md.
+#
+# Security note on `pull_request_target`: this trigger runs with a
+# repository-scoped token, so a workflow using it must never check out or
+# execute the pull request's code. This one does neither — there is no
+# `actions/checkout` step, and the only thing it runs is the GitHub CLI against
+# the API. The triggering action is itself already privileged: only accounts
+# with triage or write access can apply a label.
+name: Auto Merge
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled, ready_for_review]
+
+# Least privilege at the top level; the single job below widens only what it
+# needs.
+permissions:
+  contents: read
+
+concurrency:
+  # One run at a time per pull request, so a fast label/unlabel pair cannot
+  # race and leave auto-merge in the wrong state.
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    # `labeled`/`unlabeled` carry the label that changed. `ready_for_review`
+    # carries none, so check the pull request's current labels instead — that
+    # is what picks up a PR labelled while it was still a draft.
+    if: >-
+      github.event.label.name == 'automerge' ||
+      (github.event.action == 'ready_for_review' &&
+       contains(github.event.pull_request.labels.*.name, 'automerge'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Enabling auto-merge is a write against the pull request and the branch
+      # it targets; it is not a merge, which GitHub still performs on its own
+      # once protection is satisfied.
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+
+      - name: Enable auto-merge
+        if: github.event.action != 'unlabeled' && github.event.pull_request.draft == false
+        env:
+          # Prefer the PAT. A merge attributed to the ambient GITHUB_TOKEN does
+          # not trigger the `push: main` workflows (CI, SonarCloud, Scorecard),
+          # and self-healing-ci.yml keys off CI's completion on `main`. Falls
+          # back to GITHUB_TOKEN so this still works without the secret.
+          GH_TOKEN: ${{ secrets.GH_PAT_FOR_ACTIONS || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          # Merge method. Agent branches routinely carry a dozen work-in-progress
+          # commits, so they land as one. Change to `--merge` if squash merging
+          # is turned off in repository settings.
+          MERGE_METHOD: --squash
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --auto "$MERGE_METHOD"
+
+      - name: Disable auto-merge
+        if: github.event.action == 'unlabeled'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_FOR_ACTIONS || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto-merge

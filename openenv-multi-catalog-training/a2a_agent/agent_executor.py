@@ -23,22 +23,19 @@ One A2A task == one OpenEnv episode:
     artifact.
 """
 
-import json
-
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
-from a2a.types import Part, TextPart, DataPart
-from a2a.utils import new_agent_text_message, new_task
-
-from echo_env import EchoEnv, EchoAction
-from textarena_env import TextArenaEnv, TextArenaAction
-from coding_env import CodingEnv, CodeAction
-from repl_env import REPLEnv, REPLAction
-from atari_env import AtariEnv, AtariAction
-from openspiel_env import OpenSpielEnv, OpenSpielAction
-from envs.sumo_rl_env import SumoRLEnv, SumoAction
-from envs.chat_env import ChatEnv, ChatAction
+from a2a.types import DataPart
+from a2a.utils import new_agent_text_message
+from atari_env import AtariAction, AtariEnv
+from coding_env import CodeAction, CodingEnv
+from echo_env import EchoAction, EchoEnv
+from envs.chat_env import ChatAction, ChatEnv
+from envs.sumo_rl_env import SumoAction, SumoRLEnv
+from openspiel_env import OpenSpielAction, OpenSpielEnv
+from repl_env import REPLAction, REPLEnv
+from textarena_env import TextArenaAction, TextArenaEnv
 
 ENV_URLS = {
     "echo": "http://localhost:8001",
@@ -56,7 +53,7 @@ ATARI_GAME = "pong"
 # chat_env's action is raw model tokens (ChatAction.tokens), not text — see
 # module docstring. Must match whatever model actually plays this skill;
 # override via MODEL_NAME if that's not the training script's default.
-import os
+import os  # noqa: E402
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-0.6B")
 
@@ -80,10 +77,10 @@ class _Episode:
         self.client = client
         self.done = False
         self.last_reward = 0.0
-        self.extra = {}  # per-env scratch (e.g. echo's secret phrase)
+        self.extra: dict[str, str] = {}  # per-env scratch (e.g. echo's secret phrase)
 
 
-class OpenEnvAgentExecutor(AgentExecutor):
+class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
     def __init__(self):
         self._episodes: dict[str, _Episode] = {}
 
@@ -106,8 +103,12 @@ class OpenEnvAgentExecutor(AgentExecutor):
 
     # -- episode lifecycle ---------------------------------------------------
 
-    async def _start_episode(self, context: RequestContext, updater: TaskUpdater) -> None:
-        env_name = (context.message.metadata or {}).get("env") if context.message else None
+    async def _start_episode(
+        self, context: RequestContext, updater: TaskUpdater
+    ) -> None:
+        env_name = (
+            (context.message.metadata or {}).get("env") if context.message else None
+        )
         if env_name not in ENV_URLS:
             await updater.failed(
                 message=new_agent_text_message(
@@ -124,16 +125,24 @@ class OpenEnvAgentExecutor(AgentExecutor):
         obs_text = await self._reset(episode)
         await updater.update_status(
             state="input_required" if not episode.done else "completed",
-            message=new_agent_text_message(obs_text, context_id=context.context_id, task_id=context.task_id),
+            message=new_agent_text_message(
+                obs_text, context_id=context.context_id, task_id=context.task_id
+            ),
         )
 
-    async def _step_episode(self, context: RequestContext, updater: TaskUpdater) -> None:
+    async def _step_episode(
+        self, context: RequestContext, updater: TaskUpdater
+    ) -> None:
         episode = self._episodes.get(context.task_id)
         if episode is None:
-            await updater.failed(message=new_agent_text_message("Unknown task_id; episode not found."))
+            await updater.failed(
+                message=new_agent_text_message("Unknown task_id; episode not found.")
+            )
             return
         if episode.done:
-            await updater.failed(message=new_agent_text_message("Episode already completed."))
+            await updater.failed(
+                message=new_agent_text_message("Episode already completed.")
+            )
             return
 
         action_payload = self._extract_action(context)
@@ -153,7 +162,9 @@ class OpenEnvAgentExecutor(AgentExecutor):
         else:
             await updater.update_status(
                 state="input_required",
-                message=new_agent_text_message(obs_text, context_id=context.context_id, task_id=context.task_id),
+                message=new_agent_text_message(
+                    obs_text, context_id=context.context_id, task_id=context.task_id
+                ),
             )
 
     @staticmethod
@@ -207,13 +218,21 @@ class OpenEnvAgentExecutor(AgentExecutor):
             return self._format_ram(result.observation)
         if name == "openspiel":
             result = await client.reset()
-            return self._format_vec("state", result.observation.info_state, result.observation.legal_actions)
+            return self._format_vec(
+                "state", result.observation.info_state, result.observation.legal_actions
+            )
         if name == "repl":
-            result = await client.reset(context="alpha beta gamma delta", task_prompt="Count the words.")
+            result = await client.reset(
+                context="alpha beta gamma delta", task_prompt="Count the words."
+            )
             return result.observation.context_preview
         if name == "sumo":
             result = await client.reset()
-            return self._format_vec("traffic", result.observation.observation, result.observation.action_mask)
+            return self._format_vec(
+                "traffic",
+                result.observation.observation,
+                result.observation.action_mask,
+            )
         raise ValueError(name)
 
     async def _step(self, episode: _Episode, action) -> str:
@@ -221,7 +240,11 @@ class OpenEnvAgentExecutor(AgentExecutor):
 
         if name == "echo":
             result = await client.step(EchoAction(message=str(action)))
-            episode.last_reward = 1.0 if result.observation.echoed_message == episode.extra["secret"] else 0.0
+            episode.last_reward = (
+                1.0
+                if result.observation.echoed_message == episode.extra["secret"]
+                else 0.0
+            )
             episode.done = True
             return result.observation.echoed_message
 
@@ -235,34 +258,52 @@ class OpenEnvAgentExecutor(AgentExecutor):
         if name == "coding":
             result = await client.step(CodeAction(code=str(action)))
             obs = result.observation
-            episode.last_reward = 1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
+            episode.last_reward = (
+                1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
+            )
             episode.done = True
             return f"stdout: {obs.stdout}\nstderr: {obs.stderr}\nexit_code: {obs.exit_code}"
 
         if name == "chat":
-            tokens = _tokenizer_for_chat()(str(action), return_tensors="pt")["input_ids"][0]
+            tokens = _tokenizer_for_chat()(str(action), return_tensors="pt")[
+                "input_ids"
+            ][0]
             result = await client.step(ChatAction(tokens=tokens))
             episode.last_reward = getattr(result.observation, "reward", 0.0) or 0.0
             episode.done = result.observation.done
-            return _tokenizer_for_chat().decode(result.observation.tokens, skip_special_tokens=True)
+            return _tokenizer_for_chat().decode(
+                result.observation.tokens, skip_special_tokens=True
+            )
 
         if name == "atari":
-            action_id = int(action["action_id"]) if isinstance(action, dict) else int(action)
-            result = await client.step(AtariAction(action_id=action_id, game_name=ATARI_GAME, obs_type="ram"))
+            action_id = (
+                int(action["action_id"]) if isinstance(action, dict) else int(action)
+            )
+            result = await client.step(
+                AtariAction(action_id=action_id, game_name=ATARI_GAME, obs_type="ram")
+            )
             episode.last_reward = result.observation.reward or 0.0
             episode.done = result.observation.done
             return self._format_ram(result.observation)
 
         if name == "openspiel":
-            action_id = int(action["action_id"]) if isinstance(action, dict) else int(action)
+            action_id = (
+                int(action["action_id"]) if isinstance(action, dict) else int(action)
+            )
             result = await client.step(OpenSpielAction(action_id=action_id))
             episode.last_reward = result.observation.reward or 0.0
             episode.done = result.observation.done
-            return self._format_vec("state", result.observation.info_state, result.observation.legal_actions)
+            return self._format_vec(
+                "state", result.observation.info_state, result.observation.legal_actions
+            )
 
         if name == "repl":
             if isinstance(action, dict) and action.get("final_answer") is not None:
-                result = await client.step(REPLAction(code="", is_final=True, final_answer=str(action["final_answer"])))
+                result = await client.step(
+                    REPLAction(
+                        code="", is_final=True, final_answer=str(action["final_answer"])
+                    )
+                )
                 episode.done = True
             else:
                 result = await client.step(REPLAction(code=str(action)))
@@ -271,11 +312,17 @@ class OpenEnvAgentExecutor(AgentExecutor):
             return result.observation.result.stdout
 
         if name == "sumo":
-            phase_id = int(action["phase_id"]) if isinstance(action, dict) else int(action)
+            phase_id = (
+                int(action["phase_id"]) if isinstance(action, dict) else int(action)
+            )
             result = await client.step(SumoAction(phase_id=phase_id))
             episode.last_reward = result.observation.reward or 0.0
             episode.done = result.observation.done
-            return self._format_vec("traffic", result.observation.observation, result.observation.action_mask)
+            return self._format_vec(
+                "traffic",
+                result.observation.observation,
+                result.observation.action_mask,
+            )
 
         raise ValueError(name)
 

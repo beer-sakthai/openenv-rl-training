@@ -1,0 +1,10 @@
+{
+  "total": 155,
+  "categories": {
+    "irrelevance_tools": 50,
+    "parallel": 50,
+    "simple": 50,
+    "irrelevance_no_tools": 5
+  },
+  "multi_turn": 0
+}

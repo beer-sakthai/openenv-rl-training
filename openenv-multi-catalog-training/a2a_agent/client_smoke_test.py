@@ -3,7 +3,7 @@
     python client_smoke_test.py --base-url http://localhost:9000/
 
 Untested in this session (no a2a-sdk install here) — check this against
-the SDK's own client sample if `A2ACardResolver`/`A2AClient`'s method
+the SDK's own client sample if `A2ACardResolver`/`Client`'s method
 names have moved since this was written.
 """
 
@@ -12,20 +12,32 @@ import asyncio
 import uuid
 
 import httpx
-from a2a.client import A2ACardResolver, A2AClient
-from a2a.types import Message, MessageSendParams, Part, SendMessageRequest, TextPart
+from a2a.client import A2ACardResolver, Client
+from a2a.types import Message, SendMessageRequest
+
+
+async def send(client: Client, context_id: str | None, task_id: str | None, text: str, metadata=None):
+    request = SendMessageRequest(
+        id=str(uuid.uuid4()),
+        message=Message(
+            text=text,
+            metadata=metadata,
+        )
+    )
+from a2a.client import A2ACardResolver, Client as A2AClient
+from a2a.types import Message, Part, SendMessageRequest
 
 
 async def send(client: A2AClient, context_id: str | None, task_id: str | None, text: str, metadata=None):
     message = Message(
         role="user",
-        parts=[Part(root=TextPart(text=text))],
+        parts=[Part(text=text)],
         message_id=str(uuid.uuid4()),
         context_id=context_id,
         task_id=task_id,
         metadata=metadata,
     )
-    request = SendMessageRequest(id=str(uuid.uuid4()), params=MessageSendParams(message=message))
+    request = SendMessageRequest(message=message)
     response = await client.send_message(request)
     return response
 
@@ -35,7 +47,7 @@ async def main(base_url: str):
         card = await A2ACardResolver(http_client, base_url=base_url).get_agent_card()
         print(f"connected to: {card.name} ({len(card.skills)} skills)")
 
-        client = A2AClient(http_client, agent_card=card)
+        client = Client(http_client, agent_card=card)
 
         r1 = await send(client, None, None, "start", metadata={"env": "echo"})
         print("reset ->", r1)
