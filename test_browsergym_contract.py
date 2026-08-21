@@ -2,15 +2,13 @@ import os
 import sys
 import unittest.mock as mock
 
+import pytest  # noqa: F401
+
 # Mock trl before importing train.py if trl is not installed locally
 sys.modules["trl"] = mock.MagicMock()
 
 sys.path.append(os.path.abspath("openenv-custom-training"))
-from train import (  # noqa: E402
-    BROWSERGYM_SPACE_URL,
-    _browsergym_dataset,
-    _browsergym_reward,
-)
+from train import BROWSERGYM_SPACE_URL, _browsergym_dataset, _browsergym_reward  # noqa: E402
 
 
 def test_browsergym_dataset_column_names_and_size():
