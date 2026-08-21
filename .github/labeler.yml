@@ -1,0 +1,8 @@
+# Add 'scripts' label to any changes within 'sakthai-agentic-eval-train/scripts' folder
+scripts:
+  - sakthai-agentic-eval-train/scripts/**/*
+
+# Add 'tests' label to any changes in test files
+tests:
+  - sakthai-agentic-eval-train/scripts/test_*.py
+  - test_*.py
