@@ -1,0 +1,26 @@
+name: Lighteval
+on:
+  workflow_dispatch:
+  schedule: [{cron: "0 6 * * 1"}]
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v4
+      - run: pip install lighteval torch transformers accelerate datasets
+      - run: |
+          hf jobs uv run --flavor h200 --timeout 1h \
+            -e TASKS=mmlu:0,gsm8k:0,hellaswag:0,winogrande:0 \
+            --secrets HF_TOKEN \
+            sakthai-sft-training/eval-light.py
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
