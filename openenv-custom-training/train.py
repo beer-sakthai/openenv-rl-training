@@ -70,12 +70,10 @@ def _make_browsergym_factory(task_name: str, space_url: str):
 
 def _browsergym_reward(completions, **kwargs):
     """Reward function: pass BrowserGym step reward back to GRPO."""
-    rewards = []
-    for env_output in kwargs.get("env_outputs", []):
-        rewards.append(float(env_output.get("reward", 0.0)))
-    if not rewards:
-        rewards = [0.0] * len(completions)
-    return rewards
+    env_outputs = kwargs.get("env_outputs", [])
+    if not env_outputs:
+        return [0.0] * len(completions)
+    return [float(out.get("reward", 0.0)) for out in env_outputs]
 
 
 def _browsergym_dataset(n_episodes: int):
