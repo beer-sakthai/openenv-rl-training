@@ -12,20 +12,20 @@ import asyncio
 import uuid
 
 import httpx
-from a2a.client import A2ACardResolver, AgentToAgentClient as A2AClient
-from a2a.types import Message, MessageSendParams, Part, SendMessageRequest, TextPart
+from a2a.client import A2ACardResolver, Client as A2AClient
+from a2a.types import Message, Part, SendMessageRequest
 
 
 async def send(client: A2AClient, context_id: str | None, task_id: str | None, text: str, metadata=None):
     message = Message(
         role="user",
-        parts=[Part(root=TextPart(text=text))],
+        parts=[Part(text=text)],
         message_id=str(uuid.uuid4()),
         context_id=context_id,
         task_id=task_id,
         metadata=metadata,
     )
-    request = SendMessageRequest(id=str(uuid.uuid4()), params=MessageSendParams(message=message))
+    request = SendMessageRequest(message=message)
     response = await client.send_message(request)
     return response
 
