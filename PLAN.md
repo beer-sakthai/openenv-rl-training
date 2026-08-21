@@ -1,11 +1,14 @@
 # PLAN — SakThai end-to-end training repo
 
 **Status:** consolidation of `beer-sakthai/SakThai-Training` into this repo landed 2026-08-21.
-Supersedes the pre-consolidation four-task GRPO improvement list — everything on that list
-is either done, obsolete, or moved into the "Landed" table below.
+This file is the intent + progress record; empirical decisions live in
+[`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
 
-Empirical decisions live in [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md);
-this file is the intent + progress record.
+Active effort (2026-08-21, evening): **consolidation completion** — finish folding every
+remaining artifact of the retired repo into this one, delete `SakThai-Training` entirely
+(GitHub + local), evaluate the merged repo end-to-end, and close the hygiene follow-ups
+that a real evaluation can land today. See [`docs/CONSOLIDATION.md`](docs/CONSOLIDATION.md)
+for the full analysis (what / how / time / cost / suggestions).
 
 ---
 
@@ -20,28 +23,58 @@ this file is the intent + progress record.
 - [x] `README.md` and `CLAUDE.md` rewritten to cover both halves + document the end-to-end pipeline.
 - [x] **Bug fix:** `openenv-multi-catalog-training/train_multi_env.py:main()` `vllm_server_url` → `vllm_server_host` + `vllm_server_port`.
 - [x] **Bug fix:** `openenv-custom-training/train.py` `--env browsergym` — added `browsergym_env` dep to PEP 723 header + `requirements.txt`.
+- [x] Upstream sync: 185 commits pulled (`main` → `96580a1`), including root `requirements.txt` and unit tests under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/`.
+- [x] `.eval_results/` benchmark YAMLs preserved from SakThai-Training → moved to `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (they were tracked in the old repo but gitignored by this repo's root `.gitignore`).
+
+## Consolidation-completion plan (this PR + follow-ups)
+
+### Phase 1 — Plan + PR (this PR, `claude/consolidate-final-*`)
+
+- [x] Rewrite `PLAN.md` as the single plan record.
+- [x] Add `docs/CONSOLIDATION.md` — full analysis: What / HOW / timeline / cost / suggestions / recommendations / models / subagents / HF tools & skills.
+- [x] Open PR to `beer-sakthai/openenv-rl-training`, merge to `main` (per user instruction, plan lands before execution).
+
+### Phase 2 — Finish consolidation (execution)
+
+- [x] Preserve `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (3 benchmark YAMLs from the old repo).
+- [ ] Verify no tracked file of `beer-sakthai/SakThai-Training@master` is missing here (diff sweep, done in PR review).
+- [ ] Update `CLAUDE.md` + `README.md` references from "archive" to "deleted" once the old repo is gone.
+
+### Phase 3 — Delete `beer-sakthai/SakThai-Training`
+
+- [ ] Confirm content parity one final time (all unique tracked files preserved or superseded).
+- [ ] `gh repo delete beer-sakthai/SakThai-Training --yes` (irreversible — user-directed).
+- [ ] Remove local `/home/beern/SakThai-Training` checkout (keep `.git` shim only if history needed; history is preserved on the HF mirror + local clone).
+- [ ] Update this PLAN.md "Landed" table + README wording to reflect deletion.
+
+### Phase 4 — Evaluate everything (evidence gates)
+
+- [ ] `python3 verify_grpo_contract.py` — passes, TRL section skips when absent.
+- [ ] `uv run --with datasets --with pytest pytest test_browsergym_contract.py` — 3 passed.
+- [ ] Run `pytest` under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/` with the root `requirements.txt` toolchain.
+- [ ] Workflow lint: all `.github/workflows/*.yml` parse (`actionlint` or `python -c yaml.safe_load`).
+- [ ] Docs consistency: no dangling references to `SakThai-Training` except the historical note.
+
+### Phase 5 — Improvements (drive from evaluation results)
+
+- [ ] Add `HF_TOKEN` (and `STEP_SECURITY_API_KEY` referenced by `eval.yml`) as repo secrets — unblocks the 5 HF-Jobs workflows.
+- [ ] Fix anything evaluation surfaces (report findings in PR/comments, not silent edits).
+- [ ] Extend `monitor.yml` or add `bench-v3-publish.yml` for weekly `sakthai-bench-v3` regeneration (depends on `HF_TOKEN`).
+- [ ] Translate a subset of `.opencode/skills/` into Claude Code skills (`.claude/skills/*/SKILL.md`) — `cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting` first. Separate PR.
 
 ---
 
-## Follow-ups (separate PRs, not blocked on consolidation)
+## Follow-ups (not blocked on consolidation; from FINDINGS.md + hygiene list)
 
-### FINDINGS-driven
-
-- [ ] **Real 7B GRPO run.** The proof-of-signal was 40 steps (`grad_norm` 0.25–0.49, non-zero reward variance). A real run needs hundreds of steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target in this family per FINDINGS). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb` as the entry point; push to `Nanthasit/sakthai-context-7b-tools-grpo`.
-- [ ] **Retire `sakthai-context-0.5b-tools` as a GRPO target.** FINDINGS shows zero reward variance → zero gradient. Mark it as "SFT-only" in `sakthai-sft-training/README.md`; leave the SFT recipe alone.
-- [ ] **Bench-v3 nightly regen.** `.github/workflows/monitor.yml` runs weekly Hub health-check; extend it (or add a sibling `bench-v3-publish.yml`) to regenerate `Nanthasit/sakthai-bench-v3` on the same cadence. Depends on `HF_TOKEN`.
-
-### Repo hygiene
-
-- [ ] Add `HF_TOKEN` (and `STEP_SECURITY_API_KEY` referenced by `eval.yml`) as GitHub repo secrets. Until then only `verify-contracts.yml` runs.
-- [ ] Archive `beer-sakthai/SakThai-Training` on GitHub (Settings → Archive) once its cleanup PR merges. User-driven.
-- [ ] Translate a subset of `.opencode/skills/` into Claude Code skills (`.claude/skills/*/SKILL.md`) — start with `cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting`. Separate PR; do not merge with routine changes.
-- [ ] Verify a catalog Docker image tag in `openenv-multi-catalog-training/run_servers.sh` live and lock it (currently unverified per `CLAUDE.md` § Known open items).
-- [ ] Replace `coding_env`'s placeholder task (`print(17 * 23)`) with a real coding-tool-use task; carry `a2a_agent/coding_env` along.
-- [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm the `TaskUpdater` method names; update its README once verified.
+- [ ] **Real 7B GRPO run.** Proof-of-signal was 40 steps. A real run needs hundreds of steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`; push to `Nanthasit/sakthai-context-7b-tools-grpo`.
+- [ ] **Retire `sakthai-context-0.5b-tools` as a GRPO target.** Zero reward variance → zero gradient. Mark "SFT-only" in `sakthai-sft-training/README.md`.
+- [ ] Verify a catalog Docker image tag in `openenv-multi-catalog-training/run_servers.sh` live and lock it.
+- [ ] Replace `coding_env`'s placeholder task (`print(17 * 23)`) with a real coding-tool-use task.
+- [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm `TaskUpdater` method names.
+- [ ] HF Jobs currently returns `402 Payment Required` — five HF-Jobs workflows fail until payment + `HF_TOKEN` land.
 
 ### Deferred / not in scope
 
 - Adding `pyproject.toml` — CLAUDE.md is explicit this is not a package.
-- Unifying routing column names (`environment` / `env` / `task`) across workspaces — deliberate divergence, do not touch.
+- Unifying routing column names (`environment` / `env` / `task`) — deliberate divergence.
 - Renaming `sakthai_grpo_colab.ipynb` or `sakthai-agentic-eval-train/` — breaks Colab/Kaggle badges.
