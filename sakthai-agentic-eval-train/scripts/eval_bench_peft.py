@@ -318,14 +318,7 @@ def load_model(repo_id):
     raise RuntimeError(f"could not load {repo_id} in any of {names}") from last
 
 
-def evaluate(repo_id):
-    t0 = time.time()
-    tok = _GLOBAL_TOK or _get_tokenizer(repo_id)
-    m = load_model(repo_id)
-    m.eval()
-    _p = next(m.parameters())
-    runtime = {"device": str(_p.device), "dtype": str(_p.dtype).replace("torch.", "")}
-    raws = generate_all(m, tok)
+def _process_eval_rows(raws):
     sel = collections.defaultdict(lambda: [0, 0])
     arg = collections.defaultdict(lambda: [0, 0])
     strict = collections.defaultdict(lambda: [0, 0])
@@ -378,7 +371,11 @@ def evaluate(repo_id):
             if pp is not None:
                 partial.append(pp)
 
-    del m; gc.collect(); torch.cuda.empty_cache()
+    return sel, arg, strict, ho, dead, partial, slices, all_errors
+
+
+def _build_and_print_summary(repo_id, t0, runtime, stats):
+    sel, arg, strict, ho, dead, partial, slices, all_errors = stats
 
     def agg(d):
         p = sum(v[0] for v in d.values()); t = sum(v[1] for v in d.values())
@@ -428,6 +425,22 @@ def evaluate(repo_id):
         print(f"  !! DEGENERATE OUTPUT on {dead[0]}/{len(ROWS)} rows — this model is broken, "
               f"scores above are not meaningful")
     return res
+
+
+def evaluate(repo_id):
+    t0 = time.time()
+    tok = _GLOBAL_TOK or _get_tokenizer(repo_id)
+    m = load_model(repo_id)
+    m.eval()
+    _p = next(m.parameters())
+    runtime = {"device": str(_p.device), "dtype": str(_p.dtype).replace("torch.", "")}
+    raws = generate_all(m, tok)
+
+    stats = _process_eval_rows(raws)
+
+    del m; gc.collect(); torch.cuda.empty_cache()
+
+    return _build_and_print_summary(repo_id, t0, runtime, stats)
 
 
 def _get_tokenizer(repo_id):
