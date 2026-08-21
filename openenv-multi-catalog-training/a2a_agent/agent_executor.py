@@ -53,7 +53,7 @@ ATARI_GAME = "pong"
 # chat_env's action is raw model tokens (ChatAction.tokens), not text — see
 # module docstring. Must match whatever model actually plays this skill;
 # override via MODEL_NAME if that's not the training script's default.
-import os
+import os  # noqa: E402
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-0.6B")
 

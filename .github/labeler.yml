@@ -1,0 +1,7 @@
+core:
+  - "**/*.py"
+  - "requirements.txt"
+workflows:
+  - ".github/workflows/*.yml"
+docs:
+  - "**/*.md"
