@@ -15,5 +15,3 @@ datasets>=3.0
 # vLLM is only needed where GRPO generation runs (training box). For 2+ GPUs
 # the trl CLI (`trl vllm-serve`) is installed with trl itself.
 vllm>=0.8
-# --env browsergym imports BrowserGymEnv from the OpenEnv monorepo (not on PyPI):
-browsergym_env @ git+https://github.com/huggingface/OpenEnv.git#subdirectory=envs/browsergym_env

@@ -357,8 +357,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=MODEL_NAME)
     parser.add_argument("--vllm-mode", choices=["colocate", "server"], default="colocate")
-    parser.add_argument("--vllm-server-host", default="localhost")
-    parser.add_argument("--vllm-server-port", type=int, default=8000)
+    parser.add_argument("--vllm-server-url", default="http://localhost:8000")
     parser.add_argument("--max-completion-length", type=int, default=1024)
     parser.add_argument("--num-generations", type=int, default=4)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=64)
@@ -375,8 +374,7 @@ def main():
         log_completions=True,
     )
     if args.vllm_mode == "server":
-        grpo_kwargs["vllm_server_host"] = args.vllm_server_host
-        grpo_kwargs["vllm_server_port"] = args.vllm_server_port
+        grpo_kwargs["vllm_server_url"] = args.vllm_server_url
 
     trainer = GRPOTrainer(
         model=args.model,

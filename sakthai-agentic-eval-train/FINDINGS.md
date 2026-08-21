@@ -193,14 +193,3 @@ verified (except where noted):
 - GRPO from a bare adapter requires **merge-in** (adapter→base→local full-model dir, so
   vLLM colocate can load it) and **merge-out** (GRPO LoRA→standalone bf16 model for a
   usable push). Both handled in `grpo_train_pilot.py`.
-
----
-
-## 7. 2026-08-21 — repo consolidation
-
-The SFT half (formerly `beer-sakthai/SakThai-Training`) was merged into this repo as
-`sakthai-sft-training/`. No training, eval, or model change — file moves + doc rewrites +
-two pending bug fixes (`vllm_server_url` in `openenv-multi-catalog-training/train_multi_env.py`
-and the missing `browsergym_env` dep in `openenv-custom-training/train.py`). All model
-handles, reward numbers, and single-shot / agentic scores above remain the durable record.
-

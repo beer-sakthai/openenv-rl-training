@@ -1,14 +1,11 @@
 # /// script
 # dependencies = [
 #   "torch",
-#   "transformers>=5.2.0",
+#   "transformers",
 #   "datasets",
 #   "trl",
 #   "peft",
 #   "accelerate",
-#   "jmespath",
-#   # --env browsergym needs BrowserGymEnv from the OpenEnv monorepo (not on PyPI):
-#   "browsergym_env @ git+https://github.com/huggingface/OpenEnv.git#subdirectory=envs/browsergym_env",
 # ]
 # ///
 
