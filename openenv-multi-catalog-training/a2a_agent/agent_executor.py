@@ -23,7 +23,6 @@ One A2A task == one OpenEnv episode:
     artifact.
 """
 
-import json
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
