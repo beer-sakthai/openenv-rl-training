@@ -20,7 +20,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: uv run python sakthai-sft-training/train-sakthai-1.5b-v2.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
