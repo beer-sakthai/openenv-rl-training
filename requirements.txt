@@ -1,0 +1,8 @@
+pytest
+httpx
+torch
+datasets
+transformers
+huggingface_hub
+peft
+accelerate
