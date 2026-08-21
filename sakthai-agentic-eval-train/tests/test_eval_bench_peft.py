@@ -8,16 +8,30 @@ os.environ["SAK_MODELS"] = "dummy/model"
 # Add the parent directory of 'scripts' to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Mock out heavy dependencies that aren't needed for is_degenerate
-sys.modules["torch"] = MagicMock()
-sys.modules["transformers"] = MagicMock()
-sys.modules["datasets"] = MagicMock()
-sys.modules["accelerate"] = MagicMock()
-sys.modules["peft"] = MagicMock()
-sys.modules["huggingface_hub"] = MagicMock()
+# Patch out sys modules and the load_dataset so we don't break the environment
+_mock_modules = [
+    "torch",
+    "transformers",
+    "accelerate",
+    "peft",
+    "huggingface_hub",
+]
+for mod in _mock_modules:
+    if mod not in sys.modules:
+        sys.modules[mod] = MagicMock()
 
+import datasets  # noqa: E402
 
-from scripts.eval_bench_peft import is_degenerate  # noqa: E402
+_original_load_dataset = datasets.load_dataset
+datasets.load_dataset = MagicMock()
+
+try:
+    from scripts.eval_bench_peft import is_degenerate  # noqa: E402
+finally:
+    for mod in _mock_modules:
+        if mod in sys.modules and isinstance(sys.modules[mod], MagicMock):
+            del sys.modules[mod]
+    datasets.load_dataset = _original_load_dataset
 
 
 def test_is_degenerate_short_string():
