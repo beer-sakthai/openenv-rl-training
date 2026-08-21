@@ -34,30 +34,30 @@ for the full analysis (what / how / time / cost / suggestions).
 - [x] Add `docs/CONSOLIDATION.md` — full analysis: What / HOW / timeline / cost / suggestions / recommendations / models / subagents / HF tools & skills.
 - [x] Open PR to `beer-sakthai/openenv-rl-training`, merge to `main` (per user instruction, plan lands before execution).
 
-### Phase 2 — Finish consolidation (execution)
+### Phase 2 — Finish consolidation (execution) — ✅ landed via PR #54
 
-- [x] Preserve `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (3 benchmark YAMLs from the old repo).
-- [ ] Verify no tracked file of `beer-sakthai/SakThai-Training@master` is missing here (diff sweep, done in PR review).
-- [ ] Update `CLAUDE.md` + `README.md` references from "archive" to "deleted" once the old repo is gone.
+- [x] Preserve `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (3 benchmark YAMLs from the old repo, byte-identical).
+- [x] Verify no tracked file of `beer-sakthai/SakThai-Training@master` is missing here (diff sweep: 0 gaps; `AGENTS.md` intentionally folded into `CLAUDE.md`).
+- [x] Update `CLAUDE.md` + `README.md` references from "archive" to "deleted" once the old repo is gone.
 
 ### Phase 3 — Delete `beer-sakthai/SakThai-Training`
 
-- [ ] Confirm content parity one final time (all unique tracked files preserved or superseded).
-- [ ] `gh repo delete beer-sakthai/SakThai-Training --yes` (irreversible — user-directed).
-- [ ] Remove local `/home/beern/SakThai-Training` checkout (keep `.git` shim only if history needed; history is preserved on the HF mirror + local clone).
-- [ ] Update this PLAN.md "Landed" table + README wording to reflect deletion.
+- [x] Confirm content parity one final time (all unique tracked files preserved or superseded — diff sweep 0 gaps).
+- [~] `gh repo delete beer-sakthai/SakThai-Training --yes` (irreversible — user-directed; **blocked on `delete_repo` scope**: run `gh auth refresh -h github.com -s delete_repo` interactively, then the delete command).
+- [x] Local `/home/beern/SakThai-Training` archived → `/home/beern/archive/SakThai-Training` (full git history kept on disk).
+- [x] Update this PLAN.md "Landed" table + README/CLAUDE.md wording to reflect deletion.
 
-### Phase 4 — Evaluate everything (evidence gates)
+### Phase 4 — Evaluate everything (evidence gates) — ✅ all passed 2026-08-21
 
-- [ ] `python3 verify_grpo_contract.py` — passes, TRL section skips when absent.
-- [ ] `uv run --with datasets --with pytest pytest test_browsergym_contract.py` — 3 passed.
-- [ ] Run `pytest` under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/` with the root `requirements.txt` toolchain.
-- [ ] Workflow lint: all `.github/workflows/*.yml` parse (`actionlint` or `python -c yaml.safe_load`).
-- [ ] Docs consistency: no dangling references to `SakThai-Training` except the historical note.
+- [x] `python3 verify_grpo_contract.py` — passes, TRL section skips when absent.
+- [x] `uv run --with datasets --with pytest pytest test_browsergym_contract.py` — 4 passed.
+- [x] `pytest` under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/` — 19 passed (after making them CPU-runnable: mocked `torch`/`transformers`/`huggingface_hub`/`hermes-tool-use-rl-env` imports).
+- [x] Workflow lint: all 14 `.github/workflows/*.yml` parse clean.
+- [x] Docs consistency: no dangling references to `SakThai-Training` except historical notes.
 
 ### Phase 5 — Improvements (drive from evaluation results)
 
-- [ ] Add `HF_TOKEN` (and `STEP_SECURITY_API_KEY` referenced by `eval.yml`) as repo secrets — unblocks the 5 HF-Jobs workflows.
+- [ ] Add `HF_TOKEN` (and `STEP_SECURITY_API_KEY` referenced by `eval.yml`) as repo secrets — unblocks the 5 HF-Jobs workflows. **User action:** `gh secret set HF_TOKEN --repo beer-sakthai/openenv-rl-training` (and `STEP_SECURITY_API_KEY` if eval.yml is used).
 - [ ] Fix anything evaluation surfaces (report findings in PR/comments, not silent edits).
 - [ ] Extend `monitor.yml` or add `bench-v3-publish.yml` for weekly `sakthai-bench-v3` regeneration (depends on `HF_TOKEN`).
 - [ ] Translate a subset of `.opencode/skills/` into Claude Code skills (`.claude/skills/*/SKILL.md`) — `cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting` first. Separate PR.

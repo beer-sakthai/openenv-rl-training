@@ -7,8 +7,8 @@ supervised half (QLoRA on Qwen2.5 for tool-calling) and the reinforcement-learni
 (GRPO with [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv) and
 [TRL](https://huggingface.co/docs/trl)'s `GRPOTrainer` `environment_factory`).
 
-Consolidated on 2026-08-21 from two repos (this one and the retired `beer-sakthai/SakThai-Training`);
-history preserved on the archived source repo.
+Consolidated on 2026-08-21 from two repos (this one and the retired `beer-sakthai/SakThai-Training`,
+deleted; history preserved in the local archive).
 
 ## Layout
 

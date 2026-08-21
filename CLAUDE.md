@@ -10,8 +10,9 @@ reinforcement-learning half (GRPO with [Hugging Face OpenEnv](https://github.com
 and [TRL](https://huggingface.co/docs/trl)'s `GRPOTrainer(environment_factory=...)` multi-turn
 tool-calling loop — the other four workspaces).
 
-Consolidated on 2026-08-21 from two GitHub repos into one; the retired source is
-`beer-sakthai/SakThai-Training` (archived, history preserved).
+Consolidated on 2026-08-21 from two GitHub repos into one; the retired source was
+`beer-sakthai/SakThai-Training` (deleted on GitHub 2026-08-21; full git history preserved
+in the local archive at `/home/beern/archive/SakThai-Training`).
 
 It is **not an installable package**: no `setup.py`/`pyproject.toml`, no linter or formatter
 config, no unit-test suite beyond the two root-level contract checks. Each subdirectory has
