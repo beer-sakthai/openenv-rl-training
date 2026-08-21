@@ -23,23 +23,12 @@ One A2A task == one OpenEnv episode:
     artifact.
 """
 
+import os
+
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from a2a.types import DataPart
-
-_tokenizer = None
-
-
-def _tokenizer_for_chat():
-    global _tokenizer
-    if _tokenizer is None:
-        from transformers import AutoTokenizer
-
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    return _tokenizer
-
-
 from a2a.utils import new_agent_text_message
 from atari_env import AtariAction, AtariEnv
 from coding_env import CodeAction, CodingEnv
@@ -66,9 +55,19 @@ ATARI_GAME = "pong"
 # chat_env's action is raw model tokens (ChatAction.tokens), not text — see
 # module docstring. Must match whatever model actually plays this skill;
 # override via MODEL_NAME if that's not the training script's default.
-import os
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-0.6B")
+
+_tokenizer = None
+
+
+def _tokenizer_for_chat():
+    global _tokenizer
+    if _tokenizer is None:
+        from transformers import AutoTokenizer
+
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    return _tokenizer
 
 
 class _Episode:
