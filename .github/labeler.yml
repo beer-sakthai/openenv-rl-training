@@ -1,0 +1,7 @@
+"enhancement":
+  - any:
+      - 'src/**/*'
+      - 'scripts/**/*'
+"bug":
+  - any:
+      - 'tests/**/*'
