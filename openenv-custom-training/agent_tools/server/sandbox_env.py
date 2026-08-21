@@ -41,8 +41,7 @@ MAX_STDERR = 2000
 # Acceptance is evaluated by the server against the current filesystem after
 # every step; the first time it passes, reward=1.0 and the episode ends.
 
-from typing import Any, Dict
-TASKS: Dict[str, Dict[str, Any]] = {
+TASKS = {
     "answer_file": {
         "prompt": (
             "Create a file named answer.txt that contains exactly the number 42 "
@@ -124,19 +123,17 @@ class SandboxEnvironment(Environment):
         # Fresh scratch dir per episode so one session's artifacts never leak
         # into another's grading.
         self._workdir = Path(tempfile.mkdtemp(prefix="opentrain-"))
-        if (seed := TASKS.get(task_key, {}).get("seed")) is not None:
+        if (seed := TASKS[task_key].get("seed")) is not None:
             (self._workdir / "words.txt").write_text(seed)
-        prompt = TASKS.get(task_key, {}).get("prompt", "")
-        return AgentToolObservation(result=prompt, success=True, done=False, reward=0.0)
+        prompt = TASKS[task_key]["prompt"]
+        return AgentToolObservation(
+            result=prompt, success=True, done=False, reward=0.0
+        )
 
-    def step(
-        self, action: AgentToolAction, timeout_s: float | None = None, **kwargs
-    ) -> AgentToolObservation:
+    def step(self, action: AgentToolAction, timeout_s: float | None = None, **kwargs) -> AgentToolObservation:
         if self._done:
             return AgentToolObservation(
-                result="Episode already ended.",
-                success=False,
-                done=True,
+                result="Episode already ended.", success=False, done=True,
                 reward=self._reward,
             )
         self._state.step_count += 1
@@ -180,18 +177,11 @@ class SandboxEnvironment(Environment):
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
         proc = subprocess.run(
             ["bash", "-lc", command],
-            cwd=self._workdir,
-            env=env,
-            capture_output=True,
-            text=True,
+            cwd=self._workdir, env=env, capture_output=True, text=True,
             timeout=CMD_TIMEOUT_S,
         )
-        stdout = proc.stdout[:MAX_STDOUT] + (
-            "…" if len(proc.stdout) > MAX_STDOUT else ""
-        )
-        stderr = proc.stderr[:MAX_STDERR] + (
-            "…" if len(proc.stderr) > MAX_STDERR else ""
-        )
+        stdout = proc.stdout[:MAX_STDOUT] + ("…" if len(proc.stdout) > MAX_STDOUT else "")
+        stderr = proc.stderr[:MAX_STDERR] + ("…" if len(proc.stderr) > MAX_STDERR else "")
         out = f"exit_code: {proc.returncode}\nstdout:\n{stdout or '(none)'}\nstderr:\n{stderr or '(none)'}"
         return out, proc.returncode == 0
 
