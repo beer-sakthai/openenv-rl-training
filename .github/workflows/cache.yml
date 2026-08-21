@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r openenv-custom-training/requirements.txt -r openenv-multi-catalog-training/requirements.txt -r openenv-multi-catalog-training/a2a_agent/requirements.txt
 
       - name: Run contract check
         run: python verify_grpo_contract.py
