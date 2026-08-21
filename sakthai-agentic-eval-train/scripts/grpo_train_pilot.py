@@ -1,5 +1,10 @@
 # /// script
-# dependencies = ["trl>=0.29.0", "openenv==0.4.1", "jmespath", "peft", "datasets", "accelerate", "transformers>=5.2.0", "vllm", "huggingface_hub"]
+# dependencies = ["trl>=0.29.0", "openenv==0.4.1", "jmespath",
+# "peft", "datasets", "accelerate", "transformers>=5.2.0", "vllm",
+# "huggingface_hub"]
+
+
+#                 "huggingface_hub"]
 # ///
 """GRPO training pilot for sakthai-context-0.5b-tools, agentic tool-use fix.
 
@@ -21,7 +26,7 @@ Fixes applied vs. the original train.py in Nanthasit/hermes-tool-use-rl-env
   - environment_factory points at HermesToolEnvironment directly (in-process),
     not the broken client.py/Docker/WebSocket path.
   - vllm_mode="colocate" (train.py's CLI default, --vllm-mode server, passes
-    a nonexistent vllm_server_url GRPOConfig field and crashes at construction).
+    a nonexistent vllm_server_url GRPOConfig field (now fixed) and crashed at construction).
   - jmespath added as an explicit dependency (GRPOTrainer hard-requires it
     for tool-call parsing when environment_factory/tools is used; not listed
     in the original repo's README install line).
@@ -40,6 +45,7 @@ Env vars:
   TRAIN_MAX_STEPS   optimizer steps to run before stopping (default: 6)
   TRAIN_PUSH_TO     repo to push the trained adapter/model to (optional; if unset, does not push)
 """
+
 import os
 import sys
 import time
@@ -65,9 +71,9 @@ env_dir = Path(snapshot_download(ENV_REPO, repo_type="dataset"))
 sys.path.insert(0, str(env_dir))
 sys.path.insert(0, str(env_dir / "server"))
 
+from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 from models import HermesToolAction  # noqa: E402
 from tasks import TASKS, TASKS_BY_ID  # noqa: E402
-from hermes_tool_env import HermesToolEnvironment  # noqa: E402
 
 TASK_IDS = sorted(TASKS_BY_ID)
 
@@ -98,7 +104,9 @@ class HermesToolTaskEnvLocal:
         if task_id and task_id in TASKS_BY_ID:
             obs = self._env.step(HermesToolAction(tool="select_task", task_id=task_id))
         else:
-            obs = self._env.step(HermesToolAction(tool="select_task", task_id=TASK_IDS[0]))
+            obs = self._env.step(
+                HermesToolAction(tool="select_task", task_id=TASK_IDS[0])
+            )
         return obs.result
 
     def terminal(self, command: str) -> str:
@@ -134,7 +142,9 @@ class HermesToolTaskEnvLocal:
         Returns:
             A confirmation or error message.
         """
-        return self._step(HermesToolAction(tool="write_file", path=path, content=content))
+        return self._step(
+            HermesToolAction(tool="write_file", path=path, content=content)
+        )
 
     def patch(self, path: str, old_string: str, new_string: str) -> str:
         """Find-and-replace a unique substring in a file.
@@ -148,7 +158,9 @@ class HermesToolTaskEnvLocal:
             A confirmation, or an error if old_string isn't found or isn't unique.
         """
         return self._step(
-            HermesToolAction(tool="patch", path=path, old_string=old_string, new_string=new_string)
+            HermesToolAction(
+                tool="patch", path=path, old_string=old_string, new_string=new_string
+            )
         )
 
     def submit(self) -> str:
@@ -202,10 +214,12 @@ def _peft_base_model(repo_id):
     """Return base_model_name_or_path if repo_id is a bare PEFT adapter, else None."""
     try:
         from huggingface_hub import hf_hub_download
+
         cfg_path = hf_hub_download(repo_id, "adapter_config.json")
     except Exception:
         return None
     import json
+
     with open(cfg_path) as f:
         cfg = json.load(f)
     return cfg.get("base_model_name_or_path")
@@ -220,8 +234,9 @@ def resolve_model_dir(repo_id):
     if base_id is None:
         return repo_id
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
     from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
     print(f"  merging adapter {repo_id} into base {base_id} -> ./merged_base ...")
     base = AutoModelForCausalLM.from_pretrained(base_id, torch_dtype=torch.bfloat16)
     merged = PeftModel.from_pretrained(base, repo_id).merge_and_unload()
@@ -241,7 +256,9 @@ def main():
     import torch
     from trl import GRPOConfig, GRPOTrainer
 
-    print(f"=== GRPO pilot: mode={MODE} base={BASE_MODEL} episodes/task={EPISODES_PER_TASK} max_steps={MAX_STEPS} ===")
+    print(
+        f"=== GRPO pilot: mode={MODE} base={BASE_MODEL} episodes/task={EPISODES_PER_TASK} max_steps={MAX_STEPS} ==="
+    )
 
     # Merge-in: adapter repos -> local full-model dir so vLLM colocate can load it.
     model_path = resolve_model_dir(BASE_MODEL)
@@ -253,19 +270,29 @@ def main():
     peft_config = None
     if MODE == "lora16":
         from peft import LoraConfig
-        peft_config = LoraConfig(r=16, lora_alpha=32, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                                  task_type="CAUSAL_LM")
+
+        peft_config = LoraConfig(
+            r=16,
+            lora_alpha=32,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            task_type="CAUSAL_LM",
+        )
     elif MODE == "lora64":
         from peft import LoraConfig
-        peft_config = LoraConfig(r=64, lora_alpha=128, target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                                  task_type="CAUSAL_LM")
+
+        peft_config = LoraConfig(
+            r=64,
+            lora_alpha=128,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            task_type="CAUSAL_LM",
+        )
     # MODE == "full" -> peft_config stays None -> full-parameter fine-tune, matching
     # train.py's current (unmodified) default behavior.
 
     args = GRPOConfig(
         output_dir=f"./grpo-pilot-{MODE}",
         use_vllm=True,
-        vllm_mode="colocate",  # NOT "server" -- avoids train.py's real vllm_server_url bug
+        vllm_mode="colocate",  # NOT "server" -- avoids older train.py vllm_server_url bug
         max_completion_length=MAX_COMPLETION,
         num_generations=4,
         per_device_train_batch_size=4,
@@ -294,14 +321,17 @@ def main():
     t0 = time.time()
     trainer.train()
     elapsed = time.time() - t0
-    print(f"=== training done in {elapsed:.1f}s ({elapsed / max(MAX_STEPS, 1):.1f}s/step) ===")
+    print(
+        f"=== training done in {elapsed:.1f}s ({elapsed / max(MAX_STEPS, 1):.1f}s/step) ==="
+    )
 
     if PUSH_TO:
         # Merge the GRPO LoRA (if any) into the base and push a standalone full
         # model so the pushed checkpoint is directly usable (no broken adapter
         # base reference). For MODE=full there's no adapter to merge.
-        from transformers import AutoTokenizer
         from huggingface_hub import HfApi
+        from transformers import AutoTokenizer
+
         out_dir = f"./grpo-pilot-{MODE}-final"
         model_to_save = trainer.model
         if hasattr(model_to_save, "merge_and_unload"):
@@ -310,8 +340,11 @@ def main():
         model_to_save.save_pretrained(out_dir)
         AutoTokenizer.from_pretrained(model_path).save_pretrained(out_dir)
         HfApi().create_repo(PUSH_TO, exist_ok=True)
-        HfApi().upload_folder(folder_path=out_dir, repo_id=PUSH_TO,
-                              commit_message=f"GRPO pilot ({MODE}) from {BASE_MODEL}, {MAX_STEPS} steps")
+        HfApi().upload_folder(
+            folder_path=out_dir,
+            repo_id=PUSH_TO,
+            commit_message=f"GRPO pilot ({MODE}) from {BASE_MODEL}, {MAX_STEPS} steps",
+        )
         print(f"pushed -> {PUSH_TO}")
     else:
         print("TRAIN_PUSH_TO not set -- not pushing, pilot mechanics/timing only")
