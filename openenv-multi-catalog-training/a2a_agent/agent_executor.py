@@ -23,22 +23,19 @@ One A2A task == one OpenEnv episode:
     artifact.
 """
 
-import json
-
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from a2a.types import DataPart
-from a2a.utils import new_agent_text_message, new_task
-
-from echo_env import EchoEnv, EchoAction
-from textarena_env import TextArenaEnv, TextArenaAction
-from coding_env import CodingEnv, CodeAction
-from repl_env import REPLEnv, REPLAction
-from atari_env import AtariEnv, AtariAction
-from openspiel_env import OpenSpielEnv, OpenSpielAction
-from envs.sumo_rl_env import SumoRLEnv, SumoAction
-from envs.chat_env import ChatEnv, ChatAction
+from a2a.utils import new_agent_text_message
+from atari_env import AtariAction, AtariEnv
+from coding_env import CodeAction, CodingEnv
+from echo_env import EchoAction, EchoEnv
+from envs.chat_env import ChatAction, ChatEnv
+from envs.sumo_rl_env import SumoAction, SumoRLEnv
+from openspiel_env import OpenSpielAction, OpenSpielEnv
+from repl_env import REPLAction, REPLEnv
+from textarena_env import TextArenaAction, TextArenaEnv
 
 ENV_URLS = {
     "echo": "http://localhost:8001",
