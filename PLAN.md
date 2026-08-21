@@ -43,7 +43,7 @@ for the full analysis (what / how / time / cost / suggestions).
 ### Phase 3 — Delete `beer-sakthai/SakThai-Training`
 
 - [x] Confirm content parity one final time (all unique tracked files preserved or superseded — diff sweep 0 gaps).
-- [~] `gh repo delete beer-sakthai/SakThai-Training --yes` (irreversible — user-directed; **blocked on `delete_repo` scope**: run `gh auth refresh -h github.com -s delete_repo` interactively, then the delete command).
+- [x] `gh repo delete beer-sakthai/SakThai-Training --yes` — **deleted 2026-08-21**, verified via `gh repo view` (no longer resolvable).
 - [x] Local `/home/beern/SakThai-Training` archived → `/home/beern/archive/SakThai-Training` (full git history kept on disk).
 - [x] Update this PLAN.md "Landed" table + README/CLAUDE.md wording to reflect deletion.
 
