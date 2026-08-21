@@ -77,7 +77,7 @@ class _Episode:
         self.client = client
         self.done = False
         self.last_reward = 0.0
-        self.extra = {}  # per-env scratch (e.g. echo's secret phrase)
+        self.extra: dict[str, str] = {}  # per-env scratch (e.g. echo's secret phrase)
 
 
 class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
