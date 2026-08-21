@@ -12,7 +12,7 @@ import asyncio
 import uuid
 
 import httpx
-from a2a.client import A2ACardResolver, A2AClient
+from a2a.client import A2ACardResolver, AgentToAgentClient as A2AClient
 from a2a.types import Message, MessageSendParams, Part, SendMessageRequest, TextPart
 
 
