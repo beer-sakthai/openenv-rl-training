@@ -1,5 +1,9 @@
 pytest
 datasets
+httpx
+transformers
+torch
+peft
 transformers
 accelerate
 huggingface_hub
