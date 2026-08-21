@@ -20,8 +20,11 @@ with `python <script>.py`, `uv run`, or `hf jobs uv run`. CI (`.github/workflows
 but only `verify-contracts.yml` runs inside GitHub Actions itself — the other five
 workflows dispatch `hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret.
 Do not re-add the GitHub-suggested `pylint.yml` / `python-app.yml` / `python-package.yml` /
-`super-linter.yml` / `cache.yml` templates that were removed 2026-08-21 — they hardcode
-`pip install -r requirements.txt` at the root, which is why they never passed here.
+`super-linter.yml` / `cache.yml` / `label.yml` templates that were removed 2026-08-21 —
+the first five hardcode `pip install -r requirements.txt` at the root (which doesn't exist
+by design), and `label.yml` (`actions/labeler@v4`) fetches its config from the base branch
+on `pull_request_target`, so `.github/labeler.yml` on a feature branch is invisible until
+merged — the labeler check fails on every first-time PR by construction, not by bug.
 
 The heavy work (GRPO training, evaluation) runs **elsewhere** — HF Jobs, Colab/Kaggle,
 or a rented GPU box. This checkout has no GPU and typically no `torch`/`trl`/`datasets`
