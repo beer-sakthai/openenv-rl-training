@@ -1,0 +1,35 @@
+name: Weekly HF Monitor
+on:
+  schedule:
+    - cron: "0 8 * * 1"  # Every Monday 8AM
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install huggingface_hub
+      - run: |
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi()
+          print('| Model | Downloads | Likes |')
+          print('|---|---|---|')
+          for m in api.list_models(author='Nanthasit', sort='downloads', direction=-1):
+            print(f'| {m.modelId.split(\"/\")[-1]} | {m.downloads} | {m.likes} |')
+          "
+      - uses: actions/github-script@v7
+        if: always()
+        with:
+          script: core.setFailed('Manual check required')
