@@ -51,9 +51,12 @@ N = len(TEST)
 print(f"Loaded {N} test rows", flush=True)
 
 
+TOOL_CALL_PATTERN = re.compile(r'<tool_call>\s*(.*?)\s*</tool_call>', re.DOTALL)
+
+
 def parse_tool_calls(text):
     calls = []
-    for m in re.finditer(r'<tool_call>\s*(.*?)\s*</tool_call>', text, re.DOTALL):
+    for m in TOOL_CALL_PATTERN.finditer(text):
         try:
             obj = json.loads(m.group(1))
             args = obj.get("arguments", {})
