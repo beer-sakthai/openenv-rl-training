@@ -1,0 +1,15 @@
+pytest
+datasets
+transformers
+accelerate
+huggingface_hub
+peft
+torch
+httpx
+pydantic
+tenacity
+a2a-sdk
+openenv==0.4.1
+trl
+vllm
+jmespath
