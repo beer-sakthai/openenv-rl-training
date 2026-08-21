@@ -1,0 +1,35 @@
+name: Verify GRPO + BrowserGym Contracts
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The only workflow in this repo that runs entirely in GH Actions.
+# Everything else dispatches to HF Jobs (needs HF_TOKEN + a paid HF Jobs plan).
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: verify_grpo_contract.py (CPU, no torch/trl required)
+        run: python3 verify_grpo_contract.py
+
+      - name: test_browsergym_contract.py (mocks trl, needs datasets)
+        run: uv run --with datasets --with pytest pytest test_browsergym_contract.py -v
