@@ -27,8 +27,8 @@ One A2A task == one OpenEnv episode:
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
-from a2a.types import DataPart, Part, TextPart
-from a2a.utils import new_agent_text_message, new_task
+from a2a.types import DataPart
+from a2a.utils import new_agent_text_message
 from atari_env import AtariAction, AtariEnv
 from coding_env import CodeAction, CodingEnv
 from echo_env import EchoAction, EchoEnv

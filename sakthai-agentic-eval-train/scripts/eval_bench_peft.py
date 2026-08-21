@@ -80,9 +80,8 @@ def _assistant_body(m):
         a = fn.get("arguments", "{}")
         if not isinstance(a, str):
             a = json.dumps(a, ensure_ascii=False)
-        name = fn.get("name", "")
         parts.append(
-            f'<tool_call>\n{{"name": "{name}", "arguments": {a}}}\n</tool_call>'
+            f'<tool_call>\n{{"name": "{fn.get("name", "")}", "arguments": {a}}}\n</tool_call>'
         )
     return "\n".join(parts)
 
