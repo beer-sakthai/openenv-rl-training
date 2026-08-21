@@ -8,8 +8,6 @@ Verifies:
 3. Reward calculation logic and rollout variance detection.
 """
 
-import sys
-import os
 
 def test_reward_function():
     print("[Contract Test] Verifying reward function logic...")
@@ -56,7 +54,7 @@ def test_grpo_config_contract():
         print("⚠️ TRL package not installed in current env; skipping class instantiation test.")
     except Exception as e:
         print(f"❌ GRPOConfig test failed: {e}")
-        sys.exit(1)
+        raise SystemExit(1)
 
 def main():
     print("🚀 Starting OpenEnv RL Contract Verification...")
