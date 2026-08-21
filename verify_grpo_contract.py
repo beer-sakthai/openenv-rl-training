@@ -48,6 +48,7 @@ def test_grpo_config_contract():
             vllm_server_port=8000,
             learning_rate=5e-6,
             per_device_train_batch_size=1,
+            use_cpu=True,
         )
         assert config.vllm_server_host == "localhost"
         assert config.vllm_server_port == 8000
