@@ -102,7 +102,9 @@ def load_model(repo_id):
     cuda = torch.cuda.is_available()
     dtype = torch.bfloat16 if cuda else torch.float32
     if is_lora:
-        with urllib.request.urlopen(f"https://huggingface.co/{repo_id}/resolve/main/adapter_config.json") as f:
+        from huggingface_hub import hf_hub_download
+        config_path = hf_hub_download(repo_id=repo_id, filename="adapter_config.json")
+        with open(config_path, "r") as f:
             base = json.load(f)["base_model_name_or_path"]
         print(f"Loading base {base} + LoRA {repo_id} ...", flush=True)
         tokenizer = AutoTokenizer.from_pretrained(base)
