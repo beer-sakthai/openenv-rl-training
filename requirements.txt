@@ -1,0 +1,7 @@
+datasets
+httpx
+a2a-sdk
+pytest
+black
+isort
+flake8
