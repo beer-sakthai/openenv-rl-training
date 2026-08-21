@@ -23,6 +23,8 @@ One A2A task == one OpenEnv episode:
     artifact.
 """
 
+import json
+
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
@@ -77,7 +79,7 @@ class _Episode:
         self.client = client
         self.done = False
         self.last_reward = 0.0
-        self.extra = {}  # per-env scratch (e.g. echo's secret phrase)
+        self.extra: dict[str, str] = {}  # per-env scratch (e.g. echo's secret phrase)
 
 
 class OpenEnvAgentExecutor(AgentExecutor):
