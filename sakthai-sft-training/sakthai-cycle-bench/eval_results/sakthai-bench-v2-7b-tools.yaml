@@ -1,0 +1,11 @@
+task:
+  - text-generation
+dataset:
+  - sakthai-bench-v2
+metrics:
+  - selection: 57.0
+    name: Selection Accuracy
+    verified: false
+  - arguments: 0
+    name: Arguments Accuracy
+    verified: false
