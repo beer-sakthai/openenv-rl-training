@@ -80,7 +80,7 @@ class _Episode:
         self.extra: dict[str, str] = {}  # per-env scratch (e.g. echo's secret phrase)
 
 
-class OpenEnvAgentExecutor(AgentExecutor):
+class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
     def __init__(self):
         self._episodes: dict[str, _Episode] = {}
 
