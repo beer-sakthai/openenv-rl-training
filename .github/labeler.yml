@@ -1,0 +1,6 @@
+tests:
+  - sakthai-agentic-eval-train/tests/**/*
+scripts:
+  - sakthai-agentic-eval-train/scripts/**/*
+workflows:
+  - .github/workflows/**/*
