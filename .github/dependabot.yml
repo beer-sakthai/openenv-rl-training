@@ -5,14 +5,48 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Python dependencies (requirements.txt / setup.py / pyproject.toml)
+  - package-ecosystem: "pip"
+    directory: "/"                 # root: adjust or add extra entries for subfolders below
     schedule:
-      interval: "daliy"
-      
-version: 2
-updates:
-  - package-ecosystem: "npm"
+      interval: "weekly"           # "daily" is noisy; use "weekly" or "monthly" unless you want daily
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Also check subdirectories that have their own requirements files
+  - package-ecosystem: "pip"
+    directory: "/openenv-custom-training"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "pip"
+    directory: "/openenv-multi-catalog-training"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "pip"
+    directory: "/sakthai-agentic-eval-train"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+
+  # GitHub Actions workflow updates
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "ci"
