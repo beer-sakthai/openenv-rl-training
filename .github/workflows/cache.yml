@@ -39,10 +39,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r openenv-custom-training/requirements.txt -r openenv-multi-catalog-training/requirements.txt pytest httpx datasets
 
       - name: Run contract check
-        run: python verify_grpo_contract.py
+        run: PYTHONPATH=openenv-custom-training:openenv-multi-catalog-training python verify_grpo_contract.py
 
       - name: Run browsergym contract tests
-        run: pytest -q test_browsergym_contract.py
+        run: PYTHONPATH=openenv-custom-training:openenv-multi-catalog-training pytest -q test_browsergym_contract.py
+
+      - name: Run agent tools tests
+        run: PYTHONPATH=openenv-custom-training:openenv-multi-catalog-training pytest -q openenv-custom-training/tests/
+
+      - name: Run a2a agent smoke tests
+        run: PYTHONPATH=openenv-custom-training:openenv-multi-catalog-training pytest -q openenv-multi-catalog-training/a2a_agent/
