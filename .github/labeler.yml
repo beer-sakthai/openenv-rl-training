@@ -1,0 +1,14 @@
+# Add 'dependencies' label to any changes in requirements or dependency files
+dependencies:
+  - any:
+      - 'requirements.txt'
+      - 'setup.py'
+      - 'setup.cfg'
+      - 'pyproject.toml'
+      - 'Pipfile'
+      - 'Pipfile.lock'
+
+# Add 'github-actions' label to any changes in the .github directory
+github-actions:
+  - all:
+      - '.github/**/*'
