@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
   schedule: [{cron: "0 6 * * 1"}]
 
+permissions:
+  contents: read
+
 jobs:
   eval:
     runs-on: ubuntu-latest
