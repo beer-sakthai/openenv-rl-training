@@ -1,6 +1,6 @@
 torch
 transformers
-trl>=0.13
+trl>=1.10.0
 datasets
 vllm
 echo_env @ git+https://huggingface.co/spaces/openenv/echo_env
