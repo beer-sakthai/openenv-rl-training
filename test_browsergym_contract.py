@@ -1,10 +1,19 @@
 import sys
 import os
 import unittest.mock as mock
-import pytest
+
+# Delete all mocked modules that might interfere with real imports
+to_delete = []
+for k in sys.modules:
+    if isinstance(sys.modules[k], mock.MagicMock):
+        to_delete.append(k)
+for k in to_delete:
+    del sys.modules[k]
 
 # Mock trl before importing train.py if trl is not installed locally
 sys.modules['trl'] = mock.MagicMock()
+
+import pytest
 
 sys.path.append(os.path.abspath("openenv-custom-training"))
 from train import _browsergym_dataset, _browsergym_reward, BROWSERGYM_SPACE_URL
@@ -14,6 +23,7 @@ def test_browsergym_dataset_column_names_and_size():
     dataset = _browsergym_dataset(n_episodes)
     assert len(dataset) == n_episodes
     assert "prompt" in dataset.column_names
+    # Check that "prompt" values contain "web navigation agent"
     assert "web navigation agent" in dataset[0]["prompt"]
 
 def test_browsergym_reward_extraction():
