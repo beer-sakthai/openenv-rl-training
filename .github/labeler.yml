@@ -5,3 +5,28 @@
 "bug":
   - any:
       - 'tests/**/*'
+# Add 'backend' label to any changes in the backend directory
+backend:
+  - backend/**/*
+
+# Add 'frontend' label to any changes in the frontend directory
+frontend:
+  - frontend/**/*
+
+# Add 'docs' label to any changes in the docs directory or markdown files
+docs:
+  - docs/**/*
+  - '**/*.md'
+
+# Add 'tests' label to any changes in test directories
+tests:
+  - '**/*test*/**/*'
+  - '**/*test*.py'
+
+# Add 'ci' label to any changes in github actions
+ci:
+  - .github/**/*
+
+# Add 'scripts' label to any changes in scripts directories
+scripts:
+  - '**/*scripts*/**/*'
