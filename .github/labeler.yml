@@ -1,0 +1,15 @@
+"core":
+  - any:
+      - "openenv-custom-training/**/*"
+      - "openenv-multi-catalog-training/**/*"
+
+"testing":
+  - any:
+      - "sakthai-agentic-eval-train/**/*"
+      - "tests/**/*"
+      - "test_*.py"
+
+"documentation":
+  - any:
+      - "*.md"
+      - "docs/**/*"

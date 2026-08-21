@@ -1,0 +1,9 @@
+# Requirements for the test workflow. See openenv-custom-training/requirements.txt for training requirements.
+pytest
+pytest-mock
+transformers
+datasets
+huggingface_hub
+peft
+torch
+accelerate
