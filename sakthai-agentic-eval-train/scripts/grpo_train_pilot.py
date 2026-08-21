@@ -21,7 +21,7 @@ Fixes applied vs. the original train.py in Nanthasit/hermes-tool-use-rl-env
   - environment_factory points at HermesToolEnvironment directly (in-process),
     not the broken client.py/Docker/WebSocket path.
   - vllm_mode="colocate" (train.py's CLI default, --vllm-mode server, passes
-    a nonexistent vllm_server_url GRPOConfig field and crashes at construction).
+    a nonexistent vllm_server_url GRPOConfig field (now fixed) and crashed at construction).
   - jmespath added as an explicit dependency (GRPOTrainer hard-requires it
     for tool-call parsing when environment_factory/tools is used; not listed
     in the original repo's README install line).
@@ -265,7 +265,7 @@ def main():
     args = GRPOConfig(
         output_dir=f"./grpo-pilot-{MODE}",
         use_vllm=True,
-        vllm_mode="colocate",  # NOT "server" -- avoids train.py's real vllm_server_url bug
+        vllm_mode="colocate",  # NOT "server" -- avoids older train.py vllm_server_url bug
         max_completion_length=MAX_COMPLETION,
         num_generations=4,
         per_device_train_batch_size=4,
