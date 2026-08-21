@@ -65,7 +65,7 @@ for d in SCAN_DIRS:
                         args_str = json.dumps(args_raw) if isinstance(args_raw, dict) else str(args_raw)
 
                         # Check tool call name not in tools list
-                        if name and tool_names_set and name not in tool_names_set:
+                        if name and name not in tool_names_set:
                             audit_results["tool_mismatch"].append((f, line_no, name, tool_names))
 
                         # Check null values in arguments
@@ -127,7 +127,7 @@ for f, ln, name, tns in audit_results["tool_mismatch"]:
     missing = all_called - existing_names
     
     for mname in missing:
-        ex["tools"].append({"type":"function","function":{"name":mname,"description":"","parameters":{"type":"object","properties":{"q":{"type":"string"}},"required":["q"]}}})
+        ex.setdefault("tools", []).append({"type":"function","function":{"name":mname,"description":"","parameters":{"type":"object","properties":{"q":{"type":"string"}},"required":["q"]}}})
     
     if missing:
         lines[ln-1] = json.dumps(ex, ensure_ascii=False) + "\n"
@@ -303,7 +303,7 @@ for d in SCAN_DIRS:
                 for m in msgs:
                     for tc in (m.get("tool_calls") or []):
                         name = safe_fn(tc).get("name","") if isinstance(safe_fn(tc), dict) else ""
-                        if name and tns and name not in tns:
+                        if name and name not in tns:
                             remaining += 1
 
 print(f"Remaining tool mismatches after fix: {remaining}")
