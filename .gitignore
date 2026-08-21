@@ -12,7 +12,3 @@ auth.json
 # Local run artifacts
 *.log
 .eval_results/
-
-# Test run artifacts
-bench_results.json
-hermes_env_results.json

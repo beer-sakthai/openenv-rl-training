@@ -15,6 +15,7 @@ false sense of security; the policy will find a spelling you didn't block.
 """
 
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path

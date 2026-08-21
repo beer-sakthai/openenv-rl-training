@@ -4,28 +4,15 @@ Guidance for AI assistants working in this repository.
 
 ## What this repo is
 
-Five **independent workspaces** covering both halves of the SakThai training pipeline: the
-supervised half (QLoRA on Qwen2.5 for tool-calling — `sakthai-sft-training/`) and the
-reinforcement-learning half (GRPO with [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv)
-and [TRL](https://huggingface.co/docs/trl)'s `GRPOTrainer(environment_factory=...)` multi-turn
-tool-calling loop — the other four workspaces).
+Four **independent workspaces** for GRPO (reinforcement-learning) fine-tuning of the
+SakThai model family with [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv)
+and [TRL](https://huggingface.co/docs/trl)'s `GRPOTrainer(environment_factory=...)`
+multi-turn tool-calling loop.
 
-Consolidated on 2026-08-21 from two GitHub repos into one; the retired source was
-`beer-sakthai/SakThai-Training` (deleted on GitHub 2026-08-21; full git history preserved
-in the local archive at `/home/beern/archive/SakThai-Training`).
-
-It is **not an installable package**: no `setup.py`/`pyproject.toml`, no linter or formatter
-config, no unit-test suite beyond the two root-level contract checks. Each subdirectory has
-its own dependencies (via `requirements.txt` or a PEP 723 inline header) and is run directly
-with `python <script>.py`, `uv run`, or `hf jobs uv run`. CI (`.github/workflows/`) exists
-but only `verify-contracts.yml` runs inside GitHub Actions itself — the other five
-workflows dispatch `hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret.
-Do not re-add the GitHub-suggested `pylint.yml` / `python-app.yml` / `python-package.yml` /
-`super-linter.yml` / `cache.yml` / `label.yml` templates that were removed 2026-08-21 —
-the first five hardcode `pip install -r requirements.txt` at the root (which doesn't exist
-by design), and `label.yml` (`actions/labeler@v4`) fetches its config from the base branch
-on `pull_request_target`, so `.github/labeler.yml` on a feature branch is invisible until
-merged — the labeler check fails on every first-time PR by construction, not by bug.
+It is **not an installable package**: no `setup.py`/`pyproject.toml`, no CI (`.github/`
+does not exist), no linter or formatter config, no test suite beyond the two root-level
+contract checks. Each subdirectory has its own `requirements.txt` and is run directly
+with `python <script>.py`, `uv run`, or `hf jobs uv run`.
 
 The heavy work (GRPO training, evaluation) runs **elsewhere** — HF Jobs, Colab/Kaggle,
 or a rented GPU box. This checkout has no GPU and typically no `torch`/`trl`/`datasets`
@@ -36,16 +23,12 @@ accurate and must stay accurate (see *Documentation conventions*).
 
 | Path | What it is |
 |---|---|
-| `sakthai-sft-training/` | **SFT half.** QLoRA training scripts (0.5B / 1.5B / 7B; `train-sakthai-1.5b-v2.py`, `train_qwen.py`, `train-sakthai-cpu.py`), 10-cycle data-augmentation loop (`cycle-100-v2..v10.py`, `augment-*.py`, `audit-and-fix-safety-quality.py`), cross-model + MCP-Bench + lighteval evaluators (`eval-*.py`), `sakthai-cycle-bench/` (155-row BFCL harness), ops tooling (`scripts/ops/`, `scripts/eval/`), self-contained SFT Colab notebook (`sakthai-1.5b-colab.ipynb`), publishing helpers (`push-*.py`, `create-*.py`). Was `beer-sakthai/SakThai-Training` before 2026-08-21. |
-| `openenv-custom-training/` | **RL — custom environments.** Tier A (`env_simple_task.py`, inline plain Python), Tier B (`agent_tools/`, sandboxed OpenEnv server in Docker), and BrowserGym MiniWoB++ (`train.py --env browsergym`). Runners: `train.py` (single env), `multi_env.py` (TRL-native dict-form multi-env). |
-| `openenv-multi-catalog-training/` | **RL — catalog run.** One ~0.6B model across all 8 `openenv/*` catalog envs (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in one GRPO run via a meta-environment class. `a2a_agent/` exposes the same 8 envs as [A2A protocol](https://a2a-protocol.org/) skills, independent of training. |
-| `sakthai-agentic-eval-train/` | **The RL eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval, agentic eval, SFT bootstrap, GRPO pilot), a self-contained Colab/Kaggle notebook, and `FINDINGS.md` — the durable empirical record. |
+| `openenv-custom-training/` | **Custom environments.** Tier A (`env_simple_task.py`, inline plain Python), Tier B (`agent_tools/`, sandboxed OpenEnv server in Docker), and BrowserGym MiniWoB++ (`train.py --env browsergym`). Runners: `train.py` (single env), `multi_env.py` (TRL-native dict-form multi-env). |
+| `openenv-multi-catalog-training/` | **Catalog run.** One ~0.6B model across all 8 `openenv/*` catalog envs (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in one GRPO run via a meta-environment class. `a2a_agent/` exposes the same 8 envs as [A2A protocol](https://a2a-protocol.org/) skills, independent of training. |
+| `sakthai-agentic-eval-train/` | **The eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval, agentic eval, SFT bootstrap, GRPO pilot), a self-contained Colab/Kaggle notebook, and `FINDINGS.md` — the durable empirical record. |
 | `browsergym-space/` | Dockerfile + Space card for the BrowserGym OpenEnv server deployed at [`Nanthasit/browsergym-env`](https://huggingface.co/spaces/Nanthasit/browsergym-env) (`https://nanthasit-browsergym-env.hf.space`). |
-| `.github/workflows/` | `verify-contracts.yml` (CPU tests, runs in GH Actions); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml`/`monitor.yml` (dispatch to HF Jobs). |
-| `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
-| `docs/HF_HUB_IMPROVEMENTS.md`, `SECURITY.md` | 2026-07-30 Hub audit; token-hygiene checklist. |
-| `verify_grpo_contract.py`, `test_browsergym_contract.py` | CPU-only contract checks — the only things runnable in this checkout without HF Jobs / a GPU. |
-| `PLAN.md` | The active improvement plan; kept in sync with what has landed on `main`. |
+| `verify_grpo_contract.py`, `test_browsergym_contract.py` | CPU-only contract checks — the only things runnable in this checkout. |
+| `PLAN.md` | The improvement plan the recent commits implement. Checkboxes are stale (unticked despite the work landing); treat the file as intent, not status. |
 
 `.gitattributes` at the root is Hugging Face's auto-generated LFS config, merged in from
 a Space repo. Leave it alone.
@@ -64,49 +47,6 @@ does `sys.path.append("openenv-custom-training")`, so it only works from the rep
 
 Run both before touching anything under `openenv-custom-training/`. Everything else needs
 a GPU box; do not attempt to run training here.
-
-## The SFT half (`sakthai-sft-training/`)
-
-This workspace was `beer-sakthai/SakThai-Training` before the 2026-08-21 consolidation.
-It produces the base LoRA adapters (`Nanthasit/sakthai-context-{0.5b,1.5b,7b}-tools`) that
-the RL half loads and further-trains via GRPO. Its conventions are related to but distinct
-from the RL half — do not casually cross-import.
-
-### TRL 0.19 API quirks (SFT scripts only)
-
-The SFT scripts pin TRL 0.19.1 / transformers 5.14.1 / PyTorch 2.13.0 CPU-side; the RL
-scripts pin transformers>=5.2.0 + TRL current. These are **incompatible pinsets**; do not
-try to unify them in one `requirements.txt`.
-
-- `SFTConfig(processing_class=tokenizer, ...)` — the kwarg is `processing_class`, not `tokenizer`.
-- `completion_only_loss=True` masks non-assistant tokens via the model's chat template.
-- `hub_strategy="every_save"` protects against HF-Jobs timeouts; set `--timeout` explicitly on
-  HF Jobs (the 30-min default is too short for anything past the smoke script).
-
-### The 10-cycle augmentation loop
-
-`cycle-100-v2.py` … `cycle-100-v10.py` are ten immutable snapshots of the same
-data-augmentation script — each one produced one released dataset revision
-(`Nanthasit/sakthai-combined-v{2..10}`). Do not "refactor them into one file": the whole
-point is that the exact bytes that produced each dataset revision are pinned. New rounds
-add a `cycle-100-v11.py`; they do not edit older ones. `cycle-workflow-gap-fill.py` is the
-gap-fill variant used to build `gap-fill-v8/v8-gap-fill.jsonl` (478 rows).
-
-### Datasets on the Hub, not in the repo
-
-Except for `gap-fill-v8/v8-gap-fill.jsonl` (kept inline for reproducibility), all training
-corpora live on the Hub — `Nanthasit/sakthai-combined-v{6..12}` (~2.4k → ~5k rows) and
-`Nanthasit/sakthai-bench-v{1..3}` (155 balanced rows in v3). Do not check dataset payloads
-into the repo. The runtime pin dataset `Nanthasit/sakthai-openenv-training` is the source
-of truth for cross-half version compatibility.
-
-### Reading benchmark numbers
-
-The SFT-half benchmark table (0.5B / 1.5B / 7B on `sakthai-bench-v3`) lives in
-`sakthai-sft-training/README.md`. The RL-half agentic-eval numbers live in
-`sakthai-agentic-eval-train/FINDINGS.md`. **Do not restate either set of numbers
-elsewhere** — `FINDINGS.md` is the durable record for the RL half and the workspace README
-is the record for the SFT half; anything else drifts.
 
 ## The TRL `environment_factory` contract
 
@@ -165,8 +105,10 @@ reward over its own episodes only).
 ### GRPOConfig gotchas
 
 - **vLLM server mode fields are `vllm_server_host` + `vllm_server_port`.** `vllm_server_url`
-  does not exist and crashes at construction. Fixed in `train.py`, `multi_env.py`, and
-  `openenv-multi-catalog-training/train_multi_env.py:main()` (last one landed 2026-08-21).
+  does not exist and crashes at construction. Fixed in `train.py` and `multi_env.py`;
+  **`openenv-multi-catalog-training/train_multi_env.py:main()` still passes
+  `vllm_server_url`** — a real outstanding bug, PLAN.md Task 2 only covered the custom
+  workspace.
 - **`max_completion_length` caps tokens across the WHOLE multi-turn episode** (every
   generation plus every tool result, summed) — not one turn. Episodes truncating mid-task is
   the first thing to suspect, and a too-small cap guarantees reward 0, which starves GRPO of
@@ -333,6 +275,11 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
 
 ## Known open items
 
+- `train_multi_env.py` still passes the nonexistent `vllm_server_url` GRPOConfig field
+  (PLAN.md Task 2, applied only to the custom workspace).
+- `train.py --env browsergym` imports `browsergym_env`, which is in neither the PEP 723
+  header nor `openenv-custom-training/requirements.txt`; the factory raises a hinted
+  `ImportError` pointing at `pip install git+https://github.com/huggingface/OpenEnv.git`.
 - `coding_env`'s task in both `train_multi_env.py` and `a2a_agent/` is a placeholder
   (`print(17 * 23)`) with a substring check for correctness.
 - No catalog Docker image tag in `run_servers.sh` has been verified live.
@@ -340,11 +287,3 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
   published SDK pattern, not a live install.
 - The 7B GRPO proof-of-signal run was 40 steps — long enough to show a gradient exists, not
   long enough to improve the model. A real run needs hundreds of steps.
-- HF Jobs currently returns `402 Payment Required` on this account (per the 2026-08-03
-  observation); the five HF-Jobs workflows in `.github/workflows/` will fail until this
-  is resolved and `HF_TOKEN` is added as a repo secret. `verify-contracts.yml` runs regardless.
-
-**Resolved 2026-08-21** (consolidation PR):
-
-- ~~`train_multi_env.py` passes nonexistent `vllm_server_url`~~ → now uses `vllm_server_host` + `vllm_server_port`.
-- ~~`train.py --env browsergym` missing `browsergym_env` in PEP 723 header + requirements.txt~~ → added to both.
