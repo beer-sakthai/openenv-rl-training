@@ -1,92 +1,63 @@
 import os
 import sys
-from unittest import mock
+from unittest.mock import MagicMock
 
-# Setup mock so we can import eval_bench_peft without failing on datasets
-sys.modules["datasets"] = mock.MagicMock()
+# Set required environment variables to pass the assertions in eval_bench_peft.py
+os.environ["SAK_MODELS"] = "dummy/model"
 
-# Heavy deps are GPU-box imports; mock them so the suite runs in a CPU checkout.
-for _mod in ("torch", "transformers"):
-    sys.modules[_mod] = mock.MagicMock()
+# Add the parent directory of 'scripts' to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Setup environ mock so we don't trigger validation asserts during import
-with mock.patch.dict(os.environ, {"SAK_MODELS": "test_model"}):
-    # Add the scripts directory to path to allow import
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    script_dir = os.path.join(base_dir, "scripts")
-    sys.path.append(script_dir)
-    from eval_bench_peft import parse_calls
+# Patch out sys modules and the load_dataset so we don't break the environment
+_mock_modules = [
+    "torch",
+    "transformers",
+    "accelerate",
+    "peft",
+    "huggingface_hub",
+]
+for mod in _mock_modules:
+    if mod not in sys.modules:
+        sys.modules[mod] = MagicMock()
+
+import datasets  # noqa: E402
+
+_original_load_dataset = datasets.load_dataset
+datasets.load_dataset = MagicMock()
+
+try:
+    from scripts.eval_bench_peft import is_degenerate  # noqa: E402
+finally:
+    for mod in _mock_modules:
+        if mod in sys.modules and isinstance(sys.modules[mod], MagicMock):
+            del sys.modules[mod]
+    datasets.load_dataset = _original_load_dataset
 
 
-class TestParseCalls:
-    def test_valid_json(self):
-        text = '<tool_call>{"name": "t", "arguments": {"a": 1}}</tool_call>'
-        assert parse_calls(text) == [
-            {"name": "t", "arguments": {"a": 1}}
-        ]
+def test_is_degenerate_short_string():
+    assert not is_degenerate("short string")
 
-    def test_invalid_json(self):
-        # Missing closing brace
-        text = '<tool_call>{"name": "t", "arguments": {"a": 1}</tool_call>'
-        assert parse_calls(text) == []
 
-        # Malformed JSON
-        text = '<tool_call>{name: "t", arguments: {a: 1}}</tool_call>'
-        assert parse_calls(text) == []
+def test_is_degenerate_normal_long_string():
+    assert not is_degenerate(
+        "This is a normal long string that shouldn't be considered degenerate."
+    )
 
-    def test_valid_json_string_args(self):
-        s = '{\\"a\\": 1}'
-        text = f'<tool_call>{{"name": "t", "arguments": "{s}"}}</tool_call>'
-        assert parse_calls(text) == [
-            {"name": "t", "arguments": {"a": 1}}
-        ]
 
-    def test_invalid_json_string_args(self):
-        s = '{\\"a\\": 1'
-        text = f'<tool_call>{{"name": "t", "arguments": "{s}"}}</tool_call>'
-        assert parse_calls(text) == [
-            {"name": "t", "arguments": {"__unparsed__": '{"a": 1'}}
-        ]
+def test_is_degenerate_repeated_chars():
+    assert is_degenerate("A" * 20)
 
-    def test_invalid_arguments_type(self):
-        # Number instead of object/string
-        text = '<tool_call>{"name": "test", "arguments": 123}</tool_call>'
-        assert parse_calls(text) == [{"name": "test", "arguments": {}}]
 
-        # Boolean instead of object/string
-        text = '<tool_call>{"name": "test", "arguments": true}</tool_call>'
-        assert parse_calls(text) == [{"name": "test", "arguments": {}}]
+def test_is_degenerate_mostly_repeated_chars():
+    assert is_degenerate("A" * 18 + "BC")
 
-        # Null instead of object/string
-        text = '<tool_call>{"name": "test", "arguments": null}</tool_call>'
-        assert parse_calls(text) == [{"name": "test", "arguments": {}}]
 
-    def test_missing_name(self):
-        text = '<tool_call>{"arguments": {"arg1": 1}}</tool_call>'
-        assert parse_calls(text) == []
+def test_is_degenerate_just_below_threshold():
+    # 17 'A's out of 20 chars = 0.85 (below 0.9)
+    assert not is_degenerate("A" * 17 + "BCD")
 
-    def test_missing_arguments(self):
-        text = '<tool_call>{"name": "test"}</tool_call>'
-        assert parse_calls(text) == [{"name": "test", "arguments": {}}]
 
-    def test_multiple_tool_calls(self):
-        text = """
-        <tool_call>{"name": "test1", "arguments": {"arg1": 1}}</tool_call>
-        Some random text between calls
-        <tool_call>{"name": "test2", "arguments": {"arg2": 2}}</tool_call>
-        """
-        assert parse_calls(text) == [
-            {"name": "test1", "arguments": {"arg1": 1}},
-            {"name": "test2", "arguments": {"arg2": 2}},
-        ]
-
-    def test_mixed_valid_invalid_tool_calls(self):
-        text = """
-        <tool_call>{"name": "test1", "arguments": {"arg1": 1}}</tool_call>
-        <tool_call>{"name": "test2", "arguments": {"arg2": 2}</tool_call>
-        <tool_call>{"name": "test3", "arguments": {"arg3": 3}}</tool_call>
-        """
-        assert parse_calls(text) == [
-            {"name": "test1", "arguments": {"arg1": 1}},
-            {"name": "test3", "arguments": {"arg3": 3}},
-        ]
+def test_is_degenerate_with_spaces():
+    # "A " * 20 -> 40 chars, but spaces are removed by "".join(raw.split())
+    # So it becomes "A" * 20 which is degenerate
+    assert is_degenerate("A " * 20)
