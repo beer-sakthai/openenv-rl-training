@@ -24,3 +24,12 @@ def test_browsergym_reward_extraction():
 
 def test_browsergym_space_url_const():
     assert "nanthasit-browsergym-env.hf.space" in BROWSERGYM_SPACE_URL
+
+def test_browsergym_functions_have_docstrings():
+    assert _browsergym_dataset.__doc__ is not None
+    assert isinstance(_browsergym_dataset.__doc__, str)
+    assert len(_browsergym_dataset.__doc__.strip()) > 0
+
+    assert _browsergym_reward.__doc__ is not None
+    assert isinstance(_browsergym_reward.__doc__, str)
+    assert len(_browsergym_reward.__doc__.strip()) > 0
