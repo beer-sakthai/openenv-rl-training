@@ -103,15 +103,16 @@ def main() -> None:
         "secrets": args.secrets,
         "timeout": args.timeout,
     }
-    # Redact env values and secret names — a plan can carry --env HF_TOKEN=...
-    # or a real secret name, and this line lands in job logs / stdout.
-    _REDACT_KEYS = {"env", "secrets"}
+    # Log only non-sensitive fields — `env` can carry --env HF_TOKEN=...
+    # and `secrets` names may themselves be sensitive; both are counted, not
+    # printed. This preview lands in job logs / stdout.
     print("[submit] resolved plan:")
-    for k, v in plan.items():
-        if k in _REDACT_KEYS:
-            print(f"    {k}: <redacted {len(v)} entries>")
-        else:
-            print(f"    {k}: {v}")
+    print(f"    tag: {plan['tag']}")
+    print(f"    flavor: {plan['flavor']}")
+    print(f"    script: {plan['script']}")
+    print(f"    timeout: {plan['timeout']}")
+    print(f"    env: <redacted {len(env_map)} entries>")
+    print(f"    secrets: <redacted {len(args.secrets)} entries>")
 
     if args.dry_run:
         print("[submit] --dry-run set; not submitting")
