@@ -9,11 +9,11 @@ trl==1.9.2
 # HARD requirements for environment_factory / tools, from trl 1.9.2 source:
 #   grpo_trainer.py raises if transformers < 5.2.0 when environment_factory is
 #   used, and requires `jmespath` for response parsing.
-transformers>=5.2.0
+transformers>=5.15.0
 jmespath
 datasets>=3.0
 # vLLM is only needed where GRPO generation runs (training box). For 2+ GPUs
 # the trl CLI (`trl vllm-serve`) is installed with trl itself.
-vllm>=0.8
+vllm>=0.27.1
 # --env browsergym imports BrowserGymEnv from the OpenEnv monorepo (not on PyPI):
 browsergym_env @ git+https://github.com/huggingface/OpenEnv.git#subdirectory=envs/browsergym_env
