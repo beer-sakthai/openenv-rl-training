@@ -99,7 +99,7 @@ class SandboxEnvironment(Environment):
     def __init__(self):
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._workdir = Path(tempfile.mkdtemp(prefix="opentrain-"))
-        self._task_key = "answer_file"
+        self._task_key = os.environ.get("DEFAULT_TASK_KEY", "answer_file")
         self._reward = 0.0
         self._done = False
 
@@ -115,7 +115,7 @@ class SandboxEnvironment(Environment):
     # scratch dir per reset already isolates episodes).
 
     def reset(self, seed=None, episode_id=None, **kwargs) -> AgentToolObservation:
-        task_key = kwargs.get("task_key", "answer_file")
+        task_key = kwargs.get("task_key", os.environ.get("DEFAULT_TASK_KEY", "answer_file"))
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._task_key = task_key
         self._reward = 0.0
@@ -176,7 +176,7 @@ class SandboxEnvironment(Environment):
             raise ValueError("empty command")
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
         proc = subprocess.run(
-            ["bash", "-lc", command],
+            ["bash", "-l"], input=command,
             cwd=self._workdir, env=env, capture_output=True, text=True,
             timeout=CMD_TIMEOUT_S,
         )
