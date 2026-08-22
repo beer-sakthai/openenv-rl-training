@@ -5,6 +5,7 @@ Requires HF_TOKEN env var.
 """
 
 import os
+import re
 from huggingface_hub import HfApi
 
 api = HfApi()
@@ -75,10 +76,95 @@ for repo in model_repos:
         print(f"  ❌ Failed {repo}: {e}")
 
 # 3. Fix 0.5B merged family table stale download counts
-# The dynamic badge already shows correct count, but the family table has hardcoded numbers
-# This requires manually editing the README — the dynamic badge is already correct
-print("\n→ Note: 0.5B merged already has dynamic download badge (correct)")
-print("→ Family table hardcoded numbers need manual update in README")
+print("\n→ Fixing 0.5B merged family table stale download counts...")
+repo_id_05b = "Nanthasit/sakthai-context-0.5b-merged"
+try:
+    readme = api.hf_hub_download(repo_id=repo_id_05b, filename="README.md", repo_type="model")
+    with open(readme, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    lines = content.split('\n')
+    in_table = False
+
+    # Pre-fetch download counts for all repos in the table
+    print("  Fetching current download counts for all models...")
+    downloads_map = {}
+    for i, line in enumerate(lines):
+        if "| Model | Size | Downloads | Role |" in line:
+            in_table = True
+            continue
+
+        if in_table and line.strip().startswith('|'):
+            if line.startswith('|:'):
+                continue
+
+            url_match = re.search(r'https://huggingface.co/(Nanthasit/[^)]+)', line)
+            if url_match:
+                repo_id = url_match.group(1)
+                if repo_id not in downloads_map:
+                    try:
+                        info = api.model_info(repo_id=repo_id)
+                        downloads_map[repo_id] = info.downloads
+                    except Exception as e:
+                        pass
+            elif "**Context 0.5B Merged**" in line:
+                if repo_id_05b not in downloads_map:
+                    try:
+                        info = api.model_info(repo_id=repo_id_05b)
+                        downloads_map[repo_id_05b] = info.downloads
+                    except Exception as e:
+                        pass
+        elif in_table and not line.strip().startswith('|'):
+            in_table = False
+
+    print(f"  Fetched counts for {len(downloads_map)} models. Updating table...")
+
+    # Update table with fresh counts
+    in_table = False
+    table_changed = False
+    for i, line in enumerate(lines):
+        if "| Model | Size | Downloads | Role |" in line:
+            in_table = True
+            continue
+
+        if in_table and line.strip().startswith('|'):
+            if line.startswith('|:'):
+                continue
+
+            parts = line.split('|')
+            if len(parts) >= 4:
+                url_match = re.search(r'https://huggingface.co/(Nanthasit/[^)]+)', line)
+                if url_match:
+                    repo_id = url_match.group(1)
+                    if repo_id in downloads_map:
+                        new_downloads_str = f" {downloads_map[repo_id]:,} "
+                        if parts[3] != new_downloads_str:
+                            parts[3] = new_downloads_str
+                            lines[i] = '|'.join(parts)
+                            table_changed = True
+                elif "**Context 0.5B Merged**" in line:
+                    if repo_id_05b in downloads_map:
+                        new_downloads_str = f" **{downloads_map[repo_id_05b]:,}** "
+                        if parts[3] != new_downloads_str:
+                            parts[3] = new_downloads_str
+                            lines[i] = '|'.join(parts)
+                            table_changed = True
+        elif in_table and not line.strip().startswith('|'):
+            in_table = False
+
+    if table_changed:
+        new_content = '\n'.join(lines)
+        api.upload_file(
+            path_or_fileobj=new_content.encode(),
+            path_in_repo="README.md",
+            repo_id=repo_id_05b,
+            token=token,
+        )
+        print("  ✅ Updated 0.5B merged family table with live download counts")
+    else:
+        print("  ✓ 0.5B merged family table is already up-to-date or no changes needed")
+except Exception as e:
+    print(f"  ❌ Failed to update 0.5B merged family table: {e}")
 
 # 4. Cross-link datasets from model cards (verify they reference v7 + bench-v2 + irrelevance)
 print("\n→ Cross-links verified: 1.5B merged already links to v6, v7, irrelevance ✅")
