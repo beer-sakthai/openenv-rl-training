@@ -176,7 +176,7 @@ class SandboxEnvironment(Environment):
             raise ValueError("empty command")
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
         proc = subprocess.run(
-            ["bash", "-lc", command],
+            ["bash", "-l"], input=command,
             cwd=self._workdir, env=env, capture_output=True, text=True,
             timeout=CMD_TIMEOUT_S,
         )
