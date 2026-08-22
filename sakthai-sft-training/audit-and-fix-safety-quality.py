@@ -127,7 +127,20 @@ for f, ln, name, tns in audit_results["tool_mismatch"]:
     missing = all_called - existing_names
     
     for mname in missing:
-        ex.setdefault("tools", []).append({"type":"function","function":{"name":mname,"description":"","parameters":{"type":"object","properties":{"q":{"type":"string"}},"required":["q"]}}})
+        tool_def = {"type":"function","function":{"name":mname,"description":"","parameters":{"type":"object","properties":{"q":{"type":"string"}},"required":["q"]}}}
+        try:
+            with open("augment-dataset-10x.py", "r") as tfile:
+                for tline in tfile:
+                    if '{"type": "function", "function": {"name": "' + mname + '"' in tline:
+                        start_idx = tline.find('{"type":')
+                        if start_idx != -1:
+                            end_idx = tline.rfind('}')
+                            if end_idx != -1:
+                                tool_def = json.loads(tline[start_idx:end_idx+1])
+                                break
+        except Exception:
+            pass
+        ex.setdefault("tools", []).append(tool_def)
     
     if missing:
         lines[ln-1] = json.dumps(ex, ensure_ascii=False) + "\n"
