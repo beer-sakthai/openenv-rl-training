@@ -28,14 +28,14 @@ widget:
   <p align="center"><em>Part of the <strong>House of Sak</strong> — AI agents built from a shelter in Cork, Ireland.</em></p>
   <p align="center">
     <a href="https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02"><img src="https://img.shields.io/badge/🤗-SakThai%20Family-blue" alt="Collection"/></a>
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A//huggingface.co/api/models/Nanthasit/sakthai-plus-1.5b-lora&query=%24.downloads&label=downloads&color=blue&cacheSeconds=3600" alt="Downloads"/>
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A//huggingface.co/api/models/Nanthasit/sakthai-context-1.5b-tools-v2&query=%24.downloads&label=downloads&color=blue&cacheSeconds=3600" alt="Downloads"/>
     <img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="License"/>
   </p>
 </p>
 
 ## Model Description
 
-This is a **LoRA adapter** (not a merged model) for [Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct), fine-tuned for improved tool-calling. Compared to v1, it uses **rsLoRA**, targets **all 7 linear modules**, and was trained on the latest datasets.
+This is a **LoRA adapter** for [Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct), fine-tuned for improved tool-calling. Compared to v1, it uses **rsLoRA**, targets **all 7 linear modules**, and was trained on the latest datasets.
 
 ### Key improvements over v1
 
@@ -54,7 +54,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 base = "Qwen/Qwen2.5-1.5B-Instruct"
-adapter = "Nanthasit/sakthai-plus-1.5b-lora"
+adapter = "Nanthasit/sakthai-context-1.5b-tools-v2"
 
 tokenizer = AutoTokenizer.from_pretrained(base)
 model = AutoModelForCausalLM.from_pretrained(base, torch_dtype="auto", device_map="auto")
@@ -64,19 +64,6 @@ messages = [{"role": "user", "content": "What's the weather in Bangkok?"}]
 inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").to(model.device)
 outputs = model.generate(inputs, max_new_tokens=128)
 print(tokenizer.decode(outputs[0], skip_special_tokens=True))
-```
-
-## Merge to full weights (for deployment)
-
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel
-
-base = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct", torch_dtype="auto", device_map="auto")
-merged = PeftModel.from_pretrained(base, "Nanthasit/sakthai-plus-1.5b-lora").merge_and_unload()
-tokenizer = AutoTokenizer.from_pretrained("Nanthasit/sakthai-plus-1.5b-lora")
-merged.push_to_hub("Nanthasit/sakthai-plus-1.5b")
-tokenizer.push_to_hub("Nanthasit/sakthai-plus-1.5b")
 ```
 
 ## Training Details
