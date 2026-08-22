@@ -1,0 +1,65 @@
+name: Cleanup stale branches (one-shot)
+
+# Temporary workflow used to prune the 22 orphan branch refs left over from
+# the 2026-08-22 branch cleanup. Their PRs are already closed or merged; only
+# the refs themselves remain. Removed in a follow-up commit after running.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete stale refs via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -eu
+          branches=(
+            "add-tests-parse-tool-call-17395875333709578449"
+            "alert-autofix-1"
+            "alert-autofix-3"
+            "alert-autofix-4"
+            "alert-autofix-5"
+            "bolt-optimize-eval-bench-4497849370414291682"
+            "fix/remove-unused-import-re-4191446426072255134"
+            "fix-test-client-parse-result-4548903818205730987"
+            "fix-unused-import-json-10297539778256895409"
+            "fix-unused-import-textpart-3755145981272633155"
+            "fix-unused-import-verify-grpo-contract-12841966868894374609"
+            "fix-unused-imports-8187502373015116454"
+            "improve-peft-tests-12613789187717128513"
+            "jules-13416936758756435217-dae276e5"
+            "jules-15112970344884301526-e3bc740b"
+            "jules-2450306867324063922-15e409aa"
+            "jules-3542162466666979389-ffddc590"
+            "jules-8454724311987524072-18049810"
+            "jules-perf-regex-eval-cross-model-2154676301598140460"
+            "perf-optimize-assistant-body-clean-13702148632279846851"
+            "test-norm-empty-inputs-15965580771364173824"
+            "test-sandbox-env-9509559040178253027"
+          )
+          for br in "${branches[@]}"; do
+            echo "→ deleting $br"
+            code=$(curl -sS -o /tmp/resp -w "%{http_code}" \
+              -X DELETE \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/$OWNER/$REPO/git/refs/heads/$br" || true)
+            if [ "$code" = "204" ]; then
+              echo "  ok"
+            elif [ "$code" = "422" ] || [ "$code" = "404" ]; then
+              echo "  already gone (HTTP $code)"
+            else
+              echo "  FAILED (HTTP $code):"
+              cat /tmp/resp || true
+              echo
+            fi
+          done
