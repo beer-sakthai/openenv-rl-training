@@ -80,3 +80,16 @@ def test_run_command_timeout(env):
 
         with pytest.raises(subprocess.TimeoutExpired):
             env._run_command("sleep 100")
+
+def test_confine_success(env):
+    path = env._confine("inside.txt")
+    assert path.name == "inside.txt"
+    assert path.is_relative_to(env._workdir.resolve())
+
+def test_confine_escape(env):
+    with pytest.raises(ValueError, match="path escapes the sandbox workspace"):
+        env._confine("../outside.txt")
+
+def test_confine_escape_absolute(env):
+    with pytest.raises(ValueError, match="path escapes the sandbox workspace"):
+        env._confine("/etc/passwd")
