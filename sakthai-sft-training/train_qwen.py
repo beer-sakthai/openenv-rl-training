@@ -4,12 +4,10 @@ from datasets import load_dataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    TrainingArguments,
-    Trainer,
     DataCollatorForLanguageModeling,
-    get_cosine_schedule_with_warmup,
+    Trainer,
+    TrainingArguments,
 )
-from transformers.trainer_callback import EarlyStoppingCallback
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B"
 DATASET_NAME = "wikitext"
