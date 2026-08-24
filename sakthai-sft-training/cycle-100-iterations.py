@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """100 iterations: each generates 1 unique gap-filling example. No stopping."""
-import json, os, itertools, random
+import json, itertools, random
 from pathlib import Path
 from collections import Counter
 random.seed(42)
