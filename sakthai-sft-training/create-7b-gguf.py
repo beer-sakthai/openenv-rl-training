@@ -17,7 +17,7 @@ Usage:
   uv run python create-7b-gguf.py          # Show instructions
   # or run with actual commands on Linux/WSL
 """
-import os, sys, subprocess, platform
+import sys, subprocess, platform
 
 MODEL = "Nanthasit/sakthai-context-7b-merged"
 GGUF_REPO = "Nanthasit/sakthai-context-7b-merged"  # upload to same repo
