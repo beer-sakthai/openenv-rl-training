@@ -3,7 +3,7 @@
 Benchmark-targeted dataset augmentation — directly addresses eval_bench.py scoring rules.
 Each batch generates n examples by cycling through templates with variations.
 """
-import json, random, itertools
+import json, random
 from pathlib import Path
 
 random.seed(7)
