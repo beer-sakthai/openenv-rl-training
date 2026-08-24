@@ -16,3 +16,4 @@ auth.json
 # Test run artifacts
 bench_results.json
 hermes_env_results.json
+cycle-100-output/
