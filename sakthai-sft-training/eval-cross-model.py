@@ -20,7 +20,16 @@ Env:
   DUMP     number of per-model row dumps (default 0)
   OUT      output dir for results yaml (default ".eval_results")
 """
-import os, json, re, gc, sys, time, random, collections, urllib.request, datetime
+import collections
+import datetime
+import gc
+import json
+import os
+import random
+import re
+import sys
+import time
+from urllib.request import urlopen
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -42,7 +51,7 @@ OUT = os.environ.get("OUT", ".eval_results")
 
 URL = "https://huggingface.co/datasets/Nanthasit/sakthai-bench-v2/resolve/main/data/test.jsonl"
 print(f"Loading {URL} ...", flush=True)
-with urllib.request.urlopen(URL) as f:
+with urlopen(URL) as f:
     TEST = [json.loads(line) for line in f.read().decode().strip().splitlines()]
 if SAMPLE:
     random.seed(42)
