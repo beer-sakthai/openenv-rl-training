@@ -100,30 +100,17 @@ def build_bench_index(repo: str, split: str) -> dict[str, dict]:
     return idx
 
 
-def main() -> None:
-    p = argparse.ArgumentParser()
-    p.add_argument("--bench", required=True, help="Benchmark dataset repo id")
-    p.add_argument("--bench-split", default="train",
-                   help="Split within the bench dataset (default: train)")
-    p.add_argument("--training", nargs="*", default=[],
-                   help="Training dataset repo ids (default parquet)")
-    p.add_argument("--training-with-data-files", nargs="*", default=[],
-                   help="Entries of the form REPO=data/path.jsonl for datasets whose parquet is broken")
-    p.add_argument("--training-split", default="train")
-    p.add_argument("--out", default="-", help="Output markdown path or '-' for stdout")
-    args = p.parse_args()
-
-    print(f"[audit] indexing bench {args.bench}...", file=sys.stderr)
-    bench_idx = build_bench_index(args.bench, args.bench_split)
-    print(f"[audit] bench has {len(bench_idx)} unique prompt hashes", file=sys.stderr)
-
+def get_training_specs(args: argparse.Namespace) -> list[tuple[str, str | None]]:
     training_specs = [(r, None) for r in args.training]
     for spec in args.training_with_data_files:
         if "=" not in spec:
             raise SystemExit(f"[audit] bad spec {spec!r}, expected REPO=data/path.jsonl")
         repo, df = spec.split("=", 1)
         training_specs.append((repo, df))
+    return training_specs
 
+
+def compute_overlaps(training_specs: list[tuple[str, str | None]], bench_idx: dict[str, dict], training_split: str) -> tuple[dict[str, list[str]], dict[str, int], set[str]]:
     per_dataset_overlap: dict[str, list[str]] = {}
     all_overlap_by_cat = defaultdict(int)
     total_overlap_hashes = set()
@@ -131,7 +118,7 @@ def main() -> None:
     for repo, df in training_specs:
         print(f"[audit] indexing training {repo} (data_files={df})...", file=sys.stderr)
         try:
-            train_idx = build_hash_index(repo, args.training_split, df)
+            train_idx = build_hash_index(repo, training_split, df)
         except Exception as e:
             print(f"[audit] FAILED to load {repo}: {e}", file=sys.stderr)
             continue
@@ -143,9 +130,12 @@ def main() -> None:
             all_overlap_by_cat[bench_idx[h]["category"]] += 1
         print(f"[audit]   {repo}: {len(overlap)} overlaps", file=sys.stderr)
 
-    # Report
+    return per_dataset_overlap, all_overlap_by_cat, total_overlap_hashes
+
+
+def generate_report(bench: str, bench_idx: dict[str, dict], per_dataset_overlap: dict[str, list[str]], all_overlap_by_cat: dict[str, int], total_overlap_hashes: set[str], out: str) -> None:
     lines = []
-    lines.append(f"# Contamination audit — {args.bench}")
+    lines.append(f"# Contamination audit — {bench}")
     lines.append("")
     lines.append(f"- Bench prompts (unique hashes): **{len(bench_idx)}**")
     lines.append(f"- Distinct bench prompts also present in the training mix: "
@@ -193,12 +183,38 @@ def main() -> None:
                      f"clean subset (bench minus these row indices).")
 
     out_text = "\n".join(lines)
-    if args.out == "-":
+    if out == "-":
         print(out_text)
     else:
         from pathlib import Path
-        Path(args.out).write_text(out_text)
-        print(f"[audit] wrote {args.out}", file=sys.stderr)
+        Path(out).write_text(out_text)
+        print(f"[audit] wrote {out}", file=sys.stderr)
+
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--bench", required=True, help="Benchmark dataset repo id")
+    p.add_argument("--bench-split", default="train",
+                   help="Split within the bench dataset (default: train)")
+    p.add_argument("--training", nargs="*", default=[],
+                   help="Training dataset repo ids (default parquet)")
+    p.add_argument("--training-with-data-files", nargs="*", default=[],
+                   help="Entries of the form REPO=data/path.jsonl for datasets whose parquet is broken")
+    p.add_argument("--training-split", default="train")
+    p.add_argument("--out", default="-", help="Output markdown path or '-' for stdout")
+    args = p.parse_args()
+
+    print(f"[audit] indexing bench {args.bench}...", file=sys.stderr)
+    bench_idx = build_bench_index(args.bench, args.bench_split)
+    print(f"[audit] bench has {len(bench_idx)} unique prompt hashes", file=sys.stderr)
+
+    training_specs = get_training_specs(args)
+    per_dataset_overlap, all_overlap_by_cat, total_overlap_hashes = compute_overlaps(
+        training_specs, bench_idx, args.training_split
+    )
+    generate_report(
+        args.bench, bench_idx, per_dataset_overlap, all_overlap_by_cat, total_overlap_hashes, args.out
+    )
 
 
 if __name__ == "__main__":
