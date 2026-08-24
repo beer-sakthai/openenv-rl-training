@@ -198,133 +198,136 @@ class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
         return client
 
     async def _reset(self, episode: _Episode) -> str:
-        name, client = episode.env_name, episode.client
-        if name == "echo":
-            await client.reset()
-            episode.extra["secret"] = "the falcon flies at dawn"
-            return f"Reply with the exact phrase: '{episode.extra['secret']}'"
-        if name == "sudoku":
-            result = await client.reset()
-            msgs = result.observation.messages
-            return msgs[0].content if msgs else result.observation.prompt
-        if name == "coding":
-            await client.reset()
-            return "Write Python code that prints the result of 17 * 23, nothing else."
-        if name == "chat":
-            await client.reset()
-            return "Say something to start the conversation."
-        if name == "atari":
-            result = await client.reset()
-            return self._format_ram(result.observation)
-        if name == "openspiel":
-            result = await client.reset()
-            return self._format_vec(
-                "state", result.observation.info_state, result.observation.legal_actions
-            )
-        if name == "repl":
-            result = await client.reset(
-                context="alpha beta gamma delta", task_prompt="Count the words."
-            )
-            return result.observation.context_preview
-        if name == "sumo":
-            result = await client.reset()
-            return self._format_vec(
-                "traffic",
-                result.observation.observation,
-                result.observation.action_mask,
-            )
-        raise ValueError(name)
+        method_name = f"_reset_{episode.env_name}"
+        if hasattr(self, method_name):
+            return await getattr(self, method_name)(episode)
+        raise ValueError(episode.env_name)
 
     async def _step(self, episode: _Episode, action) -> str:
-        name, client = episode.env_name, episode.client
+        method_name = f"_step_{episode.env_name}"
+        if hasattr(self, method_name):
+            return await getattr(self, method_name)(episode, action)
+        raise ValueError(episode.env_name)
 
-        if name == "echo":
-            result = await client.step(EchoAction(message=str(action)))
-            episode.last_reward = (
-                1.0
-                if result.observation.echoed_message == episode.extra["secret"]
-                else 0.0
-            )
-            episode.done = True
-            return result.observation.echoed_message
+    async def _reset_echo(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        episode.extra["secret"] = "the falcon flies at dawn"
+        return f"Reply with the exact phrase: '{episode.extra['secret']}'"
 
-        if name == "sudoku":
-            result = await client.step(TextArenaAction(message=str(action)))
-            episode.last_reward = result.observation.reward or 0.0
-            episode.done = result.observation.done
-            msgs = result.observation.messages
-            return msgs[-1].content if msgs else ""
+    async def _step_echo(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(EchoAction(message=str(action)))
+        episode.last_reward = (
+            1.0 if result.observation.echoed_message == episode.extra["secret"] else 0.0
+        )
+        episode.done = True
+        return result.observation.echoed_message
 
-        if name == "coding":
-            result = await client.step(CodeAction(code=str(action)))
-            obs = result.observation
-            episode.last_reward = (
-                1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
-            )
-            episode.done = True
-            return f"stdout: {obs.stdout}\nstderr: {obs.stderr}\nexit_code: {obs.exit_code}"
+    async def _reset_sudoku(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        msgs = result.observation.messages
+        return msgs[0].content if msgs else result.observation.prompt
 
-        if name == "chat":
-            tokens = _tokenizer_for_chat()(str(action), return_tensors="pt")[
-                "input_ids"
-            ][0]
-            result = await client.step(ChatAction(tokens=tokens))
-            episode.last_reward = getattr(result.observation, "reward", 0.0) or 0.0
-            episode.done = result.observation.done
-            return _tokenizer_for_chat().decode(
-                result.observation.tokens, skip_special_tokens=True
-            )
+    async def _step_sudoku(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(TextArenaAction(message=str(action)))
+        episode.last_reward = result.observation.reward or 0.0
+        episode.done = result.observation.done
+        msgs = result.observation.messages
+        return msgs[-1].content if msgs else ""
 
-        if name == "atari":
-            action_id = (
-                int(action["action_id"]) if isinstance(action, dict) else int(action)
-            )
-            result = await client.step(
-                AtariAction(action_id=action_id, game_name=ATARI_GAME, obs_type="ram")
-            )
-            episode.last_reward = result.observation.reward or 0.0
-            episode.done = result.observation.done
-            return self._format_ram(result.observation)
+    async def _reset_coding(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        return "Write Python code that prints the result of 17 * 23, nothing else."
 
-        if name == "openspiel":
-            action_id = (
-                int(action["action_id"]) if isinstance(action, dict) else int(action)
-            )
-            result = await client.step(OpenSpielAction(action_id=action_id))
-            episode.last_reward = result.observation.reward or 0.0
-            episode.done = result.observation.done
-            return self._format_vec(
-                "state", result.observation.info_state, result.observation.legal_actions
-            )
+    async def _step_coding(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(CodeAction(code=str(action)))
+        obs = result.observation
+        episode.last_reward = 1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
+        episode.done = True
+        return f"stdout: {obs.stdout}\nstderr: {obs.stderr}\nexit_code: {obs.exit_code}"
 
-        if name == "repl":
-            if isinstance(action, dict) and action.get("final_answer") is not None:
-                result = await client.step(
-                    REPLAction(
-                        code="", is_final=True, final_answer=str(action["final_answer"])
-                    )
+    async def _reset_chat(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        return "Say something to start the conversation."
+
+    async def _step_chat(self, episode: _Episode, action) -> str:
+        tokens = _tokenizer_for_chat()(str(action), return_tensors="pt")["input_ids"][0]
+        result = await episode.client.step(ChatAction(tokens=tokens))
+        episode.last_reward = getattr(result.observation, "reward", 0.0) or 0.0
+        episode.done = result.observation.done
+        return _tokenizer_for_chat().decode(
+            result.observation.tokens, skip_special_tokens=True
+        )
+
+    async def _reset_atari(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_ram(result.observation)
+
+    async def _step_atari(self, episode: _Episode, action) -> str:
+        action_id = (
+            int(action["action_id"]) if isinstance(action, dict) else int(action)
+        )
+        result = await episode.client.step(
+            AtariAction(action_id=action_id, game_name=ATARI_GAME, obs_type="ram")
+        )
+        episode.last_reward = result.observation.reward or 0.0
+        episode.done = result.observation.done
+        return self._format_ram(result.observation)
+
+    async def _reset_openspiel(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_vec(
+            "state", result.observation.info_state, result.observation.legal_actions
+        )
+
+    async def _step_openspiel(self, episode: _Episode, action) -> str:
+        action_id = (
+            int(action["action_id"]) if isinstance(action, dict) else int(action)
+        )
+        result = await episode.client.step(OpenSpielAction(action_id=action_id))
+        episode.last_reward = result.observation.reward or 0.0
+        episode.done = result.observation.done
+        return self._format_vec(
+            "state", result.observation.info_state, result.observation.legal_actions
+        )
+
+    async def _reset_repl(self, episode: _Episode) -> str:
+        result = await episode.client.reset(
+            context="alpha beta gamma delta", task_prompt="Count the words."
+        )
+        return result.observation.context_preview
+
+    async def _step_repl(self, episode: _Episode, action) -> str:
+        if isinstance(action, dict) and action.get("final_answer") is not None:
+            result = await episode.client.step(
+                REPLAction(
+                    code="", is_final=True, final_answer=str(action["final_answer"])
                 )
-                episode.done = True
-            else:
-                result = await client.step(REPLAction(code=str(action)))
-                episode.done = result.observation.done
-            episode.last_reward = result.observation.reward or 0.0
-            return result.observation.result.stdout
-
-        if name == "sumo":
-            phase_id = (
-                int(action["phase_id"]) if isinstance(action, dict) else int(action)
             )
-            result = await client.step(SumoAction(phase_id=phase_id))
-            episode.last_reward = result.observation.reward or 0.0
+            episode.done = True
+        else:
+            result = await episode.client.step(REPLAction(code=str(action)))
             episode.done = result.observation.done
-            return self._format_vec(
-                "traffic",
-                result.observation.observation,
-                result.observation.action_mask,
-            )
+        episode.last_reward = result.observation.reward or 0.0
+        return result.observation.result.stdout
 
-        raise ValueError(name)
+    async def _reset_sumo(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_vec(
+            "traffic",
+            result.observation.observation,
+            result.observation.action_mask,
+        )
+
+    async def _step_sumo(self, episode: _Episode, action) -> str:
+        phase_id = int(action["phase_id"]) if isinstance(action, dict) else int(action)
+        result = await episode.client.step(SumoAction(phase_id=phase_id))
+        episode.last_reward = result.observation.reward or 0.0
+        episode.done = result.observation.done
+        return self._format_vec(
+            "traffic",
+            result.observation.observation,
+            result.observation.action_mask,
+        )
 
     @staticmethod
     def _format_ram(obs) -> str:
