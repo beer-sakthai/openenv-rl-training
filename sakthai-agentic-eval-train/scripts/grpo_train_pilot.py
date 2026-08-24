@@ -252,9 +252,72 @@ def resolve_model_dir(repo_id):
     return "./merged_base"
 
 
-def main():
+def get_peft_config(mode):
+    if mode == "lora16":
+        from peft import LoraConfig
+
+        return LoraConfig(
+            r=16,
+            lora_alpha=32,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            task_type="CAUSAL_LM",
+        )
+    elif mode == "lora64":
+        from peft import LoraConfig
+
+        return LoraConfig(
+            r=64,
+            lora_alpha=128,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            task_type="CAUSAL_LM",
+        )
+    return None
+
+def get_grpo_config(mode, max_completion, max_steps):
     import torch
-    from trl import GRPOConfig, GRPOTrainer
+    from trl import GRPOConfig
+
+    return GRPOConfig(
+        output_dir=f"./grpo-pilot-{mode}",
+        use_vllm=True,
+        vllm_mode="colocate",  # NOT "server" -- avoids older train.py vllm_server_url bug
+        max_completion_length=max_completion,
+        num_generations=4,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=2,
+        max_steps=max_steps,
+        chat_template_kwargs={"enable_thinking": False},
+        log_completions=False,  # rich-console pretty-printer can crash on non-UTF-8 consoles; keep off for jobs
+        bf16=torch.cuda.is_available(),
+        report_to=[],
+        # Don't use trainer's auto-push: with a merged-local base, the pushed
+        # adapter's base_model_name_or_path would be "./merged_base" (a broken
+        # reference). Instead we merge the GRPO adapter back out and push a
+        # standalone full model below.
+        push_to_hub=False,
+    )
+
+def push_model_to_hub(trainer, model_path, mode, base_model, max_steps, push_to):
+    from huggingface_hub import HfApi
+    from transformers import AutoTokenizer
+
+    out_dir = f"./grpo-pilot-{mode}-final"
+    model_to_save = trainer.model
+    if hasattr(model_to_save, "merge_and_unload"):
+        print("  merging GRPO LoRA into base for a standalone push ...")
+        model_to_save = model_to_save.merge_and_unload()
+    model_to_save.save_pretrained(out_dir)
+    AutoTokenizer.from_pretrained(model_path).save_pretrained(out_dir)
+    HfApi().create_repo(push_to, exist_ok=True)
+    HfApi().upload_folder(
+        folder_path=out_dir,
+        repo_id=push_to,
+        commit_message=f"GRPO pilot ({mode}) from {base_model}, {max_steps} steps",
+    )
+    print(f"pushed -> {push_to}")
+
+def main():
+    from trl import GRPOTrainer
 
     print(
         f"=== GRPO pilot: mode={MODE} base={BASE_MODEL} episodes/task={EPISODES_PER_TASK} max_steps={MAX_STEPS} ==="
@@ -267,47 +330,8 @@ def main():
     dataset = build_dataset(EPISODES_PER_TASK)
     print(f"dataset: {len(dataset)} rows")
 
-    peft_config = None
-    if MODE == "lora16":
-        from peft import LoraConfig
-
-        peft_config = LoraConfig(
-            r=16,
-            lora_alpha=32,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-            task_type="CAUSAL_LM",
-        )
-    elif MODE == "lora64":
-        from peft import LoraConfig
-
-        peft_config = LoraConfig(
-            r=64,
-            lora_alpha=128,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-            task_type="CAUSAL_LM",
-        )
-    # MODE == "full" -> peft_config stays None -> full-parameter fine-tune, matching
-    # train.py's current (unmodified) default behavior.
-
-    args = GRPOConfig(
-        output_dir=f"./grpo-pilot-{MODE}",
-        use_vllm=True,
-        vllm_mode="colocate",  # NOT "server" -- avoids older train.py vllm_server_url bug
-        max_completion_length=MAX_COMPLETION,
-        num_generations=4,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=2,
-        max_steps=MAX_STEPS,
-        chat_template_kwargs={"enable_thinking": False},
-        log_completions=False,  # rich-console pretty-printer can crash on non-UTF-8 consoles; keep off for jobs
-        bf16=torch.cuda.is_available(),
-        report_to=[],
-        # Don't use trainer's auto-push: with a merged-local base, the pushed
-        # adapter's base_model_name_or_path would be "./merged_base" (a broken
-        # reference). Instead we merge the GRPO adapter back out and push a
-        # standalone full model below.
-        push_to_hub=False,
-    )
+    peft_config = get_peft_config(MODE)
+    args = get_grpo_config(MODE, MAX_COMPLETION, MAX_STEPS)
 
     trainer = GRPOTrainer(
         model=model_path,
@@ -326,26 +350,7 @@ def main():
     )
 
     if PUSH_TO:
-        # Merge the GRPO LoRA (if any) into the base and push a standalone full
-        # model so the pushed checkpoint is directly usable (no broken adapter
-        # base reference). For MODE=full there's no adapter to merge.
-        from huggingface_hub import HfApi
-        from transformers import AutoTokenizer
-
-        out_dir = f"./grpo-pilot-{MODE}-final"
-        model_to_save = trainer.model
-        if hasattr(model_to_save, "merge_and_unload"):
-            print("  merging GRPO LoRA into base for a standalone push ...")
-            model_to_save = model_to_save.merge_and_unload()
-        model_to_save.save_pretrained(out_dir)
-        AutoTokenizer.from_pretrained(model_path).save_pretrained(out_dir)
-        HfApi().create_repo(PUSH_TO, exist_ok=True)
-        HfApi().upload_folder(
-            folder_path=out_dir,
-            repo_id=PUSH_TO,
-            commit_message=f"GRPO pilot ({MODE}) from {BASE_MODEL}, {MAX_STEPS} steps",
-        )
-        print(f"pushed -> {PUSH_TO}")
+        push_model_to_hub(trainer, model_path, MODE, BASE_MODEL, MAX_STEPS, PUSH_TO)
     else:
         print("TRAIN_PUSH_TO not set -- not pushing, pilot mechanics/timing only")
 
