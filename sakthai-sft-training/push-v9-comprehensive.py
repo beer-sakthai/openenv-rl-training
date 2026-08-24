@@ -133,5 +133,27 @@ if fixes_dir.exists():
                         repo_id="Nanthasit/sakthai-context-1.5b-tools-v2")
         print("Updated v2-tools model card")
 
+
+    # sakthai-plus 1.5b card
+    plus_card = fixes_dir / "sakthai-plus-card.md"
+    if plus_card.exists():
+        api.upload_file(path_or_fileobj=str(plus_card), path_in_repo="README.md",
+                        repo_id="Nanthasit/sakthai-plus-1.5b")
+        print("Updated sakthai-plus-1.5b model card")
+
+    # sakthai-plus-coder 1.5b card
+    plus_coder_card = fixes_dir / "sakthai-plus-coder-card.md"
+    if plus_coder_card.exists():
+        api.upload_file(path_or_fileobj=str(plus_coder_card), path_in_repo="README.md",
+                        repo_id="Nanthasit/sakthai-plus-1.5b-coder")
+        print("Updated sakthai-plus-1.5b-coder model card")
+
+    # sakthai-plus-lora 1.5b card
+    plus_lora_card = fixes_dir / "sakthai-plus-lora-card.md"
+    if plus_lora_card.exists():
+        api.upload_file(path_or_fileobj=str(plus_lora_card), path_in_repo="README.md",
+                        repo_id="Nanthasit/sakthai-plus-1.5b-lora")
+        print("Updated sakthai-plus-1.5b-lora model card")
+
 print(f"\nDone: https://huggingface.co/datasets/{repo}")
-print(f"Model cards updated: merged-v2, v2-tools")
+print(f"Model cards updated: merged-v2, v2-tools, sakthai-plus-1.5b, sakthai-plus-1.5b-coder, sakthai-plus-1.5b-lora")
