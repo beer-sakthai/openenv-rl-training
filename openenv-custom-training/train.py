@@ -116,7 +116,7 @@ def _select(args: argparse.Namespace):
     return ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL
 
 
-def main():
+def parse_args():
     env_default = os.environ.get("TRAIN_ENV")
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -185,7 +185,11 @@ def main():
         default=os.environ.get("TRAIN_PUSH_TO"),
         help="repo id to push the trained model to (optional). Env: TRAIN_PUSH_TO",
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
 
     factory, rewards, dataset_builder, default_model = _select(args)
     model = args.model or default_model
