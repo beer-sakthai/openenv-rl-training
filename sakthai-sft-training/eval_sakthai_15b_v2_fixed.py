@@ -3,8 +3,12 @@
 Loads raw test.jsonl directly (bypasses Hub metadata bug).
 No Dataset/Arrow — works on raw list of dicts.
 """
-import os, json, re, gc, time, collections, urllib.request, sys
+import json
+import re
+import time
+import urllib.request
 from collections import Counter
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 

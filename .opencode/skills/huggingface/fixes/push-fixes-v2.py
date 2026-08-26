@@ -29,7 +29,7 @@ api.upload_file(
     token=token,
 )
 
-# 3. Fix v2 tools README (still auto-generated with licence: license typo)
+# 3. Fix v2 tools README (still auto-generated with license: license typo)
 print("→ Uploading v2 tools README fix...")
 api.upload_file(
     path_or_fileobj="fixes/v2-readme.md",

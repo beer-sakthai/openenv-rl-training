@@ -3,8 +3,6 @@
 # dependencies = ["datasets", "huggingface_hub"]
 # ///
 """Push all augmented datasets to Hugging Face Hub as sakthai-combined-v8.
-Uploads as raw JSONL files (avoids pyarrow schema issues with nested tool_calls)."""
-import json, os
 from huggingface_hub import HfApi
 
 api = HfApi()

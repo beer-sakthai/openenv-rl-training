@@ -27,10 +27,8 @@ import sys
 import os
 import subprocess
 
-try:
-    import trl
-    import bitsandbytes
-except ImportError:
+import importlib.util
+if importlib.util.find_spec("trl") is None or importlib.util.find_spec("bitsandbytes") is None:
     print("Installing dependencies on Colab runtime...")
     subprocess.run([sys.executable, "-m", "pip", "install", "-qU",
                     "transformers>=4.44", "trl>=0.19,<0.20", "peft>=0.7",
