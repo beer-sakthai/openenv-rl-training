@@ -1,0 +1,19 @@
+{
+  "eval_id": 1,
+  "eval_name": "tier-b-sql-repl",
+  "prompt": "Scaffold a new env where the model has to answer analytics questions by running SQL against a small in-memory SQLite database. The env should give the model a schema description and a question in the prompt; the model uses a run_sql tool to execute queries and a submit_answer tool for the final answer. Multiple named tasks like `top_customer`, `monthly_revenue`, `stale_users`. Put it under openenv-custom-training/sql_tools/ following the agent_tools/ pattern.",
+  "assertions": [
+    {"text": "Picked Tier B (sandboxed server) — model produces SQL strings that get executed", "check": "chose_tier_b"},
+    {"text": "Three-piece split present: wrapper.py + server/sandbox_env.py + models.py + client.py under sql_tools/", "check": "three_piece_layout"},
+    {"text": "Server-side Environment subclass has SUPPORTS_CONCURRENT_SESSIONS = True as a CLASS attribute (not module-level)", "check": "concurrent_sessions_class_attr"},
+    {"text": "STEP_LIMIT (episode cap) is set", "check": "step_limit_set"},
+    {"text": "Fresh SQLite state per episode (in reset()), no cross-episode bleed", "check": "fresh_state_per_reset"},
+    {"text": "Wrapper is thin — forwards server's reward/done, does not re-judge", "check": "thin_wrapper"},
+    {"text": "Wrapper's tool methods (run_sql, submit_answer) have Google docstrings with Args: blocks", "check": "wrapper_tool_docs"},
+    {"text": "Task registry (TASKS dict) with at least top_customer, monthly_revenue, stale_users named tasks", "check": "task_registry"},
+    {"text": "Acceptance predicate evaluates the submitted answer against a pre-computed correct value", "check": "acceptance_predicate"},
+    {"text": "Dataset has a `task` column and conversational `prompt` (list of {role,content} dicts)", "check": "dataset_shape"},
+    {"text": "Module-level exports on wrapper: ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL", "check": "module_exports"},
+    {"text": "notes.md mentions recommended container flags (USER nobody, --network none, --pids-limit) and warns against a SQL blocklist", "check": "notes_security"}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "eval_id": 2,
+  "eval_name": "tier-a-json-extract-multi-env-routing",
+  "prompt": "Add a new env for extracting a specific JSON field value from a blob. The blob is passed in the prompt (like: 'given this JSON: {\"user\":{\"name\":\"alice\",\"age\":30}}, extract user.name'). Model uses a submit(value) tool. But I want this to join multi_env.py's dict-form factory alongside the existing envs, so it needs to fit that routing pattern. Reward is 1.0 iff the submitted value matches, else 0.0. No shell, no code execution.",
+  "assertions": [
+    {"text": "Picked Tier A (no server) — task doesn't execute model strings, only compares", "check": "no_server_dir"},
+    {"text": "Env class has __init__(self) with no non-self parameters", "check": "init_signature"},
+    {"text": "Env class initializes self.reward = 0.0 and self.done = False", "check": "reward_done_init"},
+    {"text": "Env has a named submit tool with Google-style docstring + Args: block", "check": "tool_docstrings"},
+    {"text": "MAX_ATTEMPTS or equivalent episode cap is set", "check": "attempt_cap"},
+    {"text": "Dataset uses the multi_env.py routing column name `environment` (not `env` or `task`) — that's the dict-form factory's convention", "check": "correct_routing_column"},
+    {"text": "reward_func returns None for episodes belonging to other envs in the batch (multi-env aggregation pattern)", "check": "multi_env_reward_none"},
+    {"text": "Dataset built deterministically with conversational prompt (list of {role,content} dicts) plus routing column plus scoring column", "check": "prompt_shape"},
+    {"text": "Module-level exports present: ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL", "check": "module_exports"},
+    {"text": "notes.md describes what to add to multi_env.py's factory dict to register the env", "check": "notes_multi_env_wiring"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "eval_id": 0,
+  "eval_name": "tier-a-word-unscramble",
+  "prompt": "I want a GRPO training env for word-unscramble. The model gets a scrambled word (like 'ranbcah' for 'branch') and has to submit the unscrambled version. There should be a hint tool that reveals one correct letter position. Cap at 6 attempts. Please add it to openenv-custom-training/ and wire it into train.py's dispatch. Use one of the SakThai tools models as the default base.",
+  "assertions": [
+    {"text": "Scaffolded env file exists under outputs/openenv-custom-training/env_*.py or similar", "check": "file"},
+    {"text": "Picked Tier A (no server) — task never executes model strings", "check": "no_server_dir"},
+    {"text": "Env class has __init__(self) with no non-self parameters", "check": "init_signature"},
+    {"text": "Env class initializes self.reward = 0.0 and self.done = False", "check": "reward_done_init"},
+    {"text": "Env class has reset(**kwargs) method", "check": "has_reset"},
+    {"text": "Every public tool method has a Google-style docstring with an Args: block", "check": "tool_docstrings"},
+    {"text": "MAX_ATTEMPTS (or equivalent cap) is set to 6 as requested", "check": "attempt_cap_6"},
+    {"text": "Module-level exports present: ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL", "check": "module_exports"},
+    {"text": "DEFAULT_MODEL is a *-tools base (NOT a *-merged trap that would break tool-calling)", "check": "default_model_tools"},
+    {"text": "reward_func signature is (environments, **kwargs) -> list[float]", "check": "reward_signature"},
+    {"text": "build_dataset produces conversational `prompt` (list of {role,content} dicts) plus a scoring-only column", "check": "prompt_shape"},
+    {"text": "Dataset is built deterministically (no random.randint calls)", "check": "deterministic_dataset"},
+    {"text": "notes.md explains tier choice and how to wire into train.py", "check": "notes_present"},
+    {"text": "validate_env.py runs cleanly (0 errors) on the generated file", "check": "validator_clean"}
+  ]
+}
