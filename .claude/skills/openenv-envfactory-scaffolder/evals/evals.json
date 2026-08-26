@@ -1,0 +1,26 @@
+{
+  "skill_name": "openenv-envfactory-scaffolder",
+  "evals": [
+    {
+      "id": 0,
+      "name": "tier-a-word-unscramble",
+      "prompt": "I want a GRPO training env for word-unscramble. The model gets a scrambled word (like 'ranbcah' for 'branch') and has to submit the unscrambled version. There should be a hint tool that reveals one correct letter position. Cap at 6 attempts. Please add it to openenv-custom-training/ and wire it into train.py's dispatch. Use one of the SakThai tools models as the default base.",
+      "expected_output": "A single new file openenv-custom-training/env_word_unscramble.py implementing a Tier A env (no server needed — the target string never gets executed). It should have __init__(self), reset(**kwargs), guess/submit + hint tools with full Google-style docstrings including Args:, MAX_ATTEMPTS=6, self.reward and self.done, deterministic dataset with conversational prompt column and scoring-only target column, reward_func(environments, **kwargs), and the four module-level exports. DEFAULT_MODEL should be a *-tools base, not *-merged.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "tier-b-sql-repl",
+      "prompt": "Scaffold a new env where the model has to answer analytics questions by running SQL against a small in-memory SQLite database. The env should give the model a schema description and a question in the prompt; the model uses a run_sql tool to execute queries and a submit_answer tool for the final answer. Multiple named tasks like `top_customer`, `monthly_revenue`, `stale_users`. Put it under openenv-custom-training/sql_tools/ following the agent_tools/ pattern.",
+      "expected_output": "A new openenv-custom-training/sql_tools/ package following the agent_tools/ three-piece split: wrapper.py (TRL-facing, thin), server/sandbox_env.py (task registry, acceptance predicates, SQL execution — MUST be sandboxed because the model's SQL string executes), models.py (Action + Observation dataclasses), client.py (HTTP shim). The class must have SUPPORTS_CONCURRENT_SESSIONS = True as a class attribute. STEP_LIMIT and output caps. Per-episode fresh SQLite file. Reward is binary, judged on submit_answer's argument matching the pre-computed correct result. Dataset has a `task` column selecting the task_key.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "tier-a-json-extract-multi-env-routing",
+      "prompt": "Add a new env for extracting a specific JSON field value from a blob. The blob is passed in the prompt (like: 'given this JSON: {\"user\":{\"name\":\"alice\",\"age\":30}}, extract user.name'). Model uses a submit(value) tool. But I want this to join multi_env.py's dict-form factory alongside the existing envs, so it needs to fit that routing pattern. Reward is 1.0 iff the submitted value matches, else 0.0. No shell, no code execution.",
+      "expected_output": "A Tier A env in openenv-custom-training/env_json_extract.py (or added to multi_env.py's dispatch). Because it joins the dict-form factory, the routing column is `environment` (TRL's convention, stripped before reset) — dataset must include this column with the right value. Named submit tool with docstring + Args, MAX_ATTEMPTS cap. reward_func returns None for episodes belonging to other envs in the multi-env batch — that's the multi-env aggregation pattern. Deterministic dataset construction, prompt is a list of dicts. Notes should say what to add to multi_env.py's factory dict so the env is picked up.",
+      "files": []
+    }
+  ]
+}
