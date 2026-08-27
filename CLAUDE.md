@@ -32,6 +32,21 @@ or a rented GPU box. This checkout has no GPU and typically no `torch`/`trl`/`da
 installed. Several READMEs say "written, not run" or "design-only"; those statements are
 accurate and must stay accurate (see *Documentation conventions*).
 
+## Related repositories
+
+Two sibling repos under `beer-sakthai`. Know which one owns what before you go looking:
+
+- **`beer-sakthai/Sak-Family-Agent`** — the agent runtime (the `sakthai` package, six
+  personas, memory store, MCP server, web API) plus its own `training/` HF Jobs
+  definitions. Its `training/sakthai-7b-lora/train.py` pushes
+  `Nanthasit/sakthai-context-7b-tools`, which is the GRPO base here. The two repos share
+  **no code** and pin incompatible dependency sets — do not cross-import, and do not
+  restate this repo's benchmark numbers over there (`FINDINGS.md` and the workspace
+  READMEs are the durable records; see *Documentation conventions*).
+- **`beer-sakthai/codeql-action`** — a fork of `github/codeql-action` carrying local
+  dependency-advisory remediation against the action's own dev-dependency tree.
+  `.github/workflows/codeql.yml` here pins **upstream**, not the fork.
+
 ## Layout
 
 | Path | What it is |

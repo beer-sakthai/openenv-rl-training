@@ -182,6 +182,21 @@ installed by design; do **not** attempt to run training here.
 The HF-Jobs workflows require `HF_TOKEN` as a repo secret + a paid HF Jobs plan.
 `train.yml` is `workflow_dispatch`-only to avoid unintentional GPU spend.
 
+## 🔗 Related repositories
+
+Three repos under [`beer-sakthai`](https://github.com/beer-sakthai) make up the SakThai
+family. This one owns the **training and evaluation** pipeline; it ships no agent runtime.
+
+| Repository | What it is | How it connects here |
+|---|---|---|
+| [`openenv-rl-training`](https://github.com/beer-sakthai/openenv-rl-training) | **This repo.** SFT (QLoRA on Qwen2.5 for tool-calling), GRPO over OpenEnv environments via TRL's `environment_factory`, the agentic-eval harness, and [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md). | — |
+| [`Sak-Family-Agent`](https://github.com/beer-sakthai/Sak-Family-Agent) | The runtime that consumes what this repo produces: the `sakthai` package, six personas, a persistent SQLite memory store, an MCP stdio server, and a web API. | Its `training/sakthai-7b-lora/train.py` pushes [`Nanthasit/sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) — the adapter this repo GRPO-trains further, and the one `FINDINGS.md` identifies as the only viable GRPO target in the family. The two repos share **no code** and pin deliberately incompatible dependency sets; keep them separate. |
+| [`codeql-action`](https://github.com/beer-sakthai/codeql-action) | A fork of [`github/codeql-action`](https://github.com/github/codeql-action) carrying local dependency-advisory remediation against the action's own dev-dependency tree. | [`codeql.yml`](.github/workflows/codeql.yml) here pins **upstream** `github/codeql-action`, not the fork. |
+
+Shared Hub assets — models, datasets, and the BrowserGym Space — live under
+[`Nanthasit`](https://huggingface.co/Nanthasit); the badges at the top of this README
+link the ones this repo produces or consumes.
+
 ## 📜 License
 
 [Apache-2.0](LICENSE), consistent with the SakThai family's published artifacts.
