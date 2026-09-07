@@ -18,6 +18,16 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: pip install lighteval torch transformers accelerate datasets
+      - name: Authenticate Hugging Face CLI
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::The HF_TOKEN repository secret is not configured or is unavailable to this workflow."
+            exit 1
+          fi
+          hf auth login --token "$HF_TOKEN" --add-to-git false
+
       - run: |
           hf jobs uv run --flavor h200 --timeout 1h \
             -e TASKS=mmlu:0,gsm8k:0,hellaswag:0,winogrande:0 \
