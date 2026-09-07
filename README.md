@@ -27,6 +27,16 @@
 [![⭐ Stars](https://img.shields.io/github/stars/beer-sakthai/openenv-rl-training?style=flat&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/stargazers)
 [![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
 
+> ## 📊 Live status — 2026-09-07
+>
+> | Area | Status | Current evidence |
+> |---|---|---|
+> | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts, CodeQL Advanced, OSSAR, and Auto Update PR Branches passed on `main` after the latest merge. |
+> | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
+> | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. |
+> | 🌿 **Branch state** | 🟡 Cleanup pending | `main` is the integration branch; a pre-existing `improve/push-all-to-hub` branch remains until the requested cleanup merge. |
+> | 🔀 **Open pull requests** | 🟢 Zero | No open pull requests are currently reported. |
+
 ### 🤗 Model & dataset badges
 
 [![🧠 sakthai-context-0.5b-tools](https://img.shields.io/badge/🤗_model-sakthai--context--0.5b--tools-orange)](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools)
@@ -79,7 +89,7 @@ environments (custom or catalog), and pushes a merged bf16 checkpoint back to th
 📄 [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) is
 the single source of truth for what has actually worked.
 
-## 📊 Status — 2026-08-22
+## 📊 Status — 2026-09-07
 
 ### 🟢 Repository hygiene
 
@@ -118,8 +128,9 @@ the single source of truth for what has actually worked.
 ### 🟡 Known open items (see `CLAUDE.md`)
 
 - 💰 **HF Jobs currently returns `402 Payment Required`** on this account —
-  the five HF-Jobs workflows will fail until this is resolved and `HF_TOKEN`
-  is added as a repo secret. `verify-contracts.yml` runs regardless.
+  authentication now succeeds, but the five HF-Jobs workflows remain blocked until
+  sufficient prepaid Hugging Face Jobs credit is available. `verify-contracts.yml`
+  and the other free CI workflows run regardless.
 - 🧪 **`coding_env` task placeholder** in both `train_multi_env.py` and
   `a2a_agent/` — substring-check for `print(17 * 23)`.
 - 🐳 **Catalog Docker image tags in `run_servers.sh`** — none verified live.
