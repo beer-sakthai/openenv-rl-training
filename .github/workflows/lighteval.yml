@@ -26,7 +26,7 @@ jobs:
             echo "::error::The HF_TOKEN repository secret is not configured or is unavailable to this workflow."
             exit 1
           fi
-          hf auth login --token "$HF_TOKEN" --add-to-git false
+          hf auth login --token "$HF_TOKEN"
 
       - run: |
           hf jobs uv run --flavor h200 --timeout 1h \
