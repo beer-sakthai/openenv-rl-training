@@ -198,6 +198,89 @@ class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
         return client
 
     async def _reset(self, episode: _Episode) -> str:
+        handler = getattr(self, f"_reset_{episode.env_name}", None)
+        if handler is None:
+            raise ValueError(episode.env_name)
+        return await handler(episode)
+
+    async def _reset_echo(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        episode.extra["secret"] = "the falcon flies at dawn"
+        return f"Reply with the exact phrase: '{episode.extra['secret']}'"
+
+    async def _reset_sudoku(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        msgs = result.observation.messages
+        return msgs[0].content if msgs else result.observation.prompt
+
+    async def _reset_coding(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        return "Write Python code that prints the result of 17 * 23, nothing else."
+
+    async def _reset_chat(self, episode: _Episode) -> str:
+        await episode.client.reset()
+        return "Say something to start the conversation."
+
+    async def _reset_atari(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_ram(result.observation)
+
+    async def _reset_openspiel(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_vec(
+            "state", result.observation.info_state, result.observation.legal_actions
+        )
+
+    async def _reset_repl(self, episode: _Episode) -> str:
+        result = await episode.client.reset(
+            context="alpha beta gamma delta", task_prompt="Count the words."
+        )
+        return result.observation.context_preview
+
+    async def _reset_sumo(self, episode: _Episode) -> str:
+        result = await episode.client.reset()
+        return self._format_vec(
+            "traffic",
+            result.observation.observation,
+            result.observation.action_mask,
+        )
+
+    async def _step(self, episode: _Episode, action) -> str:
+        handler = getattr(self, f"_step_{episode.env_name}", None)
+        if handler is None:
+            raise ValueError(episode.env_name)
+        return await handler(episode, action)
+
+    async def _step_echo(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(EchoAction(message=str(action)))
+        episode.last_reward = (
+            1.0 if result.observation.echoed_message == episode.extra["secret"] else 0.0
+        )
+        episode.done = True
+        return result.observation.echoed_message
+
+    async def _step_sudoku(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(TextArenaAction(message=str(action)))
+        episode.last_reward = result.observation.reward or 0.0
+        episode.done = result.observation.done
+        msgs = result.observation.messages
+        return msgs[-1].content if msgs else ""
+
+    async def _step_coding(self, episode: _Episode, action) -> str:
+        result = await episode.client.step(CodeAction(code=str(action)))
+        obs = result.observation
+        episode.last_reward = 1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
+        episode.done = True
+        return f"stdout: {obs.stdout}\nstderr: {obs.stderr}\nexit_code: {obs.exit_code}"
+
+    async def _step_chat(self, episode: _Episode, action) -> str:
+        tokens = _tokenizer_for_chat()(str(action), return_tensors="pt")["input_ids"][0]
+        result = await episode.client.step(ChatAction(tokens=tokens))
+        episode.last_reward = getattr(result.observation, "reward", 0.0) or 0.0
+        episode.done = result.observation.done
+        return _tokenizer_for_chat().decode(
+            result.observation.tokens, skip_special_tokens=True
+        )
         method_name = f"_reset_{episode.env_name}"
         if hasattr(self, method_name):
             return await getattr(self, method_name)(episode)
