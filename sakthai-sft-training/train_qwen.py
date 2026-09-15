@@ -4,9 +4,9 @@ from datasets import load_dataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    DataCollatorForLanguageModeling,
-    Trainer,
     TrainingArguments,
+    Trainer,
+    DataCollatorForLanguageModeling,
 )
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B"
