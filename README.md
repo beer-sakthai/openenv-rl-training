@@ -6,6 +6,7 @@
 [![🛡️ CodeQL](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml)
 [![🔎 OSSAR](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml)
 [![📦 Dependency Review](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/dependency-review.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/dependency-review.yml)
+[![🤗 HF No-Cost Checks](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml)
 [![🧹 Stale](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml)
 [![🔄 Auto Merge](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-merge.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-merge.yml)
 [![⬆️ Auto Update PRs](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml)

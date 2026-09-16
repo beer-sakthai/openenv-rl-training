@@ -1,0 +1,102 @@
+# Hugging Face control-plane checks — strictly no-cost.
+#
+# Catches the drift that silently breaks this repo between runs: an expired or
+# rotated HF_TOKEN, an `hf` CLI whose command surface has moved, and the Hub
+# account being unreachable. It is the cheap counterpart to the paid HF Jobs
+# workflows (train/eval/lighteval/mcp-bench), which cannot run at all while the
+# Jobs credit balance is empty.
+#
+# POLICY — this workflow performs ONLY:
+#   * version checks   (CLI drift)
+#   * auth checks      (token validity)
+#   * read/list checks (metadata, capped result counts)
+#
+# It must NEVER upload, delete, create repos, start Jobs, or touch Inference
+# Endpoints. Every one of those costs money or mutates Hub state, and this
+# workflow is the one that is safe to run on every pull request. Adding such a
+# step here defeats its entire purpose — put it in a `workflow_dispatch`-only
+# workflow instead, as train.yml and mcp-bench.yml do.
+#
+# `hf auth whoami` exits 1 when unauthenticated (verified against hf 1.31.0),
+# so the auth step fails fast on its own without an extra guard.
+name: HF No-Cost Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  # Weekly, so a token that expires between pull requests is caught. 07:00 UTC
+  # Monday sits between the existing 06:00 eval/lighteval and 08:00 monitor
+  # crons rather than piling onto either.
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-no-cost-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-cost-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install huggingface_hub
+        run: pip install --upgrade huggingface_hub
+
+      - name: Check CLI presence and version
+        run: |
+          set -euo pipefail
+          echo "## HF no-cost checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          VERSION="$(hf version)"
+          echo "\`hf\` reports: \`${VERSION}\`"
+          echo "- CLI: \`${VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check authentication
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::The HF_TOKEN repository secret is not configured or is unavailable to this workflow."
+            exit 1
+          fi
+          hf auth login --token "$HF_TOKEN"
+          # Exits non-zero when the token is missing, expired or revoked.
+          hf auth whoami
+          echo "- Auth: OK" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Read-only Hub listings
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_OWNER: Nanthasit
+        run: |
+          set -euo pipefail
+          echo "- Listings (read-only, capped):" >> "$GITHUB_STEP_SUMMARY"
+          for kind in models datasets spaces; do
+            echo "::group::hf ${kind} list --author ${HF_OWNER}"
+            # `|| true` on the count only: a zero-result listing is a valid
+            # answer, not a failure. A transport or auth error still fails the
+            # step through `hf` itself under `set -e`.
+            hf "${kind}" list --author "${HF_OWNER}" --limit 20 | tee "/tmp/${kind}.txt"
+            COUNT="$(grep -c . "/tmp/${kind}.txt" || true)"
+            echo "::endgroup::"
+            echo "  - ${kind}: ${COUNT} line(s) returned" >> "$GITHUB_STEP_SUMMARY"
+          done
