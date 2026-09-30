@@ -1,10 +1,10 @@
 # Training-time runtime (the GPU box only).
 # Pins verified against real packages on 2026-07-31:
-#   openenv==0.4.2  (create_app/Environment/EnvClient surfaces introspected)
+#   openenv==0.5.0  (create_app/Environment/EnvClient surfaces introspected)
 #   trl==1.13.0      (GRPOTrainer source read: environment_factory, GRPOConfig)
 # Both are experimental — if surfaces shift, re-check
 # huggingface.co/docs/openenv and huggingface.co/docs/trl/en/openenv.
-openenv==0.4.2
+openenv==0.5.0
 trl==1.13.0
 # HARD requirements for environment_factory / tools, from trl 1.9.2 source:
 #   grpo_trainer.py raises if transformers < 5.2.0 when environment_factory is
