@@ -75,8 +75,24 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${HF_TOKEN:-}" ]; then
-            echo "::error::The HF_TOKEN repository secret is not configured or is unavailable to this workflow."
-            exit 1
+            # GitHub withholds repository secrets from workflow runs triggered
+            # by Dependabot pull requests and by pull requests from forks. On
+            # those triggers HF_TOKEN can never be present, so a hard-fail
+            # here is a false red that blocks merge. Mirror the 402 soft-skip
+            # idiom in .github/scripts/hf-jobs-submit.sh: warn, write a step
+            # summary, and exit 0. The push:main and weekly cron runs still
+            # catch real token drift because secrets ARE delivered to those
+            # triggers.
+            echo "::warning::HF_TOKEN is not available to this workflow run (likely a Dependabot or fork pull request); skipping auth and Hub listings."
+            {
+              echo "- Auth: SKIPPED (HF_TOKEN unavailable to this trigger)"
+              echo ""
+              echo "## HF no-cost checks skipped"
+              echo ""
+              echo "GitHub does not deliver repository secrets to Dependabot pull requests or fork pull requests. The push:main and weekly cron runs cover drift detection."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "HF_CHECKS_SKIPPED=1" >> "$GITHUB_ENV"
+            exit 0
           fi
           hf auth login --token "$HF_TOKEN"
           # Exits non-zero when the token is missing, expired or revoked.
@@ -84,6 +100,7 @@ jobs:
           echo "- Auth: OK" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Read-only Hub listings
+        if: env.HF_CHECKS_SKIPPED != '1'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_OWNER: Nanthasit
