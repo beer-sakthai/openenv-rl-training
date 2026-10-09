@@ -27,13 +27,14 @@
 [![⭐ Stars](https://img.shields.io/github/stars/beer-sakthai/openenv-rl-training?style=flat&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/stargazers)
 [![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
 
-> ## 📊 Live status — 2026-09-16
+> ## 📊 Live status — 2026-10-09
 >
 > | Area | Status | Current evidence |
 > |---|---|---|
 > | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts now runs ruff + 38 tests (was 2 files / 4 tests); CodeQL Advanced, OSSAR and Auto Update PR Branches pass on `main`. |
 > | 🐛 **Repo-health pass** | 🟢 Landed 2026-09-16 | One unparseable file, two silent GRPO contract violations, 13 duplicated methods from a bad merge, and two eval-script NameErrors fixed. See CLAUDE.md § *Resolved 2026-09-16*. |
 > | ⚙️ **Workflow hygiene** | 🟢 Fixed | `monitor.yml` no longer fails by design every Monday; `train.yml` no longer targets a nonexistent runner label; `manual.yml` (Hello World template) deleted. |
+> | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 | 8 Dependabot PRs resolved (6 merged, 2 superseded) — bumps now on `main`: openenv 0.7.0, transformers ≥5.19.0, vllm ≥0.31.0, datasets ≥5.1.0 in `openenv-custom-training`, step-security/harden-runner 2.22.0. `hf-no-cost-checks.yml` now soft-skips (warn + exit 0) when `HF_TOKEN` is withheld, as it is from Dependabot and fork PRs by GitHub design; push:main and the weekly cron still catch real token drift. |
 > | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
 > | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. |
 > | 🧹 **Lint debt** | 🟡 Scoped out | ~115 style findings (F541/F401/F841) remain, mostly in files pinned as immutable. The gate covers bugs only — see `.ruff.toml`. |
