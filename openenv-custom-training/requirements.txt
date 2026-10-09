@@ -11,7 +11,7 @@ trl==1.14.1
 #   used, and requires `jmespath` for response parsing.
 transformers>=5.17.0
 jmespath
-datasets>=5.0.1
+datasets>=5.1.0
 # vLLM is only needed where GRPO generation runs (training box). For 2+ GPUs
 # the trl CLI (`trl vllm-serve`) is installed with trl itself.
 vllm>=0.30.0
