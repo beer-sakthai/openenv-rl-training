@@ -40,12 +40,12 @@ harness that connects the two lives in [`../sakthai-agentic-eval-train/`](../sak
 
 Cross-linked from `../sakthai-agentic-eval-train/FINDINGS.md`; do not restate numbers here.
 
-| Model | Selection | Arguments |
-|---|---|---|
-| `sakthai-context-0.5b-merged` | 91.2% | 45.7% |
-| `sakthai-context-1.5b-merged` (v1) | 48.2% | — |
-| `sakthai-context-7b-merged` | 57.0% | — |
-| `sakthai-context-1.5b-merged-v2` | ⏳ pending | ⏳ pending |
+| Model | Selection | Arguments | GRPO target? |
+|---|---|---|---|
+| `sakthai-context-0.5b-merged` | 91.2% | 45.7% | ❌ SFT-only — ~0% on hermes tasks starves GRPO of reward variance (`frac_reward_zero_std: 1`, `grad_norm: 0`). See [`FINDINGS.md`](../sakthai-agentic-eval-train/FINDINGS.md). |
+| `sakthai-context-1.5b-merged` (v1) | 48.2% | — | ⚠️ not evaluated for GRPO; easier Tier A/B tasks only. |
+| `sakthai-context-7b-merged` | 57.0% | — | ✅ only viable GRPO target in this family (3/6 agentic, reward ~0.05, `grad_norm` 0.25–0.49). |
+| `sakthai-context-1.5b-merged-v2` | ⏳ pending | ⏳ pending | — |
 
 ## Dataset + model handles on HF Hub
 
