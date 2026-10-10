@@ -26,8 +26,9 @@
 [![🔀 Pull Requests](https://img.shields.io/github/issues-pr/beer-sakthai/openenv-rl-training?label=PRs&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/pulls)
 [![⭐ Stars](https://img.shields.io/github/stars/beer-sakthai/openenv-rl-training?style=flat&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/stargazers)
 [![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
+[![📋 Known gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
-> ## 📊 Live status — 2026-10-09
+> ## 📊 Live status — 2026-10-10
 >
 > | Area | Status | Current evidence |
 > |---|---|---|
@@ -37,6 +38,7 @@
 > | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 | 8 Dependabot PRs resolved (6 merged, 2 superseded) — bumps now on `main`: openenv 0.7.0, transformers ≥5.19.0, vllm ≥0.31.0, datasets ≥5.1.0 in `openenv-custom-training`, step-security/harden-runner 2.22.0. `hf-no-cost-checks.yml` now soft-skips (warn + exit 0) when `HF_TOKEN` is withheld, as it is from Dependabot and fork PRs by GitHub design; push:main and the weekly cron still catch real token drift. |
 > | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
 > | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. |
+> | 📋 **Known-gaps index** | 🟢 Landed 2026-10-10 | 10 scattered "Known open items" from CLAUDE.md + PLAN.md consolidated into [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) with `location` / `impact` / `workaround` / `fix` / `blocker` fields. `train-sakthai-1.5b-v2.py:88` v8-load wording corrected (silent-skip, not failure); SFT benchmark table now carries an explicit **GRPO target?** column so `0.5b-tools` is marked SFT-only and `7b-tools` the only viable GRPO target. (PR [#172](https://github.com/beer-sakthai/openenv-rl-training/pull/172)) |
 > | 🧹 **Lint debt** | 🟡 Scoped out | ~115 style findings (F541/F401/F841) remain, mostly in files pinned as immutable. The gate covers bugs only — see `.ruff.toml`. |
 
 ### 🤗 Model & dataset badges
