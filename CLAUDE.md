@@ -380,6 +380,10 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
 
 ## Known open items
 
+A parseable index of these items lives at [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml);
+the prose below remains authoritative for context, but automation should read the YAML.
+When you close one, delete both.
+
 - `coding_env`'s task in both `train_multi_env.py` and `a2a_agent/` is a placeholder
   (`print(17 * 23)`) with a substring check for correctness.
 - No catalog Docker image tag in `run_servers.sh` has been verified live.
@@ -409,8 +413,12 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
 - `sakthai-combined-v8`, `v9` and `v11` do not exist on the Hub (verified 2026-09-16).
   `push-all-to-hub.py` (v8) could not have created it — it failed to parse until
   2026-09-16 — and `push-v9-comprehensive.py` (v9) was evidently never run either.
-  `train-sakthai-1.5b-v2.py:88` loads v8, so `train.yml` submits a job that fails on a
-  missing dataset; push v8 or repoint that line before spending credit on it.
+  `train-sakthai-1.5b-v2.py:88` loads v8 inside a `try/except` that prints
+  `v8 unavailable:` and continues, so `train.yml` does not fail on the miss — it just
+  silently drops the v8 augmentation shard and trains on v7 alone, which is not what the
+  script's "v2" naming implies. Push v8 (via `push-all-to-hub.py` once it is reviewed) or
+  repoint that line at an existing revision (`v10` is the latest that exists) before
+  spending credit on `train.yml`.
 - ~115 ruff style findings (F541 / F401 / F841) remain unaddressed, concentrated in
   `sakthai-sft-training/`. They are out of the lint gate on purpose; see the `.ruff.toml`
   header before widening it.
