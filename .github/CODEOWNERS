@@ -1,0 +1,8 @@
+# CODEOWNERS — review routing. See
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# This repo has one maintainer; every path routes to them. When a specialist takes
+# over a workspace, add a more-specific line ABOVE the catch-all (last match wins is
+# not how CODEOWNERS works — the LAST matching pattern wins, so order matters).
+
+*       @beer-sakthai
