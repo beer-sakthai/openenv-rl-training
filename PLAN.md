@@ -1,91 +1,70 @@
 # PLAN — SakThai end-to-end training repo
 
-**Status:** consolidation of `beer-sakthai/SakThai-Training` into this repo landed 2026-08-21.
-This file is the intent + progress record; empirical decisions live in
-[`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
+**Status:** consolidation of `beer-sakthai/SakThai-Training` into this repo landed
+2026-08-21. This file is the open-work record. Resolved work moves to
+[`CHANGELOG.md`](CHANGELOG.md); empirical decisions live in
+[`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md); the
+parseable gap index is [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 
-Active effort (2026-08-21, evening): **consolidation completion** — finish folding every
-remaining artifact of the retired repo into this one, delete `SakThai-Training` entirely
-(GitHub + local), evaluate the merged repo end-to-end, and close the hygiene follow-ups
-that a real evaluation can land today. See [`docs/CONSOLIDATION.md`](docs/CONSOLIDATION.md)
-for the full analysis (what / how / time / cost / suggestions).
+When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.md.
 
 ---
 
-## Landed 2026-08-21 (consolidation PR)
+## Open — hygiene / lint
 
-- [x] `sakthai-sft-training/` created; SFT scripts, cycle-100 augmentation, evaluators, bench harness, gap-fill data, ops tooling, and SFT Colab notebook moved in.
-- [x] `.github/workflows/` seeded from SakThai-Training (`train`, `eval`, `lighteval`, `mcp-bench`, `monitor`); paths rewritten to `sakthai-sft-training/…`.
-- [x] `.github/workflows/verify-contracts.yml` added — runs `verify_grpo_contract.py` and `test_browsergym_contract.py` on every PR.
-- [x] `train.yml` set to `workflow_dispatch`-only to avoid unintentional paid GPU spend.
-- [x] `.opencode/` (25 commands + 35 skills) lifted verbatim; no path rewrites needed.
-- [x] `SECURITY.md` and `docs/HF_HUB_IMPROVEMENTS.md` lifted; `AGENTS.md` folded into `CLAUDE.md` § "The SFT half".
-- [x] `README.md` and `CLAUDE.md` rewritten to cover both halves + document the end-to-end pipeline.
-- [x] **Bug fix:** `openenv-multi-catalog-training/train_multi_env.py:main()` `vllm_server_url` → `vllm_server_host` + `vllm_server_port`.
-- [x] **Bug fix:** `openenv-custom-training/train.py` `--env browsergym` — added `browsergym_env` dep to PEP 723 header + `requirements.txt`.
-- [x] Upstream sync: 185 commits pulled (`main` → `96580a1`), including root `requirements.txt` and unit tests under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/`.
-- [x] `.eval_results/` benchmark YAMLs preserved from SakThai-Training → moved to `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (they were tracked in the old repo but gitignored by this repo's root `.gitignore`).
+- [ ] Widen the ruff select list to the style rules (F541/F401/F841, ~115 findings).
+      Safe subset path: exclude `cycle-100-v*.py` snapshots, enable F401 + F841 only
+      (skip F541 — f-string noise is low signal), fix the remaining ~30 real findings.
+      The pinned snapshots must stay byte-identical.
+- [ ] Repoint `augmented-output/push-augmented.py` at the Hub so the committed
+      `.jsonl` payloads under `augmented-output/` and `safety-quality-fixes/` can be
+      removed. Blocked on a push to the Hub first; see `KNOWN_GAPS.yaml#committed-dataset-payloads`.
+- [ ] Translate a subset of `.opencode/skills/` into Claude Code skills
+      (`.claude/skills/*/SKILL.md`) — `cycle-workflow`, `data-augmentation`, `training`,
+      `eval`, `troubleshooting` first.
+- [ ] Audit stale publish helpers. `push-v9-comprehensive.py` was never run;
+      `push-all-to-hub.py` was broken until 2026-09-16. If v9/v11 won't be pushed,
+      mark the scripts "deprecated — see KNOWN_GAPS.yaml" or delete them.
 
-## Consolidation-completion plan (this PR + follow-ups)
+## Open — infra / dependencies
 
-### Phase 1 — Plan + PR (this PR, `claude/consolidate-final-*`)
+- [ ] **Add prepaid HF Jobs credit.** Sole blocker on the four HF-Jobs workflows:
+      `402 ... Pre-paid credit balance is insufficient`, confirmed in the 2026-09-14
+      `lighteval` job log after a successful login. See `KNOWN_GAPS.yaml#hf-jobs-402`.
+- [ ] Push `sakthai-combined-v8` (or repoint `train-sakthai-1.5b-v2.py:88` at `v10`).
+      v8/v9/v11 do not exist on the Hub; `train.yml` silently drops the v8 shard via
+      a `try/except`. See `KNOWN_GAPS.yaml#dataset-v8-missing`.
+- [ ] Redeploy `browsergym-space/` or keep the upstream default. `Nanthasit/browsergym-env`
+      returns 404; `train.py --env browsergym` now points at `openenv/browsergym_env`.
+      See `KNOWN_GAPS.yaml#browsergym-space-not-deployed`.
+- [ ] Verify a catalog Docker image tag in `openenv-multi-catalog-training/run_servers.sh`
+      live and lock it. See `KNOWN_GAPS.yaml#catalog-docker-tags-unverified`.
 
-- [x] Rewrite `PLAN.md` as the single plan record.
-- [x] Add `docs/CONSOLIDATION.md` — full analysis: What / HOW / timeline / cost / suggestions / recommendations / models / subagents / HF tools & skills.
-- [x] Open PR to `beer-sakthai/openenv-rl-training`, merge to `main` (per user instruction, plan lands before execution).
+## Open — real runs
 
-### Phase 2 — Finish consolidation (execution) — ✅ landed via PR #54
+- [ ] **Real 7B GRPO run.** Proof-of-signal was 40 steps. A real run needs hundreds of
+      steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target in
+      this family — settled in FINDINGS.md). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`;
+      push to `Nanthasit/sakthai-context-7b-tools-grpo`. See `KNOWN_GAPS.yaml#grpo-proof-run-too-short`.
+- [ ] Replace `coding_env`'s placeholder task (`print(17 * 23)`) with a real
+      coding-tool-use task. See `KNOWN_GAPS.yaml#coding-env-placeholder`.
+- [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm `TaskUpdater`
+      method names. See `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`.
+- [ ] Dispatch a single `--env browsergym` episode against `openenv/browsergym_env`
+      and compare the observation + reward against `_BrowserGymTaskEnv`'s inferred
+      assumptions. See `KNOWN_GAPS.yaml#browsergym-env-wrapper-unverified`.
 
-- [x] Preserve `sakthai-sft-training/sakthai-cycle-bench/eval_results/` (3 benchmark YAMLs from the old repo, byte-identical).
-- [x] Verify no tracked file of `beer-sakthai/SakThai-Training@master` is missing here (diff sweep: 0 gaps; `AGENTS.md` intentionally folded into `CLAUDE.md`).
-- [x] Update `CLAUDE.md` + `README.md` references from "archive" to "deleted" once the old repo is gone.
+## Open — monitoring
 
-### Phase 3 — Delete `beer-sakthai/SakThai-Training`
-
-- [x] Confirm content parity one final time (all unique tracked files preserved or superseded — diff sweep 0 gaps).
-- [x] `gh repo delete beer-sakthai/SakThai-Training --yes` — **deleted 2026-08-21**, verified via `gh repo view` (no longer resolvable).
-- [x] Local `/home/beern/SakThai-Training` archived → `/home/beern/archive/SakThai-Training` (full git history kept on disk).
-- [x] Update this PLAN.md "Landed" table + README/CLAUDE.md wording to reflect deletion.
-
-### Phase 4 — Evaluate everything (evidence gates) — ✅ all passed 2026-08-21
-
-- [x] `python3 verify_grpo_contract.py` — passes, TRL section skips when absent.
-- [x] `uv run --with datasets --with pytest pytest test_browsergym_contract.py` — 4 passed.
-- [x] `pytest` under `sakthai-agentic-eval-train/tests/` and `openenv-custom-training/tests/` — 19 passed (after making them CPU-runnable: mocked `torch`/`transformers`/`huggingface_hub`/`hermes-tool-use-rl-env` imports).
-- [x] Workflow lint: all 14 `.github/workflows/*.yml` parse clean.
-- [x] Docs consistency: no dangling references to `SakThai-Training` except historical notes.
-
-### Phase 5 — Improvements (drive from evaluation results)
-
-- [x] Add `HF_TOKEN` as a repo secret — **already done.** The 2026-09-14 `lighteval` run logs `Token is valid (permission: write)` / `Login successful`. It is *not* what blocks the HF-Jobs workflows; prepaid Jobs credit is (see below). `STEP_SECURITY_API_KEY` is likewise in place — harden-runner completes on every run.
-- [x] Fix anything evaluation surfaces — **repo-health pass landed 2026-09-16**: the
-      unparseable `push-all-to-hub.py`, both `--env browsergym` contract violations (reward
-      always 0.0, bare-string prompt), the 13 duplicated methods in `a2a_agent/`, two
-      eval-script NameErrors, a ruff bug-gate, and the 27 workspace tests no CI job ran.
-      Full list in CLAUDE.md § *Resolved 2026-09-16*.
-- [ ] Widen the ruff select list to the style rules (F541/F401/F841, ~115 findings) —
-      needs a cleanup pass on the files that are safe to edit; the `cycle-100-v*.py`
-      snapshots must not be reformatted.
-- [ ] Repoint `augmented-output/push-augmented.py` at the Hub so the committed `.jsonl`
-      payloads under `augmented-output/` and `safety-quality-fixes/` can be removed.
-- [ ] Extend `monitor.yml` or add `bench-v3-publish.yml` for weekly `sakthai-bench-v3` regeneration (depends on `HF_TOKEN`).
-- [ ] Translate a subset of `.opencode/skills/` into Claude Code skills (`.claude/skills/*/SKILL.md`) — `cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting` first. Separate PR.
+- [ ] Extend `monitor.yml` or add `bench-v3-publish.yml` for weekly `sakthai-bench-v3`
+      regeneration (depends on `HF_TOKEN`).
 
 ---
-
-## Follow-ups (not blocked on consolidation; from FINDINGS.md + hygiene list)
-
-- [ ] **Real 7B GRPO run.** Proof-of-signal was 40 steps. A real run needs hundreds of steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`; push to `Nanthasit/sakthai-context-7b-tools-grpo`.
-- [ ] **Retire `sakthai-context-0.5b-tools` as a GRPO target.** Zero reward variance → zero gradient. Mark "SFT-only" in `sakthai-sft-training/README.md`.
-- [ ] Verify a catalog Docker image tag in `openenv-multi-catalog-training/run_servers.sh` live and lock it.
-- [ ] Replace `coding_env`'s placeholder task (`print(17 * 23)`) with a real coding-tool-use task.
-- [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm `TaskUpdater` method names.
-- [ ] **Add prepaid HF Jobs credit.** This is the sole remaining blocker on the four HF-Jobs workflows: `402 ... Pre-paid credit balance is insufficient`, confirmed in the 2026-09-14 `lighteval` job log after a successful login.
-- [ ] Redeploy `browsergym-space/` or keep the upstream default. `Nanthasit/browsergym-env` returns 404 (verified 2026-09-16); `train.py --env browsergym` now points at `openenv/browsergym_env`.
-- [ ] Push `sakthai-combined-v8` (or repoint `train-sakthai-1.5b-v2.py:88`). v8/v9/v11 were never created, and `train.yml` loads v8.
 
 ### Deferred / not in scope
 
 - Adding `pyproject.toml` — CLAUDE.md is explicit this is not a package.
-- Unifying routing column names (`environment` / `env` / `task`) — deliberate divergence.
-- Renaming `sakthai_grpo_colab.ipynb` or `sakthai-agentic-eval-train/` — breaks Colab/Kaggle badges.
+- Unifying routing column names (`environment` / `env` / `task`) — deliberate divergence
+  across the three workspaces; each one is self-consistent.
+- Renaming `sakthai_grpo_colab.ipynb` or `sakthai-agentic-eval-train/` — breaks
+  Colab/Kaggle badges that point at `main`.

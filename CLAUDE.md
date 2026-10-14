@@ -74,7 +74,8 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
 | `docs/HF_HUB_IMPROVEMENTS.md`, `SECURITY.md` | 2026-07-30 Hub audit; token-hygiene checklist. |
 | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py` | CPU-only contract checks, plus the `openenv` stub that lets the two workspace test suites collect here. Together with `.ruff.toml`, the only things runnable in this checkout without HF Jobs / a GPU. |
-| `PLAN.md` | The active improvement plan; kept in sync with what has landed on `main`. |
+| `PLAN.md` | The open-work record. Resolved work moves to `CHANGELOG.md`; the parseable gap index is `docs/KNOWN_GAPS.yaml`. |
+| `CHANGELOG.md` | Landed work, newest first. One line per PR / sweep. |
 
 `.gitattributes` at the root is Hugging Face's auto-generated LFS config, merged in from
 a Space repo. Leave it alone.
