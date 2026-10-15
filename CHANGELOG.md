@@ -11,6 +11,14 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ### Changed
 
+- **`README.md` status-bar badges** — removed 5 that structurally cannot be green on
+  main: `auto-merge`, `dependency-review`, `summary` are `pull_request`-only so they
+  never run on `main` (badge reads "no status", grey, looks failed); `mcp-bench` and
+  `train` are `workflow_dispatch`-only and their only historical runs failed on HF Jobs
+  402 before `hf-jobs-submit.sh` existed (badge sticks red forever until re-dispatched,
+  which stays blocked on prepaid credit — see `KNOWN_GAPS.yaml#hf-jobs-402`). The 9
+  remaining badges (verify-contracts, codeql, ossar, hf-no-cost-checks, stale,
+  auto-update-prs, eval, lighteval, monitor) do run on `main` and reflect real health.
 - **`CLAUDE.md § Known open items`** — HF Jobs 402 bullet trimmed from a 9-line
   paragraph to one sentence pointing at
   [`.github/scripts/hf-jobs-submit.sh`](.github/scripts/hf-jobs-submit.sh). The script
