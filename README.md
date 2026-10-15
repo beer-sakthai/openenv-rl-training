@@ -1,21 +1,21 @@
 # 🚀 OpenEnv + TRL GRPO training — SakThai family
 
-<!-- 📊 Status bar — CI, security, licence, hygiene, Hub assets -->
+<!-- 📊 Status bar — CI, security, licence, hygiene, Hub assets.
+     Only workflows that actually run on `main` are badged. PR-only triggers
+     (`auto-merge`, `dependency-review`, `summary`) and `workflow_dispatch`-only
+     HF-Jobs workflows (`mcp-bench`, `train`) are deliberately omitted so the bar
+     reflects real main-branch health — see docs/KNOWN_GAPS.yaml#hf-jobs-402 for
+     why the dispatch-only ones can't go green until Jobs credit is restored. -->
 
 [![✅ Verify Contracts](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
 [![🛡️ CodeQL](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml)
 [![🔎 OSSAR](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml)
-[![📦 Dependency Review](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/dependency-review.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/dependency-review.yml)
 [![🤗 HF No-Cost Checks](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml)
 [![🧹 Stale](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml)
-[![🔄 Auto Merge](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-merge.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-merge.yml)
 [![⬆️ Auto Update PRs](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml)
 [![📊 Eval](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/eval.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/eval.yml)
 [![⚡ Lighteval](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/lighteval.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/lighteval.yml)
-[![⚖️ MCP Bench](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/mcp-bench.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/mcp-bench.yml)
 [![👀 Monitor](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/monitor.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/monitor.yml)
-[![📝 Summary](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/summary.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/summary.yml)
-[![🚂 Train](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/train.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/train.yml)
 
 [![📜 License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![🐍 Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
