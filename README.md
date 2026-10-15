@@ -28,17 +28,19 @@
 [![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
 [![📋 Known gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
-> ## 📊 Live status — 2026-10-10
+> ## 📊 Live status — 2026-10-15
 >
 > | Area | Status | Current evidence |
 > |---|---|---|
-> | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts now runs ruff + 38 tests (was 2 files / 4 tests); CodeQL Advanced, OSSAR and Auto Update PR Branches pass on `main`. |
-> | 🐛 **Repo-health pass** | 🟢 Landed 2026-09-16 | One unparseable file, two silent GRPO contract violations, 13 duplicated methods from a bad merge, and two eval-script NameErrors fixed. See CLAUDE.md § *Resolved 2026-09-16*. |
+> | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts runs ruff + 38 tests; CodeQL Advanced, OSSAR, Dependency Review, HF No-Cost Checks and Auto Update PR Branches all green on current `main` head and the daily scheduled CodeQL run. |
+> | 🐛 **Repo-health pass** | 🟢 Landed 2026-09-16 | One unparseable file, two silent GRPO contract violations, 13 duplicated methods from a bad merge, and two eval-script NameErrors fixed. See `CHANGELOG.md § 2026-09-16`. |
 > | ⚙️ **Workflow hygiene** | 🟢 Fixed | `monitor.yml` no longer fails by design every Monday; `train.yml` no longer targets a nonexistent runner label; `manual.yml` (Hello World template) deleted. |
-> | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 | 8 Dependabot PRs resolved (6 merged, 2 superseded) — bumps now on `main`: openenv 0.7.0, transformers ≥5.19.0, vllm ≥0.31.0, datasets ≥5.1.0 in `openenv-custom-training`, step-security/harden-runner 2.22.0. `hf-no-cost-checks.yml` now soft-skips (warn + exit 0) when `HF_TOKEN` is withheld, as it is from Dependabot and fork PRs by GitHub design; push:main and the weekly cron still catch real token drift. |
+> | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 → 2026-10-14 | 8 Dependabot PRs resolved on 2026-10-09; two more on 2026-10-14 bumped `github/codeql-action/init` and `/analyze` 4.38.2 → 4.38.3 together (PRs [#174](https://github.com/beer-sakthai/openenv-rl-training/pull/174) + [#176](https://github.com/beer-sakthai/openenv-rl-training/pull/176); the pair must land together or CodeQL fails on the version mismatch — it did between the merges, and self-resolved when the second landed). |
 > | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
-> | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. |
-> | 📋 **Known-gaps index** | 🟢 Landed 2026-10-10 | 10 scattered "Known open items" from CLAUDE.md + PLAN.md consolidated into [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) with `location` / `impact` / `workaround` / `fix` / `blocker` fields. `train-sakthai-1.5b-v2.py:88` v8-load wording corrected (silent-skip, not failure); SFT benchmark table now carries an explicit **GRPO target?** column so `0.5b-tools` is marked SFT-only and `7b-tools` the only viable GRPO target. (PR [#172](https://github.com/beer-sakthai/openenv-rl-training/pull/172)) |
+> | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. `.github/scripts/hf-jobs-submit.sh` reports a 402 as a skip (warning + exit 0), so none of the four HF-Jobs workflows go red for it. |
+> | 📋 **Known-gaps index** | 🟢 Landed 2026-10-10 | 10 scattered "Known open items" from CLAUDE.md + PLAN.md consolidated into [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) with `location` / `impact` / `workaround` / `fix` / `blocker` fields. SFT benchmark table carries an explicit **GRPO target?** column so `0.5b-tools` is marked SFT-only and `7b-tools` the only viable GRPO target. (PR [#172](https://github.com/beer-sakthai/openenv-rl-training/pull/172)) |
+> | 📒 **Docs split: PLAN ↔ CHANGELOG** | 🟢 Landed 2026-10-14 | `PLAN.md` trimmed to open items only (91 → 61 lines, regrouped into hygiene/infra/real-runs/monitoring with per-bullet `KNOWN_GAPS.yaml` anchors); landed work moved to new `CHANGELOG.md`. `.github/CODEOWNERS` routes every path to `@beer-sakthai`. (PR [#178](https://github.com/beer-sakthai/openenv-rl-training/pull/178)) |
+> | 🧼 **Docs trim + dead-script flag** | 🟢 Landed 2026-10-15 | CLAUDE.md's 9-line HF-Jobs-402 paragraph collapsed to a one-sentence pointer at `.github/scripts/hf-jobs-submit.sh` (the script header carries the full rationale). `sakthai-sft-training/push-v9-comprehensive.py` module docstring now flags `DEPRECATED` (never run; `sakthai-combined-v9` was never created). (PR [#179](https://github.com/beer-sakthai/openenv-rl-training/pull/179)) |
 > | 🧹 **Lint debt** | 🟡 Scoped out | ~115 style findings (F541/F401/F841) remain, mostly in files pinned as immutable. The gate covers bugs only — see `.ruff.toml`. |
 
 ### 🤗 Model & dataset badges
