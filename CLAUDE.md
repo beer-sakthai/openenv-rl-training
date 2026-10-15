@@ -392,15 +392,11 @@ When you close one, delete both.
   published SDK pattern, not a live install.
 - The 7B GRPO proof-of-signal run was 40 steps — long enough to show a gradient exists, not
   long enough to improve the model. A real run needs hundreds of steps.
-- HF Jobs returns `402 Payment Required` on this account. **Credit is the only blocker** —
-  `HF_TOKEN` IS configured as a repo secret and valid: the 2026-09-14 `lighteval` run logs
-  `Token is valid (permission: write)` and `Login successful`, then fails with
-  `402 ... Pre-paid credit balance is insufficient`. The four HF-Jobs workflows cannot
-  dispatch until credit is added, but they no longer go red for it: each routes its
-  `hf jobs` call through `.github/scripts/hf-jobs-submit.sh` (added 2026-09-18), which
-  reports a 402 as a skip — warning annotation, job summary, exit 0 — and lets every other
-  failure through untouched. A red run on one of them therefore means a real problem, not
-  an empty balance. `verify-contracts.yml` and `hf-no-cost-checks.yml` run regardless.
+- HF Jobs returns `402 Payment Required` on this account; adding prepaid Jobs credit is
+  the only blocker. The four HF-Jobs workflows no longer go red for it — they route their
+  `hf jobs` call through [`.github/scripts/hf-jobs-submit.sh`](.github/scripts/hf-jobs-submit.sh),
+  which reports 402 as a skip (warning + exit 0) and lets every other failure through.
+  `verify-contracts.yml` and `hf-no-cost-checks.yml` run regardless.
 - `--env browsergym`'s wrapper (`_BrowserGymTaskEnv` in `openenv-custom-training/train.py`)
   is **written, not run**. `BrowserGymAction(action=...)` and the observation text field
   were inferred, not checked against an installed `browsergym_env`. Confirm both before a

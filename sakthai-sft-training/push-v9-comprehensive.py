@@ -4,6 +4,14 @@
 # ///
 """
 Push v9 to HF Hub: combines all cycle data + safety/quality fixes + model card fixes.
+
+DEPRECATED — this script was never run. `Nanthasit/sakthai-combined-v9` does not exist
+on the Hub (verified 2026-09-16 via `hf stat`; still missing on later checks). See
+`docs/KNOWN_GAPS.yaml#dataset-v8-missing` — same gap covers v9 and v11. The script is
+kept for the record of what the v9 build intended, not as a runnable recipe. Before
+running it, confirm the directories it iterates (`cycle-100-output`, `gap-filled`,
+`benchmark-targeted`, `augmented-output`, `safety-quality-fixes`) still exist and that
+`sakthai-sft-training/push-all-to-hub.py` (the v8 variant) builds cleanly first.
 """
 import json, glob, os, itertools, random
 from pathlib import Path

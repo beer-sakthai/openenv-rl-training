@@ -7,6 +7,41 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ---
 
+## 2026-10-15
+
+### Changed
+
+- **`CLAUDE.md § Known open items`** — HF Jobs 402 bullet trimmed from a 9-line
+  paragraph to one sentence pointing at
+  [`.github/scripts/hf-jobs-submit.sh`](.github/scripts/hf-jobs-submit.sh). The script
+  header already carries the full "report 402 as a skip" rationale.
+- **`sakthai-sft-training/push-v9-comprehensive.py`** — module docstring now flags the
+  script as DEPRECATED (never run; `Nanthasit/sakthai-combined-v9` was never created on
+  the Hub) and points at `docs/KNOWN_GAPS.yaml#dataset-v8-missing`. Script contents
+  preserved intact as a record of what the v9 build intended.
+
+## 2026-10-14
+
+### Added
+
+- **`CHANGELOG.md`** — this file. Landed work moves out of `PLAN.md` into here, so each
+  file has one job. Covers the four landed sweeps the repo has accumulated.
+- **`.github/CODEOWNERS`** — one-liner `* @beer-sakthai` routing every path to the
+  maintainer so review-routing is explicit for the GitHub review bot and the Claude
+  Approvals integration. (PR [#178](https://github.com/beer-sakthai/openenv-rl-training/pull/178))
+
+### Changed
+
+- **`PLAN.md`** trimmed from 91 → 61 lines. Open bullets regrouped into
+  `hygiene / lint`, `infra / dependencies`, `real runs`, `monitoring`; every bullet
+  cross-references the relevant `KNOWN_GAPS.yaml` anchor. (PR #178)
+- **`CLAUDE.md` Layout table** — new `CHANGELOG.md` row; `PLAN.md` row updated to
+  describe its new "open work only" role. (PR #178)
+- CodeQL action bumped from 4.38.2 to 4.38.3 for both `init` and `analyze`
+  (PRs [#174](https://github.com/beer-sakthai/openenv-rl-training/pull/174) and
+  [#176](https://github.com/beer-sakthai/openenv-rl-training/pull/176)); the two
+  must land together or CodeQL fails on the version mismatch.
+
 ## 2026-10-10
 
 ### Added
