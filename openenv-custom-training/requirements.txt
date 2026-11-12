@@ -29,7 +29,7 @@ trl==1.16.0
 transformers>=5.22.1
 transformers>=5.20.2
 jmespath
-datasets>=5.1.0
+datasets>=5.2.0
 # vLLM is only needed where GRPO generation runs (training box). For 2+ GPUs
 # the trl CLI (`trl vllm-serve`) is installed with trl itself.
 vllm>=0.32.0
