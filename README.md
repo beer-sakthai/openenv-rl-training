@@ -28,6 +28,7 @@
 [![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
 [![📋 Known gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
+> ## 📊 Live status — 2026-10-09
 > ## 📊 Live status — 2026-10-15
 >
 > | Area | Status | Current evidence |
@@ -35,6 +36,7 @@
 > | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts runs ruff + 38 tests; CodeQL Advanced, OSSAR, Dependency Review, HF No-Cost Checks and Auto Update PR Branches all green on current `main` head and the daily scheduled CodeQL run. |
 > | 🐛 **Repo-health pass** | 🟢 Landed 2026-09-16 | One unparseable file, two silent GRPO contract violations, 13 duplicated methods from a bad merge, and two eval-script NameErrors fixed. See `CHANGELOG.md § 2026-09-16`. |
 > | ⚙️ **Workflow hygiene** | 🟢 Fixed | `monitor.yml` no longer fails by design every Monday; `train.yml` no longer targets a nonexistent runner label; `manual.yml` (Hello World template) deleted. |
+> | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 | 8 Dependabot PRs resolved (6 merged, 2 superseded) — bumps now on `main`: openenv 0.7.0, transformers ≥5.19.0, vllm ≥0.31.0, datasets ≥5.1.0 in `openenv-custom-training`, step-security/harden-runner 2.22.0. `hf-no-cost-checks.yml` now soft-skips (warn + exit 0) when `HF_TOKEN` is withheld, as it is from Dependabot and fork PRs by GitHub design; push:main and the weekly cron still catch real token drift. |
 > | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-10-09 → 2026-10-14 | 8 Dependabot PRs resolved on 2026-10-09; two more on 2026-10-14 bumped `github/codeql-action/init` and `/analyze` 4.38.2 → 4.38.3 together (PRs [#174](https://github.com/beer-sakthai/openenv-rl-training/pull/174) + [#176](https://github.com/beer-sakthai/openenv-rl-training/pull/176); the pair must land together or CodeQL fails on the version mismatch — it did between the merges, and self-resolved when the second landed). |
 > | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
 > | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. `.github/scripts/hf-jobs-submit.sh` reports a 402 as a skip (warning + exit 0), so none of the four HF-Jobs workflows go red for it. |
