@@ -74,7 +74,8 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
 | `docs/HF_HUB_IMPROVEMENTS.md`, `SECURITY.md` | 2026-07-30 Hub audit; token-hygiene checklist. |
 | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py` | CPU-only contract checks, plus the `openenv` stub that lets the two workspace test suites collect here. Together with `.ruff.toml`, the only things runnable in this checkout without HF Jobs / a GPU. |
-| `PLAN.md` | The active improvement plan; kept in sync with what has landed on `main`. |
+| `PLAN.md` | The open-work record. Resolved work moves to `CHANGELOG.md`; the parseable gap index is `docs/KNOWN_GAPS.yaml`. |
+| `CHANGELOG.md` | Landed work, newest first. One line per PR / sweep. |
 
 `.gitattributes` at the root is Hugging Face's auto-generated LFS config, merged in from
 a Space repo. Leave it alone.
@@ -380,6 +381,10 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
 
 ## Known open items
 
+A parseable index of these items lives at [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml);
+the prose below remains authoritative for context, but automation should read the YAML.
+When you close one, delete both.
+
 - `coding_env`'s task in both `train_multi_env.py` and `a2a_agent/` is a placeholder
   (`print(17 * 23)`) with a substring check for correctness.
 - No catalog Docker image tag in `run_servers.sh` has been verified live.
@@ -387,15 +392,11 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
   published SDK pattern, not a live install.
 - The 7B GRPO proof-of-signal run was 40 steps — long enough to show a gradient exists, not
   long enough to improve the model. A real run needs hundreds of steps.
-- HF Jobs returns `402 Payment Required` on this account. **Credit is the only blocker** —
-  `HF_TOKEN` IS configured as a repo secret and valid: the 2026-09-14 `lighteval` run logs
-  `Token is valid (permission: write)` and `Login successful`, then fails with
-  `402 ... Pre-paid credit balance is insufficient`. The four HF-Jobs workflows cannot
-  dispatch until credit is added, but they no longer go red for it: each routes its
-  `hf jobs` call through `.github/scripts/hf-jobs-submit.sh` (added 2026-09-18), which
-  reports a 402 as a skip — warning annotation, job summary, exit 0 — and lets every other
-  failure through untouched. A red run on one of them therefore means a real problem, not
-  an empty balance. `verify-contracts.yml` and `hf-no-cost-checks.yml` run regardless.
+- HF Jobs returns `402 Payment Required` on this account; adding prepaid Jobs credit is
+  the only blocker. The four HF-Jobs workflows no longer go red for it — they route their
+  `hf jobs` call through [`.github/scripts/hf-jobs-submit.sh`](.github/scripts/hf-jobs-submit.sh),
+  which reports 402 as a skip (warning + exit 0) and lets every other failure through.
+  `verify-contracts.yml` and `hf-no-cost-checks.yml` run regardless.
 - `--env browsergym`'s wrapper (`_BrowserGymTaskEnv` in `openenv-custom-training/train.py`)
   is **written, not run**. `BrowserGymAction(action=...)` and the observation text field
   were inferred, not checked against an installed `browsergym_env`. Confirm both before a
@@ -409,8 +410,12 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
 - `sakthai-combined-v8`, `v9` and `v11` do not exist on the Hub (verified 2026-09-16).
   `push-all-to-hub.py` (v8) could not have created it — it failed to parse until
   2026-09-16 — and `push-v9-comprehensive.py` (v9) was evidently never run either.
-  `train-sakthai-1.5b-v2.py:88` loads v8, so `train.yml` submits a job that fails on a
-  missing dataset; push v8 or repoint that line before spending credit on it.
+  `train-sakthai-1.5b-v2.py:88` loads v8 inside a `try/except` that prints
+  `v8 unavailable:` and continues, so `train.yml` does not fail on the miss — it just
+  silently drops the v8 augmentation shard and trains on v7 alone, which is not what the
+  script's "v2" naming implies. Push v8 (via `push-all-to-hub.py` once it is reviewed) or
+  repoint that line at an existing revision (`v10` is the latest that exists) before
+  spending credit on `train.yml`.
 - ~115 ruff style findings (F541 / F401 / F841) remain unaddressed, concentrated in
   `sakthai-sft-training/`. They are out of the lint gate on purpose; see the `.ruff.toml`
   header before widening it.

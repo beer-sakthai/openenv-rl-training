@@ -1,0 +1,139 @@
+# Known gaps — single parseable source of truth.
+#
+# Each entry collects a scattered "Known open item" from CLAUDE.md and PLAN.md so
+# tooling can enumerate them. Prose text in CLAUDE.md / PLAN.md stays authoritative
+# for context; this file is the index.
+#
+# Fields:
+#   id:           short slug used in commits / CI output.
+#   title:        one-line human description.
+#   location:     path(s) + line numbers where the issue lives.
+#   impact:       what breaks or wastes money if ignored.
+#   workaround:   what the code does today to tolerate it.
+#   fix:          the concrete remediation.
+#   blocker:      who/what has to act to unblock it (owner, credit, hub, …).
+#   verified_on:  ISO date of the most recent verification pass.
+#
+# When a gap closes, delete its entry and the matching prose line in CLAUDE.md
+# "Known open items". Do not leave a resolved entry here.
+
+gaps:
+  - id: dataset-v8-missing
+    title: "sakthai-combined-v8/v9/v11 not on the Hub"
+    location:
+      - "sakthai-sft-training/train-sakthai-1.5b-v2.py:88"
+      - "sakthai-sft-training/push-all-to-hub.py"
+      - "sakthai-sft-training/push-v9-comprehensive.py"
+    impact: >
+      train.yml silently drops the v8 augmentation shard; the script's "v2" naming
+      implies v8 is included. v7 alone trains.
+    workaround: "try/except around load_dataset prints 'v8 unavailable:' and continues."
+    fix: "Push v8 via push-all-to-hub.py once reviewed, or repoint line 88 at v10."
+    blocker: owner-decision
+    verified_on: "2026-09-16"
+
+  - id: committed-dataset-payloads
+    title: "augmented-output/ and safety-quality-fixes/ committed in-tree"
+    location:
+      - "augmented-output/*.jsonl (~1 MB)"
+      - "safety-quality-fixes/*.jsonl"
+      - "augmented-output/push-augmented.py"
+    impact: >
+      Violates the "datasets live on the Hub" rule. ~1 MB of jsonl in-tree.
+    workaround: "None — the files just live here."
+    fix: >
+      Push all-augmented.jsonl to a Hub dataset; repoint push-augmented.py to
+      read from the Hub; `git rm` the committed payloads in the same PR.
+    blocker: owner-decision
+    verified_on: "2026-09-16"
+
+  - id: hf-jobs-402
+    title: "HF Jobs returns 402 Payment Required"
+    location: ".github/workflows/{train,eval,lighteval,mcp-bench}.yml"
+    impact: "None of the four paid-GPU workflows can dispatch until credit lands."
+    workaround: >
+      .github/scripts/hf-jobs-submit.sh treats 402 as a skip (warning + exit 0),
+      so no job goes red for it. verify-contracts.yml + hf-no-cost-checks.yml
+      run regardless.
+    fix: "Add prepaid HF Jobs credit to the beer-sakthai Hugging Face account."
+    blocker: payment
+    verified_on: "2026-09-14"
+
+  - id: browsergym-env-wrapper-unverified
+    title: "--env browsergym wrapper written, not run against a real server"
+    location: "openenv-custom-training/train.py (_BrowserGymTaskEnv)"
+    impact: >
+      BrowserGymAction(action=...) and the observation-text field were inferred
+      from the upstream Space's OpenAPI, not from a live install. A long GRPO
+      run could silently train on wrong rewards.
+    workaround: "Contract test asserts the wrapper shape only, not live behaviour."
+    fix: >
+      Dispatch a single episode against openenv/browsergym_env and compare the
+      observation + reward against the wrapper's assumptions. Lock in a fixture.
+    blocker: hf-jobs-credit
+    verified_on: "2026-09-16"
+
+  - id: browsergym-space-not-deployed
+    title: "Nanthasit/browsergym-env returns 404"
+    location: "browsergym-space/"
+    impact: >
+      The Dockerfile and Space card are intact but the Space itself was deleted
+      at some point. --env browsergym now defaults to upstream openenv/browsergym_env.
+    workaround: "Pass --browsergym-url to override; or redeploy from browsergym-space/."
+    fix: "Redeploy browsergym-space/ to Nanthasit/browsergym-env, or decide to keep the upstream default and remove the directory."
+    blocker: owner-decision
+    verified_on: "2026-09-16"
+
+  - id: coding-env-placeholder
+    title: "coding_env task is a placeholder (print(17 * 23))"
+    location:
+      - "openenv-multi-catalog-training/train_multi_env.py"
+      - "openenv-multi-catalog-training/a2a_agent/"
+    impact: "Multi-catalog run trains on a trivially-solvable task; no real coding signal."
+    workaround: "Substring check for the expected number."
+    fix: "Pick a small real coding-tool-use task (fetch arg, modify, re-return) and swap in."
+    blocker: owner-decision
+    verified_on: "2026-09-16"
+
+  - id: a2a-sdk-method-names-unverified
+    title: "a2a_agent/ TaskUpdater method names not verified against a live SDK"
+    location: "openenv-multi-catalog-training/a2a_agent/agent_executor.py"
+    impact: "First `pip install a2a-sdk` run could fail at import or runtime."
+    workaround: "No a2a-sdk is installed in any CI job today."
+    fix: >
+      Add a smoke test that imports a2a_agent.agent_executor under a real
+      a2a-sdk install (skip when absent). Same pattern as the other contract tests.
+    blocker: dev-time
+    verified_on: "2026-09-16"
+
+  - id: catalog-docker-tags-unverified
+    title: "No catalog Docker image tag in run_servers.sh has been pulled"
+    location: "openenv-multi-catalog-training/run_servers.sh"
+    impact: "Multi-env local run could fail on a 404 image before any training starts."
+    workaround: "Script carries the tags upstream published; may have moved."
+    fix: "Pull each tag once, record SHA, pin in the script."
+    blocker: dev-time
+    verified_on: "2026-08-21"
+
+  - id: ruff-style-rules
+    title: "~115 F541/F401/F841 findings sit outside the lint gate"
+    location: ".ruff.toml, mostly in sakthai-sft-training/"
+    impact: "Not a bug — style noise. But it means the lint gate can't widen without a cleanup."
+    workaround: ".ruff.toml deliberately selects E9/F821/F811 only."
+    fix: >
+      Exclude cycle-100-v*.py snapshots (they must stay byte-identical), enable
+      F401 + F841 only (skip F541 — f-string noise is low signal), fix the remaining
+      ~30-40 real findings.
+    blocker: dev-time
+    verified_on: "2026-09-16"
+
+  - id: grpo-proof-run-too-short
+    title: "7B GRPO proof-of-signal was 40 steps"
+    location: "sakthai-agentic-eval-train/FINDINGS.md"
+    impact: "Shows a gradient exists but does not improve the model. A real run needs hundreds of steps."
+    workaround: "None — this is a planned follow-up."
+    fix: >
+      Run sakthai_grpo_colab.ipynb for 200-500 steps against
+      Nanthasit/sakthai-context-7b-tools; push to -grpo variant.
+    blocker: gpu-time
+    verified_on: "2026-08-21"
