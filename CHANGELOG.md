@@ -7,6 +7,12 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ---
 
+## 2026-11-12
+
+### Changed
+
+- **`codeql.yml` & `dependabot.yml`** — unified `github/codeql-action/init` and `github/codeql-action/analyze` to `33d7b85da1a04171e211befe2c739303b9a4c066` (`v4.39.3`), matching `upload-sarif` in `ossar.yml` and resolving the CodeQL version mismatch failure from split Dependabot PRs (#213, #214). Added `groups.github-actions` in `.github/dependabot.yml` so future GitHub Actions updates are grouped together in one PR.
+
 ## 2026-10-15
 
 ### Changed
