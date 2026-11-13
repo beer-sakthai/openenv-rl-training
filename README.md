@@ -1,236 +1,113 @@
-# 🚀 OpenEnv + TRL GRPO training — SakThai family
+# SakThai OpenEnv RL Training
 
-<!-- 📊 Status bar — CI, security, licence, hygiene, Hub assets.
-     Only workflows that actually run on `main` are badged. PR-only triggers
-     (`auto-merge`, `dependency-review`, `summary`) and `workflow_dispatch`-only
-     HF-Jobs workflows (`mcp-bench`, `train`) are deliberately omitted so the bar
-     reflects real main-branch health — see docs/KNOWN_GAPS.yaml#hf-jobs-402 for
-     why the dispatch-only ones can't go green until Jobs credit is restored. -->
+End-to-end training and evaluation pipeline for the **SakThai** agent model family (tool-calling and agentic reasoning models based on Qwen2.5).
 
-[![✅ Verify Contracts](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![🛡️ CodeQL](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml)
-[![🔎 OSSAR](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/ossar.yml)
-[![🤗 HF No-Cost Checks](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml)
-[![🧹 Stale](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/stale.yml)
-[![⬆️ Auto Update PRs](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/auto-update-prs.yml)
-[![📊 Eval](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/eval.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/eval.yml)
-[![⚡ Lighteval](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/lighteval.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/lighteval.yml)
-[![👀 Monitor](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/monitor.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/monitor.yml)
-
-[![📜 License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![🐍 Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
-[![🤗 Hugging Face](https://img.shields.io/badge/🤗-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
-[![🌿 Branch policy: main only](https://img.shields.io/badge/branch--policy-main%20only-brightgreen)](docs/branch-cleanup-2026-08-22.md)
-[![🔁 Last cleanup](https://img.shields.io/badge/last%20cleanup-2026--08--22-informational)](docs/branch-cleanup-2026-08-22.md)
-[![💬 Issues](https://img.shields.io/github/issues/beer-sakthai/openenv-rl-training?label=issues&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/issues)
-[![🔀 Pull Requests](https://img.shields.io/github/issues-pr/beer-sakthai/openenv-rl-training?label=PRs&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/pulls)
-[![⭐ Stars](https://img.shields.io/github/stars/beer-sakthai/openenv-rl-training?style=flat&logo=github)](https://github.com/beer-sakthai/openenv-rl-training/stargazers)
-[![📅 Last commit](https://img.shields.io/github/last-commit/beer-sakthai/openenv-rl-training/main?logo=git&logoColor=white)](https://github.com/beer-sakthai/openenv-rl-training/commits/main)
-[![📋 Known gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
-
-> ## 📊 Live status — 2026-11-13
->
-> | Area | Status | Current evidence |
-> |---|---|---|
-> | 🧪 **Contracts and security CI** | 🟢 Passing | Verify Contracts runs ruff + 38 tests; CodeQL Advanced, OSSAR, Dependency Review, HF No-Cost Checks and Auto Update PR Branches all green on current `main` head and the daily scheduled CodeQL run. |
-> | 🐛 **Repo-health pass** | 🟢 Landed 2026-09-16 | One unparseable file, two silent GRPO contract violations, 13 duplicated methods from a bad merge, and two eval-script NameErrors fixed. See `CHANGELOG.md § 2026-09-16`. |
-> | ⚙️ **Workflow hygiene** | 🟢 Fixed | `monitor.yml` no longer fails by design every Monday; `train.yml` no longer targets a nonexistent runner label; `manual.yml` (Hello World template) deleted. |
-> | 📦 **Dependency pass + Dependabot CI** | 🟢 Landed 2026-11-13 | CodeQL actions unified to v4.39.3 (PR [#216](https://github.com/beer-sakthai/openenv-rl-training/pull/216)); step-security/harden-runner bumped to 2.22.4 (PR [#215](https://github.com/beer-sakthai/openenv-rl-training/pull/215)); runtime requirements in `openenv-custom-training` deduplicated and bumped to openenv 0.12.0, trl 1.17.1, transformers ≥5.22.2, datasets ≥5.2.0 (PR [#224](https://github.com/beer-sakthai/openenv-rl-training/pull/224)); Dependabot grouping configured for all GitHub Actions and Pip ecosystems in `.github/dependabot.yml` to prevent split/conflicting PRs. |
-> | 🤗 **HF authentication** | 🟢 Fixed and runner-tested | Lighteval authenticated successfully with `HF_TOKEN`; the remaining failure is HF Jobs billing, not login. |
-> | 💰 **HF Jobs evaluation** | 🟡 Credit blocked | Lighteval reached Hugging Face and returned `402 Payment Required` because prepaid Jobs credit is insufficient. `.github/scripts/hf-jobs-submit.sh` reports a 402 as a skip (warning + exit 0), so none of the four HF-Jobs workflows go red for it. |
-> | 📋 **Known-gaps index** | 🟢 Landed 2026-10-10 | 10 scattered "Known open items" from CLAUDE.md + PLAN.md consolidated into [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) with `location` / `impact` / `workaround` / `fix` / `blocker` fields. SFT benchmark table carries an explicit **GRPO target?** column so `0.5b-tools` is marked SFT-only and `7b-tools` the only viable GRPO target. (PR [#172](https://github.com/beer-sakthai/openenv-rl-training/pull/172)) |
-> | 📒 **Docs split: PLAN ↔ CHANGELOG** | 🟢 Landed 2026-10-14 | `PLAN.md` trimmed to open items only (91 → 61 lines, regrouped into hygiene/infra/real-runs/monitoring with per-bullet `KNOWN_GAPS.yaml` anchors); landed work moved to new `CHANGELOG.md`. `.github/CODEOWNERS` routes every path to `@beer-sakthai`. (PR [#178](https://github.com/beer-sakthai/openenv-rl-training/pull/178)) |
-> | 🧼 **Docs trim + dead-script flag** | 🟢 Landed 2026-10-15 | CLAUDE.md's 9-line HF-Jobs-402 paragraph collapsed to a one-sentence pointer at `.github/scripts/hf-jobs-submit.sh` (the script header carries the full rationale). `sakthai-sft-training/push-v9-comprehensive.py` module docstring now flags `DEPRECATED` (never run; `sakthai-combined-v9` was never created). (PR [#179](https://github.com/beer-sakthai/openenv-rl-training/pull/179)) |
-> | 🧹 **Lint debt** | 🟡 Scoped out | ~115 style findings (F541/F401/F841) remain, mostly in files pinned as immutable. The gate covers bugs only — see `.ruff.toml`. |
-
-### 🤗 Model & dataset badges
-
-[![🧠 sakthai-context-0.5b-tools](https://img.shields.io/badge/🤗_model-sakthai--context--0.5b--tools-orange)](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools)
-[![🧠 sakthai-context-1.5b-tools](https://img.shields.io/badge/🤗_model-sakthai--context--1.5b--tools-orange)](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools)
-[![🧠 sakthai-context-7b-tools](https://img.shields.io/badge/🤗_model-sakthai--context--7b--tools-orange)](https://huggingface.co/Nanthasit/sakthai-context-7b-tools)
-[![📊 sakthai-combined-v12](https://img.shields.io/badge/🤗_dataset-sakthai--combined--v12-green)](https://huggingface.co/datasets/Nanthasit/sakthai-combined-v12)
-[![📊 sakthai-bench-v3](https://img.shields.io/badge/🤗_dataset-sakthai--bench--v3-green)](https://huggingface.co/datasets/Nanthasit/sakthai-bench-v3)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
+[![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
+[![Known Gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
 
-End-to-end training + evaluation pipeline for the **SakThai model family** — both the
-supervised half (QLoRA on Qwen2.5 for tool-calling) and the reinforcement-learning half
-(GRPO with [🤗 OpenEnv](https://github.com/huggingface/OpenEnv) and
-[TRL](https://huggingface.co/docs/trl)'s `GRPOTrainer` `environment_factory`).
+## What is this repository for?
 
-📚 Consolidated on **2026-08-21** from two repos (this one and the retired
-`beer-sakthai/SakThai-Training`, deleted; history preserved in the local archive).
-🧹 Branch-cleanup pass **2026-08-22** brought the repo to a single-branch (`main` only)
-state — see [`docs/branch-cleanup-2026-08-22.md`](docs/branch-cleanup-2026-08-22.md).
+This repository builds and aligns the machine learning models behind the SakThai agent ecosystem. It coordinates two training stages:
 
-## 📂 Layout
+1. **Supervised Fine-Tuning (SFT)** (`sakthai-sft-training/`):
+   - Fine-tunes Qwen2.5 (0.5B, 1.5B, 7B) using **QLoRA** on curated function-calling and multi-turn conversational datasets.
+   - Produces the foundation tool-calling adapter: [`Nanthasit/sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools).
 
-| 📁 Directory | 📝 What it is |
-|-----------|------------|
-| 🎓 [`sakthai-sft-training/`](sakthai-sft-training/) | **SFT half.** QLoRA training scripts (0.5B / 1.5B / 7B), 10-cycle data-augmentation loop (`cycle-100-v*.py`), cross-model / MCP-Bench / lighteval evaluators, `sakthai-cycle-bench/` (155-row BFCL harness), ops tooling (`scripts/ops/`, `scripts/eval/`), self-contained SFT Colab notebook. |
-| 🎯 [`openenv-custom-training/`](openenv-custom-training/) | **RL — custom environments.** Tier A (inline plain-Python logic, no server), Tier B (sandboxed OpenEnv server), and **BrowserGym MiniWoB++** (`--env browsergym`), plus `train.py` (single-env) and `multi_env.py` (TRL-native dict-form multi-env) runners. Default base: `Nanthasit/sakthai-context-7b-tools`. |
-| 🎮 [`openenv-multi-catalog-training/`](openenv-multi-catalog-training/) | **RL — catalog run.** Trains one small model across all 8 `openenv/*` catalog environments (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in a single GRPO run via the multi-environment pattern. |
-| 🧪 [`sakthai-agentic-eval-train/`](sakthai-agentic-eval-train/) | **The eval + train pipeline that actually ran.** As-run HF Jobs scripts + `sakthai_grpo_colab.ipynb` + `FINDINGS.md` (the durable empirical record — read this before re-litigating model choice). |
-| 🌐 [`browsergym-space/`](browsergym-space/) | **BrowserGym OpenEnv Server** — Dockerfile + Space card. ⚠️ **Not currently deployed:** `Nanthasit/browsergym-env` no longer exists (404 on `/` and `/health`, verified 2026-09-16). `train.py --env browsergym` defaults to the upstream [`openenv/browsergym_env`](https://huggingface.co/spaces/openenv/browsergym_env) instead; redeploy from this directory and pass `--browsergym-url` to use your own. |
-| 📖 [`docs/`](docs/) | Repo audit & policy docs — 2026-07-30 Hub audit, `SECURITY.md`, and the 2026-08-22 branch-cleanup record. |
-| ⚙️ [`.github/workflows/`](.github/workflows/) | 14 GitHub Actions workflows — CI (`verify-contracts`), security (`codeql`, `ossar`, `dependency-review`), hygiene (`stale`, `summary`), and 5 HF-Jobs dispatchers (`train`, `eval`, `lighteval`, `mcp-bench`, `monitor`). |
-| 🤖 [`.opencode/`](.opencode/) | 25 slash-command specs + 35 workflow skills — a path-agnostic prompt library, no code depends on it. |
+2. **Reinforcement Learning via GRPO** (`openenv-custom-training/`, `openenv-multi-catalog-training/`):
+   - Takes the 7B SFT adapter and applies **Group Relative Policy Optimization (GRPO)** using TRL and [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv).
+   - Trains agents on interactive multi-turn tasks (such as **BrowserGym MiniWoB++** for web automation and multi-domain catalog tasks).
+   - Produces final RL-aligned checkpoints: [`Nanthasit/sakthai-context-7b-tools-grpo`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo).
 
-## 🔄 End-to-end pipeline
-
-```
-              sakthai-sft-training/                sakthai-agentic-eval-train/
-              (QLoRA + augmentation)               (bench + agentic + GRPO pilot)
-                     |                                        ^
-                     v                                        |
-              Nanthasit/sakthai-context-7b-tools  ---GRPO---> Nanthasit/sakthai-context-7b-tools-grpo
-                     ^                                        |
-                     |                                        v
-              cycle-100-v*.py  <---(FINDINGS.md drives next round)---  openenv-{custom,multi-catalog}-training/
+```text
+[ Data Augmentation ] ──> [ SFT (QLoRA) ] ──> [ 7B Base Adapter ] ──> [ GRPO + OpenEnv ] ──> [ Final Checkpoint ]
+                                                                                                    │
+                                                                                                    ▼
+                                                                     Deployed to: beer-sakthai/Sak-Family-Agent
 ```
 
-The SFT half produces the base LoRA. The RL half loads that base, runs GRPO on OpenEnv
-environments (custom or catalog), and pushes a merged bf16 checkpoint back to the Hub.
-📄 [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) is
-the single source of truth for what has actually worked.
+> **Ecosystem Note**: This repository only trains and evaluates models. The end-user application (with SQLite memory, MCP servers, and persona interfaces) lives in [`beer-sakthai/Sak-Family-Agent`](https://github.com/beer-sakthai/Sak-Family-Agent).
 
-## 📊 Status — 2026-09-07
+---
 
-### 🟢 Repository hygiene
+## Published Models & Datasets
 
-- 🌿 **Branch policy: `main` only.** The 2026-08-22 cleanup pass reduced the repo from
-  `main` + 34 non-main remote branches to `main` alone. Audit trail:
-  [`docs/branch-cleanup-2026-08-22.md`](docs/branch-cleanup-2026-08-22.md).
-- 🔀 **Zero open PRs.** All 18 in-flight PRs were resolved: 12 squash-merged
-  (docs/tests/bugfixes), 7 closed unmerged (duplicates or `CLAUDE.md`-forbidden
-  workflow reintroductions).
-- 🧨 **22 orphan branch refs deleted** via a one-shot `workflow_dispatch` job
-  (`git push --delete` is blocked at the session's egress proxy).
+All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit):
 
-### 🟢 Verified contracts & CI
+| Asset | Type | Description |
+| :--- | :--- | :--- |
+| [`sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) | Model (7B LoRA) | Primary tool-calling adapter; main base target for GRPO. |
+| [`sakthai-context-1.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) | Model (1.5B LoRA) | Compact tool-calling model for lightweight environments. |
+| [`sakthai-context-0.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) | Model (0.5B LoRA) | Ultra-compact SFT model. |
+| [`sakthai-combined-v12`](https://huggingface.co/datasets/Nanthasit/sakthai-combined-v12) | Dataset | ~5k curated instruction and function-calling rows. |
+| [`sakthai-bench-v3`](https://huggingface.co/datasets/Nanthasit/sakthai-bench-v3) | Dataset | 155-row balanced function-calling benchmark suite. |
 
-- ✅ **`verify_grpo_contract.py`** — CPU-only check that drives `SimpleGuessEnv`
-  through real episodes (structural contract, a solved rollout, a rollout that
-  terminates at `MAX_ATTEMPTS`, an out-of-range guess rejected) plus the
-  `GRPOConfig` vLLM field names. Passes on `main`.
-- ✅ **`test_browsergym_contract.py`** — 11 tests, mocks `trl`, requires `datasets`.
-  Part of the 38-test CPU suite; run all three together, as CI does:
-  `uv run --with datasets --with pytest --with pydantic --with httpx pytest test_browsergym_contract.py sakthai-agentic-eval-train/tests/ openenv-custom-training/tests/`
-- 🧹 **`ruff`** (`.ruff.toml`) — narrow bug-only gate: syntax errors, undefined
-  names, redefinitions. Style rules are deliberately off; see the config header.
-- ⚙️ **`.github/workflows/verify-contracts.yml`** — runs ruff, the contract
-  script, and all 38 tests on every PR & push to `main`. Free; the only workflow
-  that runs inside GH Actions itself.
-- 🛡️ **`.github/workflows/codeql.yml`** & **`ossar.yml`** — advanced code-scanning
-  for actions & Python; weekly + on-PR.
+---
 
-### 🟢 Deployed assets
+## Repository Structure
 
-- ⚠️ **BrowserGym OpenEnv Server (`browsergym-space/`)** — **not deployed.**
-  `Nanthasit/browsergym-env` no longer exists: `hf stat` reports it missing and
-  both `/` and `/health` on `nanthasit-browsergym-env.hf.space` return 404
-  (verified twice, 2026-09-16). The Dockerfile and Space card in that directory
-  are intact, so it can be redeployed. Until then `train.py --env browsergym`
-  defaults to the upstream
-  [`openenv/browsergym_env`](https://huggingface.co/spaces/openenv/browsergym_env),
-  whose OpenEnv surface (`/reset`, `/step`, `/state`, `/schema`) was verified
-  the same day.
-- 🎯 **`train.py --env browsergym`** — BrowserGym environment factory & reward
-  extraction integrated in `openenv-custom-training/train.py`.
-- 🧠 **Target model (`Nanthasit/sakthai-context-7b-tools`)** — the primary viable
-  GRPO target (non-zero reward variance, `grad_norm` 0.25–0.49). See
-  [`FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) for why.
+Each subdirectory is an independent workspace:
 
-### 🟡 Known open items (see `CLAUDE.md`)
+- **`sakthai-sft-training/`** — SFT training scripts, 10-cycle data augmentation loop (`cycle-100-v*.py`), and benchmark evaluators.
+- **`openenv-custom-training/`** — GRPO training runners (`train.py`, `multi_env.py`) supporting BrowserGym MiniWoB++ and custom sandboxed environments.
+- **`openenv-multi-catalog-training/`** — Multi-environment GRPO runner across 8 OpenEnv catalog environments.
+- **`sakthai-agentic-eval-train/`** — Empirical evaluations, Colab notebooks, and [`FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) (empirical record).
+- **`browsergym-space/`** — Dockerfile and Space configuration for the BrowserGym OpenEnv server.
+- **`docs/`** — Architecture records, security policies, and the tracked open gap index ([`KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml)).
+- **`.github/workflows/`** — Free CI test runners (`verify-contracts.yml`, `codeql.yml`) and Hugging Face Jobs dispatchers.
 
-- 💰 **HF Jobs currently returns `402 Payment Required`** on this account —
-  authentication now succeeds, but the five HF-Jobs workflows remain blocked until
-  sufficient prepaid Hugging Face Jobs credit is available. `verify-contracts.yml`
-  and the other free CI workflows run regardless.
-- 🧪 **`coding_env` task placeholder** in both `train_multi_env.py` and
-  `a2a_agent/` — substring-check for `print(17 * 23)`.
-- 🐳 **Catalog Docker image tags in `run_servers.sh`** — none verified live.
-- 🕸️ **`a2a_agent/` never executed** — `TaskUpdater` method names were written
-  from the published SDK pattern, not a live install.
-- ⏱️ **7B GRPO proof-of-signal run was 40 steps** — long enough to show a gradient
-  exists, not long enough to improve the model. Real run needs hundreds of steps.
+---
 
-## 🚀 Launching GRPO GPU Training Jobs on HF Jobs
+## Quickstart
+
+### Local Verification (CPU)
+
+Run linting and contract test suites locally:
 
 ```bash
-# 🌐 BrowserGym MiniWoB++ RL Training on A100 GPU
-hf jobs uv run --detach --flavor a100-large --secrets HF_TOKEN --timeout 1h \
-  -e TRAIN_MODE=lora16 -e TRAIN_BASE=Nanthasit/sakthai-context-7b-tools \
-  -e TRAIN_MAX_STEPS=150 -e TRAIN_EPISODES=8 -e TRAIN_MAX_COMPLETION=1024 \
-  -e TRAIN_PUSH_TO=Nanthasit/sakthai-context-7b-tools-grpo \
-  openenv-custom-training/train.py --env browsergym --browsergym-task click-button
-```
-
-```bash
-# 📊 Agentic eval on L4 GPU
-hf jobs uv run --flavor l4x1 --secrets HF_TOKEN \
-  --env SAK_MODELS=Nanthasit/sakthai-context-7b-tools \
-  sakthai-agentic-eval-train/scripts/eval_hermes_env.py
-```
-
-For the SFT half, see 📄 [`sakthai-sft-training/README.md`](sakthai-sft-training/README.md).
-
-## ⚡ Running things locally (what actually works here)
-
-```bash
-# 🟢 Bug-only lint gate: syntax errors, undefined names, redefinitions
+# 1. Bug-only lint check (syntax, undefined names, redefinitions)
 uv run --with ruff ruff check .
 
-# 🟢 Drives SimpleGuessEnv through real episodes; skips the TRL section when trl is absent
+# 2. Verify GRPO environment contracts
 python3 verify_grpo_contract.py
 
-# 🟢 38 passed — run the three suites in ONE invocation, as CI does: they share
-#    sys.modules, and splitting them hides mock leaks between the suites.
+# 3. Run all 38 contract tests
 uv run --with datasets --with pytest --with pydantic --with httpx \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/
 ```
 
-Everything else needs a GPU box — this checkout has no `torch`/`trl`/`datasets`
-installed by design; do **not** attempt to run training here.
+### Remote GPU Training (Hugging Face Jobs)
 
-## ⚙️ CI
+Dispatch training runs directly to GPU clusters via `hf jobs`:
 
-| 🔧 Workflow | 🎯 Purpose | 🏃 When it runs | 💵 Cost |
-|---|---|---|---|
-| [`verify-contracts.yml`](.github/workflows/verify-contracts.yml) | Both CPU contract tests | Every PR + push to `main` | Free |
-| [`codeql.yml`](.github/workflows/codeql.yml) | Static analysis (Python + Actions) | PR + weekly cron | Free |
-| [`ossar.yml`](.github/workflows/ossar.yml) | Windows-based security scanners | Weekly cron | Free |
-| [`dependency-review.yml`](.github/workflows/dependency-review.yml) | PR-only vuln/license diff review | Every PR | Free |
-| [`stale.yml`](.github/workflows/stale.yml) | Issue/PR staleness reaper | Daily cron | Free |
-| [`summary.yml`](.github/workflows/summary.yml) | LLM-generated PR summary | Every PR | Free |
-| [`auto-merge.yml`](.github/workflows/auto-merge.yml) | Label-gated auto-merge (`automerge` label) | Label event | Free |
-| [`auto-update-prs.yml`](.github/workflows/auto-update-prs.yml) | Auto-updates open PR branches when `main` moves | Push to `main` | Free |
-| [`train.yml`](.github/workflows/train.yml) | Dispatch `hf jobs uv run` (GRPO) | `workflow_dispatch` | 💰 HF Jobs |
-| [`eval.yml`](.github/workflows/eval.yml) | Dispatch eval to HF Jobs | Weekly cron / dispatch | 💰 HF Jobs |
-| [`lighteval.yml`](.github/workflows/lighteval.yml) | Dispatch lighteval to HF Jobs | Weekly cron / dispatch | 💰 HF Jobs |
-| [`mcp-bench.yml`](.github/workflows/mcp-bench.yml) | Dispatch MCP-Bench to HF Jobs | `workflow_dispatch` | 💰 HF Jobs |
-| [`monitor.yml`](.github/workflows/monitor.yml) | Weekly HF Hub monitor | Weekly cron / dispatch | 💰 HF Jobs |
+```bash
+# BrowserGym MiniWoB++ GRPO Training on A100 GPU
+hf jobs uv run --detach --flavor a100-large --secrets HF_TOKEN --timeout 1h \
+  -e TRAIN_MODE=lora16 \
+  -e TRAIN_BASE=Nanthasit/sakthai-context-7b-tools \
+  -e TRAIN_MAX_STEPS=150 \
+  -e TRAIN_PUSH_TO=Nanthasit/sakthai-context-7b-tools-grpo \
+  openenv-custom-training/train.py --env browsergym --browsergym-task click-button
+```
 
-The HF-Jobs workflows require `HF_TOKEN` as a repo secret + a paid HF Jobs plan.
-`train.yml` is `workflow_dispatch`-only to avoid unintentional GPU spend.
+*For interactive experimentation, use the self-contained Colab notebook: [`sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`](sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb).*
 
-## 🔗 Related repositories
+---
 
-Three repos under [`beer-sakthai`](https://github.com/beer-sakthai) make up the SakThai
-family. This one owns the **training and evaluation** pipeline; it ships no agent runtime.
+## CI & Project Status
 
-| Repository | What it is | How it connects here |
-|---|---|---|
-| [`openenv-rl-training`](https://github.com/beer-sakthai/openenv-rl-training) | **This repo.** SFT (QLoRA on Qwen2.5 for tool-calling), GRPO over OpenEnv environments via TRL's `environment_factory`, the agentic-eval harness, and [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md). | — |
-| [`Sak-Family-Agent`](https://github.com/beer-sakthai/Sak-Family-Agent) | The runtime that consumes what this repo produces: the `sakthai` package, six personas, a persistent SQLite memory store, an MCP stdio server, and a web API. | Its `training/sakthai-7b-lora/train.py` pushes [`Nanthasit/sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) — the adapter this repo GRPO-trains further, and the one `FINDINGS.md` identifies as the only viable GRPO target in the family. The two repos share **no code** and pin deliberately incompatible dependency sets; keep them separate. |
-| [`codeql-action`](https://github.com/beer-sakthai/codeql-action) | A fork of [`github/codeql-action`](https://github.com/github/codeql-action) carrying local dependency-advisory remediation against the action's own dev-dependency tree. | [`codeql.yml`](.github/workflows/codeql.yml) here pins **upstream** `github/codeql-action`, not the fork. |
+- **CI Status**: Contract tests, CodeQL, and PR auto-updates run on every push to `main`.
+- **Known Items**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
+- **Changelog**: Historical releases and completed PRs are tracked in [`CHANGELOG.md`](CHANGELOG.md).
 
-Shared Hub assets — models, datasets, and the BrowserGym Space — live under
-[`Nanthasit`](https://huggingface.co/Nanthasit); the badges at the top of this README
-link the ones this repo produces or consumes.
+---
 
-## 📜 License
+## License
 
-[Apache-2.0](LICENSE), consistent with the SakThai family's published artifacts.
+[Apache-2.0](LICENSE)
