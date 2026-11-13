@@ -7,10 +7,11 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ---
 
-## 2026-11-12
+## 2026-11-13
 
 ### Changed
 
+- **`README.md`** — refreshed live status table date to 2026-11-13, cleaned up duplicate status headings, and consolidated the dependency pass entry to record the latest updates (PRs #215, #216, #224).
 - **`openenv-custom-training/requirements.txt` & `dependabot.yml`** — unified and deduplicated runtime requirements in `openenv-custom-training/requirements.txt`, updating `openenv==0.12.0`, `trl==1.17.1`, `transformers>=5.22.2`, and `datasets>=5.2.0`, removing historical duplicate lines caused by prior merge conflicts. Configured `groups.dependencies` for all `pip` ecosystems in `.github/dependabot.yml` to prevent duplicate/split PRs. Superseded and consolidated PRs #217-#223.
 - **`codeql.yml` & `dependabot.yml`** — unified `github/codeql-action/init` and `github/codeql-action/analyze` to `33d7b85da1a04171e211befe2c739303b9a4c066` (`v4.39.3`), matching `upload-sarif` in `ossar.yml` and resolving the CodeQL version mismatch failure from split Dependabot PRs (#213, #214). Added `groups.github-actions` in `.github/dependabot.yml` so future GitHub Actions updates are grouped together in one PR.
 
