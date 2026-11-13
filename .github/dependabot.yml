@@ -17,6 +17,10 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
 
   # Also check subdirectories that have their own requirements files
   - package-ecosystem: "pip"
@@ -26,6 +30,10 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/openenv-multi-catalog-training"
@@ -34,6 +42,10 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
 
   # NOTE: no entry for /sakthai-agentic-eval-train or /sakthai-sft-training —
   # neither has a requirements.txt. Their scripts declare dependencies in PEP
@@ -46,6 +58,10 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
 
   # GitHub Actions workflow updates
   - package-ecosystem: "github-actions"
