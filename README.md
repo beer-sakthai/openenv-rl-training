@@ -36,15 +36,25 @@ This repository builds and aligns the machine learning models behind the SakThai
 
 ## Published Models & Datasets
 
-All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit):
+All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). For detailed performance findings, see [`docs/MODELS.md`](docs/MODELS.md).
 
-| Asset | Type | Description |
-| :--- | :--- | :--- |
-| [`sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) | Model (7B LoRA) | Primary tool-calling adapter; main base target for GRPO. |
-| [`sakthai-context-1.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) | Model (1.5B LoRA) | Compact tool-calling model for lightweight environments. |
-| [`sakthai-context-0.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) | Model (0.5B LoRA) | Ultra-compact SFT model. |
-| [`sakthai-combined-v12`](https://huggingface.co/datasets/Nanthasit/sakthai-combined-v12) | Dataset | ~5k curated instruction and function-calling rows. |
-| [`sakthai-bench-v3`](https://huggingface.co/datasets/Nanthasit/sakthai-bench-v3) | Dataset | 155-row balanced function-calling benchmark suite. |
+### Model Family Matrix
+
+| Model Tier | Base Model | Role & Primary Strength | Multi-Turn Agentic | GRPO Target? |
+| :--- | :--- | :--- | :--- | :--- |
+| [`sakthai-context-0.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) | Qwen2.5-0.5B | Fast tool routing; highest single-shot selection (**91.0%**) | 0/6 (Fails) | ❌ SFT-only |
+| [`sakthai-context-1.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) | Qwen2.5-1.5B | Balanced model for consumer GPUs (Colab T4, 4–8 GB VRAM) | 0/6 (Fails) | ⚠️ Not targeted |
+| [`sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) | Qwen2.5-7B | Flagship adapter; complex multi-step reasoning & tool calling | **3/6** (Passed) | ✅ **Primary target** |
+| `sakthai-context-7b-tools-grpo` | 7B + GRPO | Production RL checkpoint aligned on OpenEnv tasks | In-loop eval | 🎯 **Final output** |
+
+### Datasets
+
+| Dataset | Type | Rows | Description |
+| :--- | :--- | :--- | :--- |
+| [`sakthai-combined-v12`](https://huggingface.co/datasets/Nanthasit/sakthai-combined-v12) | SFT Corpus | ~5,000 | Curated multi-turn instruction and tool-calling dataset. |
+| [`sakthai-bench-v3`](https://huggingface.co/datasets/Nanthasit/sakthai-bench-v3) | Evaluation | 155 | Balanced function-calling benchmark harness. |
+
+*Detailed model breakdowns, benchmark metrics, and artifact formats (LoRA, bf16 Merged, GGUF) are documented in [`docs/MODELS.md`](docs/MODELS.md).*
 
 ---
 
