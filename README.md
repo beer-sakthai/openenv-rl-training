@@ -36,9 +36,9 @@ This repository builds and aligns the machine learning models behind the SakThai
 
 ## Published Models & Datasets
 
-All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). For detailed performance findings, see [`docs/MODELS.md`](docs/MODELS.md).
+All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). Beyond the core RL tool-calling pipeline below, the ecosystem encompasses **13+ specialized models** spanning Coding, Vision, Speech, 128k Context, and Embeddings (detailed in [`docs/MODELS.md`](docs/MODELS.md)).
 
-### Model Family Matrix
+### Core Tool-Calling & RL Matrix
 
 | Model Tier | Base Model | Role & Primary Strength | Multi-Turn Agentic | GRPO Target? |
 | :--- | :--- | :--- | :--- | :--- |
@@ -54,7 +54,7 @@ All assets are available on the Hugging Face Hub under [`Nanthasit`](https://hug
 | [`sakthai-combined-v12`](https://huggingface.co/datasets/Nanthasit/sakthai-combined-v12) | SFT Corpus | ~5,000 | Curated multi-turn instruction and tool-calling dataset. |
 | [`sakthai-bench-v3`](https://huggingface.co/datasets/Nanthasit/sakthai-bench-v3) | Evaluation | 155 | Balanced function-calling benchmark harness. |
 
-*Detailed model breakdowns, benchmark metrics, and artifact formats (LoRA, bf16 Merged, GGUF) are documented in [`docs/MODELS.md`](docs/MODELS.md).*
+*The complete 13-model ecosystem catalog (including Vision, Coder, Plus, 128k Context, and TTS) is documented in [`docs/MODELS.md`](docs/MODELS.md).*
 
 ---
 
