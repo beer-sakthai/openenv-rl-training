@@ -1,6 +1,6 @@
 """Fix: push a clean version of sakthai-bench-v2 with consistent types."""
 
-import json, os, sys, urllib.request
+import json, urllib.request
 
 REPO = "Nanthasit/sakthai-bench-v2"
 JSONL_URL = "https://huggingface.co/datasets/" + REPO + "/resolve/main/data/test.jsonl"

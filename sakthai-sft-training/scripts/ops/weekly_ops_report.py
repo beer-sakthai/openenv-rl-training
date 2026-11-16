@@ -78,7 +78,6 @@ def summarize(jobs: list[dict]) -> str:
         return "No jobs in window."
 
     stage = Counter(getattr(j.status, "stage", "UNKNOWN") for j in jobs)
-    flavor = Counter(getattr(j, "flavor", "?") for j in jobs)
     gpu_seconds = defaultdict(int)
     script_stats = defaultdict(lambda: {"total": 0, "error": 0})
     wasted_gpu_sec = 0

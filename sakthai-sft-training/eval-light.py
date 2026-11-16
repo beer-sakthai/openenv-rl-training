@@ -10,7 +10,7 @@ Usage:
   uv run python eval-light.py --tasks mmlu,gsm8k       # Specific tasks
   uv run python eval-light.py --compare                # Plus vs Qwen baseline
 """
-import subprocess, sys, os
+import subprocess, sys
 
 MODEL = "Nanthasit/sakthai-plus-1.5b"
 BASELINE = "Qwen/Qwen2.5-1.5B-Instruct"

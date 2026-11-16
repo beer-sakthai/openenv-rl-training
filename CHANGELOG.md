@@ -15,16 +15,19 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 - **`openenv-custom-training/env_mcp_task.py` & `tests/test_mcp_env.py`** — MCP-backed OpenEnv environment (`SakThaiMCPEnvironment(MCPEnvironment)`) and TRL `environment_factory` wrapper (`MCPTaskEnv`, `--env mcp` in `train.py`), plus CPU contract stubs for `openenv.core.env_server.mcp_types` and `MCPEnvironment` in `conftest.py`.
 - **`openenv-custom-training/evaluate_baselines.py`** — CPU-runnable baseline policy competition (`AlwaysStay`/`AlwaysZero`, `Random`, `EpsilonGreedy`, `SmartHeuristic`) across `SimpleGuessEnv` and simulated 10×5 OpenSpiel Catch, reporting win rates, average steps, and GRPO group reward variance (`frac_reward_zero_std`).
 - **`sakthai-sft-training/train-sakthai-embedding.py`** — PEP 723 script for fine-tuning and evaluating `Nanthasit/sakthai-embedding-multilingual` with `SentenceTransformerTrainer` and `MultipleNegativesRankingLoss` on bilingual (Thai + English) tool-retrieval triplets.
+- **`openenv-multi-catalog-training/tests/test_a2a_agent.py`** — contract and lifecycle suite for `OpenEnvAgentExecutor`, testing `TaskUpdater` protocol methods (`submit`, `start_work`, `update_status`, `failed`, `cancel`), initial episode reset, `DataPart` action precedence, completion, and error rejection (closes `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`).
 
 ### Fixed
 
 - **`sakthai-agentic-eval-train/scripts/eval_bench_peft.py`** — added `_load_bench_dataset()` fallback to raw `data/test.jsonl` when `datasets.load_dataset` raises `ValueError: Feature type 'Json' not found` on Colab, with regression coverage in `test_eval_bench_peft.py`.
 - **`openenv-multi-catalog-training/train_multi_env.py` & `a2a_agent/agent_executor.py`** — fixed `_format_openspiel_obs` truncation (`info_state[:32]` → `[:64]` with active non-zero indices and multi-player `current_player_id` / `opponent_last_action` fields) so the 50-cell Catch paddle row (indices 45–49) is no longer cut off; replaced `coding_env`'s `print(17 * 23)` placeholder task with a structured invoice-parsing function task (closes `KNOWN_GAPS.yaml#coding-env-placeholder`).
 - **`sakthai-sft-training/eval-cross-model.py`** — added optional `INCLUDE_EXTERNAL_BASELINES=1` (`google/functiongemma-270m-it`) and `USE_HF_ROUTER=1` (`https://router.huggingface.co/v1`) remote inference fallback when HF Jobs returns `402 Payment Required`.
+- **`sakthai-sft-training/train-sakthai-1.5b-v2.py:88`** — repointed missing `sakthai-combined-v8` to `Nanthasit/sakthai-combined-v10` (the latest existing Hub revision), preventing silent shard drops during training (closes `KNOWN_GAPS.yaml#dataset-v8-missing`).
+- **`.ruff.toml` & style rule cleanup** — widened linter select to include `F401` (unused imports) and `F841` (unused variables) with exemptions preserving immutable `cycle-100-v*.py` snapshots and notebook cells byte-for-byte; resolved all 37 real findings across active files (closes `KNOWN_GAPS.yaml#ruff-style-rules`).
 
 ### Changed
 
-- **Documentation audit and synchronization** — updated root `README.md`, `CLAUDE.md`, `openenv-custom-training/README.md`, `openenv-multi-catalog-training/README.md`, `openenv-multi-catalog-training/a2a_agent/README.md`, and `sakthai-agentic-eval-train/README.md` to reflect the 57 passed tests, `evaluate_baselines.py`, `eval_sakthai_bench_colab.ipynb` badges/links, MCP environment integration, and upgraded invoice-parsing task definitions.
+- **Documentation audit and synchronization** — updated root `README.md`, `CLAUDE.md`, `openenv-custom-training/README.md`, `openenv-multi-catalog-training/README.md`, `openenv-multi-catalog-training/a2a_agent/README.md`, and `sakthai-agentic-eval-train/README.md` to reflect the 66 passed tests, `evaluate_baselines.py`, `eval_sakthai_bench_colab.ipynb` badges/links, MCP environment integration, and upgraded invoice-parsing task definitions.
 
 ## 2026-11-13
 

@@ -13,7 +13,6 @@ from pipeline_common import (  # noqa: E402
     parse_tool_calls,
     positive_int,
     render_prompt,
-    tools_block,
     validate_choice,
 )
 

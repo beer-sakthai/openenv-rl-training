@@ -7,8 +7,7 @@ Phase 3: Safety enhancement - create targeted safety batch
 Phase 4: Quality enhancement - create targeted quality batch
 Phase 5: Report
 """
-import json, glob, os, random
-from collections import Counter
+import json, glob, random
 from pathlib import Path
 
 random.seed(123456)

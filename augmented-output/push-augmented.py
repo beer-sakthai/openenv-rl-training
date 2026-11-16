@@ -3,9 +3,8 @@ Push augmented dataset to Hugging Face Hub.
 Usage: uv run python push-augmented.py
 Requires HF_TOKEN env var.
 """
-import os, json
+import json
 from datasets import Dataset
-from huggingface_hub import HfApi
 
 rows = []
 with open("augmented-output/all-augmented.jsonl") as f:

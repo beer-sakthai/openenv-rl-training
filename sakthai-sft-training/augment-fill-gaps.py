@@ -67,7 +67,6 @@ def gap1_pure_tc(n=100):
     exprs = ["2+2","15/100*200","sqrt(144)","sin(pi/2)","log(100)","3**3","(5+3)*2","100/3"]
     emails = [("alice@co.com","Project update","Done"),("bob@firm.com","Meeting","3pm"),
               ("carol@org.com","Report","Attached"),("dave@io.com","Question","Please review")]
-    rest_names = ["Sushi Bar","Pizza Place","Taco Stand","Noodle House"," Curry Shop"]
     reminders = ["Buy groceries","Call mom","Doctor appointment","Team standup","Submit report"]
     
     examples = []
@@ -80,7 +79,6 @@ def gap1_pure_tc(n=100):
         dt = dates[i % len(dates)]
         ex = exprs[i % len(exprs)]
         em = emails[i % len(emails)]
-        rn = rest_names[i % len(rest_names)]
         rm = reminders[i % len(reminders)]
         
         # Cycle through tool types
@@ -213,7 +211,6 @@ def gap6_multihop(n=40):
             m("assistant", tc=tc("get_stock_price", {"ticker": t}) + tc("search_web", {"query": f"{t} analyst opinion 2026"}))],
             "tools": subs(["get_stock_price","search_web","get_news"])})
         # book flight → check weather at destination
-        c2 = cities[(i+2) % len(cities)]
         examples.append({"messages": [m("user", f"Book to {c} from BKK and check weather there"),
             m("assistant", tc=tc("book_flight", {"origin": "BKK", "destination": c, "date": "2026-10-01"}) + tc("get_weather", {"location": c}))],
             "tools": subs(["book_flight","get_weather","get_restaurant_info"])})

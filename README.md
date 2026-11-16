@@ -6,7 +6,7 @@ End-to-end training and evaluation pipeline for the **SakThai** agent model fami
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Known Gaps](https://img.shields.io/badge/known%20gaps-9%20tracked-blue)](docs/KNOWN_GAPS.yaml)
+[![Known Gaps](https://img.shields.io/badge/known%20gaps-6%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
 
@@ -80,17 +80,18 @@ Each subdirectory is an independent workspace:
 Run linting, contract test suites, and heuristic baseline checks locally:
 
 ```bash
-# 1. Bug-only lint check (syntax, undefined names, redefinitions)
+# 1. Lint check (syntax, undefined names, redefinitions, unused imports/variables)
 uv run --with ruff ruff check .
 
 # 2. Verify GRPO environment contracts
-python3 verify_grpo_contract.py
+uv run --with datasets python3 verify_grpo_contract.py
 
-# 3. Run all contract and agent tests (57 passed in single invocation)
-uv run --with datasets --with pytest --with pydantic --with httpx \
+# 3. Run all contract and agent tests (66 passed in single invocation)
+uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
-         openenv-custom-training/tests/
+         openenv-custom-training/tests/ \
+         openenv-multi-catalog-training/tests/
 
 # 4. Run CPU heuristic baseline competition & GRPO reward-variance check
 uv run --with datasets --with pydantic python3 openenv-custom-training/evaluate_baselines.py

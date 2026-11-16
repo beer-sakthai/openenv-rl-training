@@ -21,16 +21,16 @@ with `python <script>.py`, `uv run`, or `hf jobs uv run`. The root `requirements
 `verify-contracts.yml` installs (datasets, httpx, pydantic, pytest, ruff); its own header
 explains why unifying the workspaces' pinsets there does not resolve.
 
-There **is** a linter config (`.ruff.toml`) as of 2026-09-16, but a deliberately narrow one:
-E9, F821 and F811 only — syntax errors, undefined names, redefinitions. Style rules stay off
-because ~115 pre-existing F541/F401/F841 hits sit mostly in files that must not be touched
-(the `cycle-100-v*.py` snapshots). Do not widen the select list without doing the cleanup
-first, and never by reformatting a pinned snapshot.
+There **is** a linter config (`.ruff.toml`), selecting E9, F821, F811, F401, and F841:
+syntax errors, undefined names, redefinitions, and unused imports/variables. The immutable
+`cycle-100-v*.py` snapshots and notebook cells are exempted via `[lint.per-file-ignores]`
+to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
-`verify_grpo_contract.py`, and 57 pytest tests across the root contract file and both
-workspace suites; `benchmark-evaluation-manager-agent.yml` runs the evaluation manager
-agent rubric benchmark and regression tests on every push. Four workflows dispatch
+`verify_grpo_contract.py` (with datasets), and 66 pytest tests across the root contract file
+and all three workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
+and `openenv-multi-catalog-training/tests/`); `benchmark-evaluation-manager-agent.yml` runs the
+evaluation manager agent rubric benchmark and regression tests on every push. Four workflows dispatch
 `hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret (`train`, `eval`,
 `lighteval`, `mcp-bench`); `monitor.yml` does not dispatch anything — it reads the Hub API
 and writes a job summary.
@@ -86,18 +86,19 @@ a Space repo. Leave it alone.
 ## Running things locally (what actually works here)
 
 ```bash
-uv run --with ruff ruff check .          # E9 / F821 / F811 only; clean tree
-python3 verify_grpo_contract.py          # drives SimpleGuessEnv; skips TRL when absent
-uv run --with datasets --with pytest --with pydantic --with httpx \
+uv run --with ruff ruff check .          # E9 / F821 / F811 / F401 / F841; clean tree
+uv run --with datasets python3 verify_grpo_contract.py  # drives SimpleGuessEnv
+uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
-         openenv-custom-training/tests/    # 57 passed
+         openenv-custom-training/tests/ \
+         openenv-multi-catalog-training/tests/    # 66 passed
 uv run --with datasets --with pydantic \
   python3 openenv-custom-training/evaluate_baselines.py  # CPU baseline competition
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 ```
 
-Run the three suites in **one** pytest invocation, as CI does. They share `sys.modules`, and
+Run the four suites in **one** pytest invocation, as CI does. They share `sys.modules`, and
 splitting them hides mock leaks between them — `test_eval_hermes_env.py` leaving a MagicMock
 at `sys.modules["torch"]` broke `Dataset` construction in the browsergym file, and only
 showed up once they ran together.
@@ -394,8 +395,6 @@ the prose below remains authoritative for context, but automation should read th
 When you close one, delete both.
 
 - No catalog Docker image tag in `run_servers.sh` has been verified live.
-- `a2a_agent/` has never been executed; the `TaskUpdater` method names were written from the
-  published SDK pattern, not a live install.
 - The 7B GRPO proof-of-signal run was 40 steps — long enough to show a gradient exists, not
   long enough to improve the model. A real run needs hundreds of steps.
 - HF Jobs returns `402 Payment Required` on this account; adding prepaid Jobs credit is
@@ -413,21 +412,18 @@ When you close one, delete both.
   `safety-quality-fixes/`, against the "datasets live on the Hub, not in the repo" rule
   below. `augmented-output/push-augmented.py` reads `all-augmented.jsonl` from there, so
   removing them is not a pure deletion — it needs that script repointed at the Hub first.
-- `sakthai-combined-v8`, `v9` and `v11` do not exist on the Hub (verified 2026-09-16).
-  `push-all-to-hub.py` (v8) could not have created it — it failed to parse until
-  2026-09-16 — and `push-v9-comprehensive.py` (v9) was evidently never run either.
-  `train-sakthai-1.5b-v2.py:88` loads v8 inside a `try/except` that prints
-  `v8 unavailable:` and continues, so `train.yml` does not fail on the miss — it just
-  silently drops the v8 augmentation shard and trains on v7 alone, which is not what the
-  script's "v2" naming implies. Push v8 (via `push-all-to-hub.py` once it is reviewed) or
-  repoint that line at an existing revision (`v10` is the latest that exists) before
-  spending credit on `train.yml`.
-- ~115 ruff style findings (F541 / F401 / F841) remain unaddressed, concentrated in
-  `sakthai-sft-training/`. They are out of the lint gate on purpose; see the `.ruff.toml`
-  header before widening it.
 
-**Resolved 2026-11-16** (Colab Drive notebooks & OpenEnv improvements, PR #232):
+**Resolved 2026-11-16** (Colab Drive notebooks, A2A tests, ruff widening & dataset repointing, PRs #232, #234):
 
+- ~~`a2a_agent/ TaskUpdater method names not verified against a live SDK`~~ → added
+  `openenv-multi-catalog-training/tests/test_a2a_agent.py` covering task submission,
+  environment dispatch, action extraction (`DataPart` vs user text), completion, cancellation,
+  and error rejection with lightweight A2A stubs in `conftest.py` (9 tests passing).
+- ~~`sakthai-combined-v8/v9/v11 not on the Hub`~~ → repointed `train-sakthai-1.5b-v2.py:88`
+  to `Nanthasit/sakthai-combined-v10` (the latest existing Hub revision).
+- ~~`~115 F541/F401/F841 findings sit outside the lint gate`~~ → `.ruff.toml` now selects
+  `F401` and `F841` across all workspaces with `[lint.per-file-ignores]` keeping
+  `cycle-100-v*.py` snapshots byte-identical; all 37 real findings in active files cleaned up.
 - ~~`eval_bench_peft.py` crashed on Colab with `ValueError: Feature type 'Json' not found`~~ →
   `_load_bench_dataset()` falls back to raw `data/test.jsonl`, and
   `sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb` evaluates both `-merged` and

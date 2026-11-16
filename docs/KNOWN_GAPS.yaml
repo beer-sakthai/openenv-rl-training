@@ -18,20 +18,6 @@
 # "Known open items". Do not leave a resolved entry here.
 
 gaps:
-  - id: dataset-v8-missing
-    title: "sakthai-combined-v8/v9/v11 not on the Hub"
-    location:
-      - "sakthai-sft-training/train-sakthai-1.5b-v2.py:88"
-      - "sakthai-sft-training/push-all-to-hub.py"
-      - "sakthai-sft-training/push-v9-comprehensive.py"
-    impact: >
-      train.yml silently drops the v8 augmentation shard; the script's "v2" naming
-      implies v8 is included. v7 alone trains.
-    workaround: "try/except around load_dataset prints 'v8 unavailable:' and continues."
-    fix: "Push v8 via push-all-to-hub.py once reviewed, or repoint line 88 at v10."
-    blocker: owner-decision
-    verified_on: "2026-09-16"
-
   - id: committed-dataset-payloads
     title: "augmented-output/ and safety-quality-fixes/ committed in-tree"
     location:
@@ -84,17 +70,6 @@ gaps:
     blocker: owner-decision
     verified_on: "2026-09-16"
 
-  - id: a2a-sdk-method-names-unverified
-    title: "a2a_agent/ TaskUpdater method names not verified against a live SDK"
-    location: "openenv-multi-catalog-training/a2a_agent/agent_executor.py"
-    impact: "First `pip install a2a-sdk` run could fail at import or runtime."
-    workaround: "No a2a-sdk is installed in any CI job today."
-    fix: >
-      Add a smoke test that imports a2a_agent.agent_executor under a real
-      a2a-sdk install (skip when absent). Same pattern as the other contract tests.
-    blocker: dev-time
-    verified_on: "2026-09-16"
-
   - id: catalog-docker-tags-unverified
     title: "No catalog Docker image tag in run_servers.sh has been pulled"
     location: "openenv-multi-catalog-training/run_servers.sh"
@@ -103,18 +78,6 @@ gaps:
     fix: "Pull each tag once, record SHA, pin in the script."
     blocker: dev-time
     verified_on: "2026-08-21"
-
-  - id: ruff-style-rules
-    title: "~115 F541/F401/F841 findings sit outside the lint gate"
-    location: ".ruff.toml, mostly in sakthai-sft-training/"
-    impact: "Not a bug — style noise. But it means the lint gate can't widen without a cleanup."
-    workaround: ".ruff.toml deliberately selects E9/F821/F811 only."
-    fix: >
-      Exclude cycle-100-v*.py snapshots (they must stay byte-identical), enable
-      F401 + F841 only (skip F541 — f-string noise is low signal), fix the remaining
-      ~30-40 real findings.
-    blocker: dev-time
-    verified_on: "2026-09-16"
 
   - id: grpo-proof-run-too-short
     title: "7B GRPO proof-of-signal was 40 steps"

@@ -12,10 +12,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
 
 ## Open — hygiene / lint
 
-- [ ] Widen the ruff select list to the style rules (F541/F401/F841, ~115 findings).
-      Safe subset path: exclude `cycle-100-v*.py` snapshots, enable F401 + F841 only
-      (skip F541 — f-string noise is low signal), fix the remaining ~30 real findings.
-      The pinned snapshots must stay byte-identical.
 - [ ] Repoint `augmented-output/push-augmented.py` at the Hub so the committed
       `.jsonl` payloads under `augmented-output/` and `safety-quality-fixes/` can be
       removed. Blocked on a push to the Hub first; see `KNOWN_GAPS.yaml#committed-dataset-payloads`.
@@ -31,9 +27,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
 - [ ] **Add prepaid HF Jobs credit.** Sole blocker on the four HF-Jobs workflows:
       `402 ... Pre-paid credit balance is insufficient`, confirmed in the 2026-09-14
       `lighteval` job log after a successful login. See `KNOWN_GAPS.yaml#hf-jobs-402`.
-- [ ] Push `sakthai-combined-v8` (or repoint `train-sakthai-1.5b-v2.py:88` at `v10`).
-      v8/v9/v11 do not exist on the Hub; `train.yml` silently drops the v8 shard via
-      a `try/except`. See `KNOWN_GAPS.yaml#dataset-v8-missing`.
 - [ ] Redeploy `browsergym-space/` or keep the upstream default. `Nanthasit/browsergym-env`
       returns 404; `train.py --env browsergym` now points at `openenv/browsergym_env`.
       See `KNOWN_GAPS.yaml#browsergym-space-not-deployed`.
@@ -46,8 +39,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
       steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target in
       this family — settled in FINDINGS.md). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`;
       push to `Nanthasit/sakthai-context-7b-tools-grpo`. See `KNOWN_GAPS.yaml#grpo-proof-run-too-short`.
-- [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm `TaskUpdater`
-      method names. See `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`.
 - [ ] Dispatch a single `--env browsergym` episode against `openenv/browsergym_env`
       and compare the observation + reward against `_BrowserGymTaskEnv`'s inferred
       assumptions. See `KNOWN_GAPS.yaml#browsergym-env-wrapper-unverified`.
