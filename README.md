@@ -6,7 +6,7 @@ End-to-end training and evaluation pipeline for the **SakThai** agent model fami
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Known Gaps](https://img.shields.io/badge/known%20gaps-10%20tracked-blue)](docs/KNOWN_GAPS.yaml)
+[![Known Gaps](https://img.shields.io/badge/known%20gaps-9%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
 

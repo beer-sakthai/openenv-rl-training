@@ -19,6 +19,8 @@ it there.
 
 ```
 env_simple_task.py        Tier A: SimpleGuessEnv + reward + dataset (inline, no server)
+env_mcp_task.py           OpenEnv MCP: SakThaiMCPEnvironment(MCPEnvironment) + MCPTaskEnv wrapper
+evaluate_baselines.py     CPU policy competition & GRPO frac_reward_zero_std sanity check
 agent_tools/              Tier B: sandboxed OpenEnv server + client + TRL wrapper
   models.py               Action/Observation (Pydantic)
   server/sandbox_env.py   the actual terminal task logic, runs INSIDE the sandbox
@@ -26,7 +28,7 @@ agent_tools/              Tier B: sandboxed OpenEnv server + client + TRL wrappe
   client.py               EnvClient subclass the wrapper talks to
   wrapper.py              the TRL-facing class passed to environment_factory
   README.md               openenv init / build / run instructions
-train.py                  entrypoint: --env {simple,agent_tools}, configurable model & vLLM mode
+train.py                  entrypoint: --env {simple,agent_tools,mcp,browsergym}, configurable model & vLLM mode
 multi_env.py              Tier A + Tier B combined, TRL-native dict form
                           (environment_factory={"guess": ..., "agent_tools": ...})
 requirements.txt          pinned deps (written against openenv 0.4.1 / trl 1.9.2)

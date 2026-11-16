@@ -201,9 +201,29 @@ def classify_arg_errors(gold_calls, pred):
 # cheap and side-effect free for CPU-only tests.
 ROWS = []
 
+
+def _load_bench_dataset(bench_repo=None):
+    """Load benchmark rows via datasets.load_dataset, falling back to raw JSONL
+    when Hub dataset card metadata triggers `ValueError: Feature type 'Json' not found`.
+    """
+    repo = bench_repo or BENCH
+    try:
+        return load_dataset(repo, split="test")
+    except ValueError as exc:
+        if "Feature type" not in str(exc) and "Json" not in str(exc):
+            raise
+        import urllib.request
+
+        url = f"https://huggingface.co/datasets/{repo}/resolve/main/data/test.jsonl"
+        print(f"  load_dataset schema failed ({exc}); falling back to raw JSONL: {url}")
+        with urllib.request.urlopen(url, timeout=30) as resp:
+            raw_lines = resp.read().decode("utf-8").strip().splitlines()
+        return [json.loads(line) for line in raw_lines if line.strip()]
+
+
 def load_rows():
     global ROWS
-    test = load_dataset(BENCH, split="test")
+    test = _load_bench_dataset(BENCH)
     rows = []
     for ex in test:
         index = ex.get("turn_index")

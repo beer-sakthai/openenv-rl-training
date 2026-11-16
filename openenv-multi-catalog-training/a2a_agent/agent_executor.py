@@ -236,12 +236,19 @@ class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
 
     async def _reset_coding(self, episode: _Episode) -> str:
         await episode.client.reset()
-        return "Write Python code that prints the result of 17 * 23, nothing else."
+        return (
+            "Write a Python function `parse_and_sum_amounts(records: list[str]) -> int` that "
+            "extracts the integer THB amount after 'THB:' in each string (ignoring lines marked "
+            "'VOID'), then run it on `['INV-1 THB:1250', 'INV-2 VOID THB:900', 'INV-3 THB:3400', "
+            "'INV-4 THB:770']` and print `RESULT:<sum>:<valid_count>` (nothing else)."
+        )
 
     async def _step_coding(self, episode: _Episode, action) -> str:
         result = await episode.client.step(CodeAction(code=str(action)))
         obs = result.observation
-        episode.last_reward = 1.0 if obs.exit_code == 0 and "391" in obs.stdout else 0.0
+        episode.last_reward = (
+            1.0 if obs.exit_code == 0 and "RESULT:5420:3" in obs.stdout else 0.0
+        )
         episode.done = True
         return f"stdout: {obs.stdout}\nstderr: {obs.stderr}\nexit_code: {obs.exit_code}"
 
@@ -276,18 +283,23 @@ class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
     async def _reset_openspiel(self, episode: _Episode) -> str:
         result = await episode.client.reset()
         return self._format_vec(
-            "state", result.observation.info_state, result.observation.legal_actions
+            "state", result.observation.info_state, result.observation.legal_actions, limit=64
         )
 
     async def _step_openspiel(self, episode: _Episode, action) -> str:
         action_id = (
             int(action["action_id"]) if isinstance(action, dict) else int(action)
         )
-        result = await episode.client.step(OpenSpielAction(action_id=action_id))
+        game_name = (
+            str(action.get("game_name", "catch")) if isinstance(action, dict) else "catch"
+        )
+        result = await episode.client.step(
+            OpenSpielAction(action_id=action_id, game_name=game_name)
+        )
         episode.last_reward = result.observation.reward or 0.0
         episode.done = result.observation.done
         return self._format_vec(
-            "state", result.observation.info_state, result.observation.legal_actions
+            "state", result.observation.info_state, result.observation.legal_actions, limit=64
         )
 
     async def _reset_repl(self, episode: _Episode) -> str:
@@ -335,6 +347,7 @@ class OpenEnvAgentExecutor(AgentExecutor):  # noqa: E402
         return f"RAM ({len(ram)} bytes): {' '.join(map(str, ram))}. Legal actions: {obs.legal_actions}"
 
     @staticmethod
-    def _format_vec(label: str, vec, legal) -> str:
-        vec_str = ",".join(f"{v:.2f}" for v in list(vec)[:16])
+    def _format_vec(label: str, vec, legal, limit: int = 16) -> str:
+        items = list(vec)[:limit]
+        vec_str = ",".join(f"{v:.2f}" for v in items)
         return f"{label} (truncated): [{vec_str}...]. Legal/mask: {legal}"

@@ -27,6 +27,7 @@ agentic (multi-turn) tool use, built 2026-07-31. Everything here ran on **Huggin
 | `scripts/grpo_train_pilot.py` | GRPO against the in-process env. Handles adapter **merge-in** (for vLLM) + **merge-out** (standalone push). `TRAIN_MODE=lora16\|lora64\|full`, `TRAIN_BASE`, `TRAIN_MAX_STEPS`, `TRAIN_MAX_COMPLETION`, `TRAIN_PUSH_TO`. |
 | `scripts/pipeline_common.py` | Shared tool schemas, renderer, parser, setting validation, and result provenance helpers used by the evaluators. |
 | `sakthai_grpo_colab.ipynb` | **Self-contained Colab/Kaggle notebook** — the whole GRPO pipeline (merge-in/out, QLoRA for 7B, `use_vllm=False` for a T4, bf16 save) for a **free sustained GPU**. This is the consolidated, latest version; prefer it for a real run. |
+| `eval_sakthai_bench_colab.ipynb` | **Free Colab T4 benchmark notebook** — evaluates `-merged` and `-tools` PEFT checkpoints on `sakthai-bench-v2` via `eval_bench_peft.py` (with the `data/test.jsonl` fallback for `Feature type 'Json' not found`). |
 | `FINDINGS.md` | Full write-up: baselines, the RL cold-start finding, the SFT tradeoff, all bugs found. |
 
 ## How to run

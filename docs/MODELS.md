@@ -89,7 +89,8 @@ This core line is fine-tuned and aligned within `openenv-rl-training`:
 
 3. **`sakthai-embedding-multilingual`**
    - **Specialty**: High-dimensional dense vector embeddings optimized for cross-lingual (Thai & English) semantic retrieval.
-   - **Primary Use Case**: Powering the long-term vector memory store in the agent runtime.
+   - **Primary Use Case**: Powering the long-term vector memory store and semantic tool retrieval (pre-filtering candidate tool schemas) in the agent runtime.
+   - **Training & Evaluation**: Fine-tuned with `SentenceTransformerTrainer` and `MultipleNegativesRankingLoss` on bilingual `(anchor, positive, negative)` triplets via [`sakthai-sft-training/train-sakthai-embedding.py`](../sakthai-sft-training/train-sakthai-embedding.py).
 
 ---
 

@@ -83,6 +83,107 @@ def _install_openenv_stub():
         def __init__(self, base_url=None, **kwargs):
             self.base_url = base_url
 
+    from enum import Enum
+    import inspect
+
+    class ToolErrorType(str, Enum):
+        TOOL_NOT_FOUND = "TOOL_NOT_FOUND"
+        INVALID_ARGS = "INVALID_ARGS"
+        EXECUTION_ERROR = "EXECUTION_ERROR"
+        TRANSPORT_ERROR = "TRANSPORT_ERROR"
+        TIMEOUT = "TIMEOUT"
+
+    class ToolError(BaseModel):
+        error_type: ToolErrorType
+        message: str = ""
+
+    class Tool(BaseModel):
+        name: str
+        description: str = ""
+        input_schema: dict = {}
+
+    class ListToolsAction(Action):
+        pass
+
+    class ListToolsObservation(Observation):
+        tools: list[Tool] = []
+
+    class CallToolAction(Action):
+        tool_name: str
+        arguments: dict = {}
+
+    class CallToolObservation(Observation):
+        tool_name: str = ""
+        result: object = None
+        error: ToolError | None = None
+
+    class MCPEnvironment(Environment):
+        """Stub matching openenv.core.env_server.mcp_environment.MCPEnvironment."""
+
+        def __init__(self, mcp_server=None):
+            self.mcp = mcp_server
+            self._tools_registry = getattr(mcp_server, "_tools_registry", {})
+
+        def step(self, action, timeout_s=None, **kwargs):
+            if isinstance(action, ListToolsAction):
+                tools = [
+                    Tool(
+                        name=name,
+                        description=inspect.getdoc(fn) or "",
+                        input_schema={},
+                    )
+                    for name, fn in self._tools_registry.items()
+                ]
+                return ListToolsObservation(tools=tools, done=False, reward=0.0)
+            if isinstance(action, CallToolAction):
+                fn = self._tools_registry.get(action.tool_name)
+                if fn is None:
+                    return CallToolObservation(
+                        tool_name=action.tool_name,
+                        result=None,
+                        error=ToolError(
+                            error_type=ToolErrorType.TOOL_NOT_FOUND,
+                            message=f"Unknown tool: {action.tool_name!r}",
+                        ),
+                        done=False,
+                        reward=0.0,
+                    )
+                sig = inspect.signature(fn)
+                try:
+                    sig.bind(**(action.arguments or {}))
+                except TypeError as exc:
+                    return CallToolObservation(
+                        tool_name=action.tool_name,
+                        result=None,
+                        error=ToolError(
+                            error_type=ToolErrorType.INVALID_ARGS,
+                            message=str(exc),
+                        ),
+                        done=False,
+                        reward=0.0,
+                    )
+                try:
+                    res = fn(**(action.arguments or {}))
+                except Exception as exc:
+                    return CallToolObservation(
+                        tool_name=action.tool_name,
+                        result=None,
+                        error=ToolError(
+                            error_type=ToolErrorType.EXECUTION_ERROR,
+                            message=str(exc),
+                        ),
+                        done=False,
+                        reward=0.0,
+                    )
+                return CallToolObservation(
+                    tool_name=action.tool_name,
+                    result=res,
+                    error=None,
+                    done=getattr(self, "_done", False),
+                    reward=getattr(self, "_reward", 0.0),
+                )
+            return self._step_impl(action, timeout_s=timeout_s, **kwargs)
+
     def _module(name, **attrs):
         mod = types.ModuleType(name)
         for key, value in attrs.items():
@@ -103,6 +204,20 @@ def _install_openenv_stub():
         State=State,
     )
     _module("openenv.core.env_server.interfaces", Environment=Environment)
+    _module(
+        "openenv.core.env_server.mcp_types",
+        ToolErrorType=ToolErrorType,
+        ToolError=ToolError,
+        Tool=Tool,
+        ListToolsAction=ListToolsAction,
+        ListToolsObservation=ListToolsObservation,
+        CallToolAction=CallToolAction,
+        CallToolObservation=CallToolObservation,
+    )
+    _module(
+        "openenv.core.env_server.mcp_environment",
+        MCPEnvironment=MCPEnvironment,
+    )
     core.env_server = env_server
 
 
@@ -110,3 +225,4 @@ try:
     import openenv  # noqa: F401
 except ImportError:
     _install_openenv_stub()
+

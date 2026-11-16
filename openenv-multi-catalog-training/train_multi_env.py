@@ -58,8 +58,14 @@ REPL_URL = os.environ.get("REPL_ENV_URL", "http://localhost:8007")
 SUMO_URL = os.environ.get("SUMO_ENV_URL", "http://localhost:8008")
 
 ATARI_GAME = os.environ.get("ATARI_GAME", "pong")
-CODING_TASK_PROMPT = "Write Python code that prints the result of 17 * 23, nothing else."
-CODING_EXPECTED = "391"
+OPENSPIEL_GAME = os.environ.get("OPENSPIEL_GAME", "catch")
+CODING_TASK_PROMPT = (
+    "Write a Python function `parse_and_sum_amounts(records: list[str]) -> int` that "
+    "extracts the integer THB amount after 'THB:' in each string (ignoring lines marked "
+    "'VOID'), then run it on `['INV-1 THB:1250', 'INV-2 VOID THB:900', 'INV-3 THB:3400', "
+    "'INV-4 THB:770']` and print `RESULT:<sum>:<valid_count>` (nothing else)."
+)
+CODING_EXPECTED = "RESULT:5420:3"
 
 _tokenizer = None
 
@@ -255,7 +261,9 @@ class MultiCatalogEnv:
         """
         if self.active != "openspiel":
             raise ValueError("openspiel_move is only valid during the openspiel task.")
-        result = self._clients["openspiel"].step(OpenSpielAction(action_id=action_id))
+        result = self._clients["openspiel"].step(
+            OpenSpielAction(action_id=action_id, game_name=OPENSPIEL_GAME)
+        )
         self.reward = result.observation.reward or 0.0
         self.done = result.observation.done
         return self._format_openspiel_obs(result.observation)
