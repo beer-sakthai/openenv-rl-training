@@ -37,10 +37,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
       and compare the observation + reward against `_BrowserGymTaskEnv`'s inferred
       assumptions. See `KNOWN_GAPS.yaml#browsergym-env-wrapper-unverified`.
 
-## Open — monitoring
-
-- [ ] Extend `monitor.yml` or add `bench-v3-publish.yml` for weekly `sakthai-bench-v3`
-      regeneration (depends on `HF_TOKEN`).
 
 ---
 

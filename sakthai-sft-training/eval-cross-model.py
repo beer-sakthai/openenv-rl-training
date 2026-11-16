@@ -42,9 +42,15 @@ DEFAULT_MODELS = [
     "Nanthasit/sakthai-context-1.5b-merged",
     "Nanthasit/sakthai-context-7b-merged",
 ]
+V2_MODELS = [
+    "Nanthasit/sakthai-context-1.5b-merged-v2",
+    "Nanthasit/sakthai-coder-browser",
+]
 EXTERNAL_BASELINE_MODELS = [
     "google/functiongemma-270m-it",
 ]
+if os.environ.get("INCLUDE_V2_MODELS", "0") in ("1", "true", "yes"):
+    DEFAULT_MODELS = DEFAULT_MODELS + V2_MODELS
 if os.environ.get("INCLUDE_EXTERNAL_BASELINES", "0") in ("1", "true", "yes"):
     DEFAULT_MODELS = DEFAULT_MODELS + EXTERNAL_BASELINE_MODELS
 MODELS = [m.strip() for m in os.environ.get("MODELS", ",".join(DEFAULT_MODELS)).split(",") if m.strip()]
@@ -56,7 +62,11 @@ OUT = os.environ.get("OUT", ".eval_results")
 USE_HF_ROUTER = os.environ.get("USE_HF_ROUTER", "0") in ("1", "true", "yes")
 HF_ROUTER_URL = os.environ.get("HF_ROUTER_URL", "https://router.huggingface.co/v1")
 
-URL = "https://huggingface.co/datasets/Nanthasit/sakthai-bench-v2/resolve/main/data/test.jsonl"
+BENCHMARK_DATASET = os.environ.get("BENCHMARK_DATASET", "Nanthasit/sakthai-bench-v2")
+if "bench-v3" in BENCHMARK_DATASET:
+    URL = f"https://huggingface.co/datasets/{BENCHMARK_DATASET}/resolve/main/data/sakthai-bench-v3.jsonl"
+else:
+    URL = f"https://huggingface.co/datasets/{BENCHMARK_DATASET}/resolve/main/data/test.jsonl"
 print(f"Loading {URL} ...", flush=True)
 with urlopen(URL) as f:
     TEST = [json.loads(line) for line in f.read().decode().strip().splitlines()]

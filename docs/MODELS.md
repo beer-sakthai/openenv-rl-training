@@ -11,7 +11,11 @@ All public models, adapters, and datasets are hosted under the Hugging Face name
 | Model Identifier | Base Architecture | Scale | Primary Domain / Specialty | Deployment Target | Hugging Face Link |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`sakthai-context-0.5b-tools`** | Qwen2.5-0.5B-Instruct | 0.5B | High-speed single-shot tool routing (**91.0%** selection) | Edge / CPU / Mobile | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) |
+| **`sakthai-context-0.5b-tools-sft-v2`** | Qwen2.5-0.5B-Instruct | 0.5B | Upgraded v2 SFT adapter with chat template | Dynamic Adapter Serving | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools-sft-v2) |
 | **`sakthai-context-1.5b-tools`** | Qwen2.5-1.5B-Instruct | 1.5B | Balanced lightweight tool calling & JSON output | Colab T4 / Consumer GPUs | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) |
+| **`sakthai-context-1.5b-merged-v2`** | Qwen2.5-1.5B-Instruct | 1.5B | Production v2 model (rsLoRA + all 7 linear targets) | Colab T4 / vLLM | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-1.5b-merged-v2) |
+| **`sakthai-coder-browser`** | Qwen2.5-Coder-1.5B | 1.5B | Specialized browser automation, DOM reasoning & web actions | BrowserGym / OpenEnv Agent | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-coder-browser) |
+| **`sakthai-coder-browser-lora`** | Qwen2.5-Coder-1.5B | 1.5B | PEFT LoRA adapter for browser navigation | Dynamic Browser Adapter | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-coder-browser-lora) |
 | **`sakthai-context-7b-tools`** | Qwen2.5-7B-Instruct | 7B | Flagship base model; multi-turn agentic reasoning & coding | Heavy GPU / vLLM / GRPO Base | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) |
 | **`sakthai-context-7b-tools-grpo`**| 7B + GRPO | 7B | Production RL-aligned checkpoint (BrowserGym & terminal tasks) | Autonomous Agent Runtime | [🤗 Hub Target](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo) |
 | **`sakthai-context-7b-128k`** | Qwen2.5-7B | 7B | Extended **128,000-token context window** for document analysis | Long-Context RAG / Search | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-7b-128k) |
@@ -23,6 +27,7 @@ All public models, adapters, and datasets are hosted under the Hugging Face name
 | **`sakthai-vision-7b`** | Qwen2-VL / Vision Base | 7B | Multimodal vision-language understanding, UI parsing & OCR | Browser Automation / Vision | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-vision-7b) |
 | **`sakthai-tts-model`** | Voice Synthesis Base | ~0.3B | Thai & English voice synthesis and spoken responses | Voice UI & Agent Audio | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-tts-model) |
 | **`sakthai-embedding-multilingual`**| Multilingual Dense | ~0.3B | Semantic text embedding for vector database retrieval | RAG & Vector Memory | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-embedding-multilingual) |
+| **`my-embedding-gemma`** | Gemma 3 Dense Text | ~0.3B | High-accuracy dense semantic embeddings for tool retrieval | RAG & Semantic Routing | [🤗 Model Card](https://huggingface.co/Nanthasit/my-embedding-gemma) |
 
 ---
 
@@ -104,7 +109,22 @@ All models are released in three standardized distribution formats:
 
 ---
 
-## 4. Downstream Runtime Architecture
+## 4. Core Hugging Face Datasets
+
+The repository models are trained and benchmarked against authoritative datasets hosted under `Nanthasit`:
+
+| Dataset Identifier | Scale | Format | Description / Purpose |
+| :--- | :--- | :--- | :--- |
+| **`sakthai-bench-v3`** | 1,200 examples | JSONL / Parquet | Flagship tool-calling benchmark across `simple`, `parallel`, `irrelevance`, and `held-out` categories. |
+| **`sakthai-bench-v2`** | 500 examples | JSONL / Parquet | Standard 500-example benchmark for cross-model comparative scoring (`eval-cross-model.py`). |
+| **`sakthai-combined-v12`** | 7,437 examples | JSONL / Parquet | Latest expanded multi-turn conversational tool-calling SFT dataset. |
+| **`sakthai-combined-v10`** | 5,800 examples | JSONL / Parquet | Stable baseline SFT dataset used in production runs. |
+| **`sakthai-coder-browser`** | 247 examples | JSONL | Ground-truth browser navigation actions and code generation trajectories for BrowserGym. |
+| **`sakthai-github-actions-v2`** | 850 examples | JSONL | Workflow generation, CI/CD step repair, and GitHub automation tasks. |
+
+---
+
+## 5. Downstream Runtime Architecture
 
 The models in this repository are orchestrated downstream by [`beer-sakthai/Sak-Family-Agent`](https://github.com/beer-sakthai/Sak-Family-Agent):
 

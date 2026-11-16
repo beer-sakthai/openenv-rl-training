@@ -17,6 +17,9 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 - **`sakthai-sft-training/train-sakthai-embedding.py`** — PEP 723 script for fine-tuning and evaluating `Nanthasit/sakthai-embedding-multilingual` with `SentenceTransformerTrainer` and `MultipleNegativesRankingLoss` on bilingual (Thai + English) tool-retrieval triplets.
 - **`openenv-multi-catalog-training/tests/test_a2a_agent.py`** — contract and lifecycle suite for `OpenEnvAgentExecutor`, testing `TaskUpdater` protocol methods (`submit`, `start_work`, `update_status`, `failed`, `cancel`), initial episode reset, `DataPart` action precedence, completion, and error rejection (closes `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`).
 - **`.claude/skills/` translation** — translated 5 high-value `.opencode/skills/` (`cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting`) into native Claude Code skills with YAML frontmatter, execution workflows, and architectural guidance for SFT and OpenEnv RL pipelines.
+- **`.github/workflows/bench-v3-publish.yml` & `sakthai-bench-v3` integration** — added scheduled weekly workflow submitting `eval_bench_peft.py` against `Nanthasit/sakthai-bench-v3` on HF Jobs, with dataset filename resolution (`data/sakthai-bench-v3.jsonl`) and split fallback in `eval_bench_peft.py` and `test_eval_bench_peft.py`.
+- **`Nanthasit/sakthai-coder-browser` lightweight BrowserGym option** — added `BROWSERGYM_CODER_MODEL` and `--browsergym-model` choice (`default` / `coder`) in `openenv-custom-training/train.py`, enabling BrowserGym RL training to run on 1.5B Qwen2.5-Coder weights without the 20 GB VRAM requirement of 7B, guarded by `test_browsergym_contract.py`.
+- **`Nanthasit/my-embedding-gemma` embedding backbone** — added `GEMMA_BASE_MODEL` constant and `--model-id` support in `sakthai-sft-training/train-sakthai-embedding.py` to enable fine-tuning and evaluating Gemma 3 dense embeddings alongside `sakthai-embedding-multilingual`.
 
 ### Fixed
 
@@ -30,6 +33,9 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 - **Documentation audit and synchronization** — updated root `README.md`, `CLAUDE.md`, `openenv-custom-training/README.md`, `openenv-multi-catalog-training/README.md`, `openenv-multi-catalog-training/a2a_agent/README.md`, and `sakthai-agentic-eval-train/README.md` to reflect the 66 passed tests, `evaluate_baselines.py`, `eval_sakthai_bench_colab.ipynb` badges/links, MCP environment integration, and upgraded invoice-parsing task definitions.
 - **Audit of stale publish helpers** — audited `sakthai-sft-training/push-v9-comprehensive.py` and `sakthai-sft-training/push-all-to-hub.py`, marking both explicitly as archived/deprecated with docstring explanations covering the superseded Hub lineage (`v10`) and uncommitted historical files.
+- **Model catalog & dataset synchronization (`docs/MODELS.md`)** — updated Master Model Portfolio Matrix with `sakthai-coder-browser`, `sakthai-coder-browser-lora`, `my-embedding-gemma`, `sakthai-context-1.5b-merged-v2`, and `sakthai-context-0.5b-tools-sft-v2`; added new Core Datasets reference section (`sakthai-bench-v3`, `sakthai-combined-v12`, `sakthai-coder-browser`, `sakthai-github-actions-v2`).
+- **Weekly Hub Monitor expansion (`.github/workflows/monitor.yml`)** — expanded weekly reporting step to enumerate downloads and likes across all 17 `Nanthasit` datasets in addition to models.
+- **Configurable SFT augmentation (`sakthai-sft-training/train-sakthai-1.5b-v2.py`)** — added `AUGMENTED_DATASET` environment variable support allowing seamless upgrade from `v10` to `Nanthasit/sakthai-combined-v12`.
 
 ## 2026-11-13
 

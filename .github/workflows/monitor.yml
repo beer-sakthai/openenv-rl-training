@@ -58,4 +58,15 @@ jobs:
               rows += 1
           if not rows:
               print("| _no models returned_ | | |")
+
+          print("\n## Nanthasit Hub datasets\n")
+          print("| Dataset | Downloads | Likes |")
+          print("|---|---:|---:|")
+          d_rows = 0
+          for d in api.list_datasets(author="Nanthasit", sort="downloads"):
+              d_name = d.id.split("/")[-1]
+              print(f"| {d_name} | {getattr(d, 'downloads', 0)} | {getattr(d, 'likes', 0)} |")
+              d_rows += 1
+          if not d_rows:
+              print("| _no datasets returned_ | | |")
           PY

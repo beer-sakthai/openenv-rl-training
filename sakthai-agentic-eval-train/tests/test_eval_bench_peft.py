@@ -106,3 +106,30 @@ def test_load_rows_falls_back_to_jsonl_on_json_feature_error(monkeypatch):
     assert eval_bench_peft.ROWS[0]["cat"] == "simple"
     assert eval_bench_peft.ROWS[0]["gold_calls"][0]["name"] == "get_weather"
 
+
+def test_load_bench_dataset_v3_fallback(monkeypatch):
+    """Assert sakthai-bench-v3 fallback resolves data/sakthai-bench-v3.jsonl."""
+    import io
+    import json
+    import urllib.request
+
+    requested_urls = []
+
+    def _dummy_urlopen(url, timeout=30):
+        requested_urls.append(url)
+        dummy_row = {
+            "messages": [{"role": "user", "content": "test"}],
+            "tools": [],
+            "expected_tools": [],
+            "category": "simple",
+        }
+        return io.BytesIO((json.dumps(dummy_row) + "\n").encode("utf-8"))
+
+    monkeypatch.setattr(eval_bench_peft, "load_dataset", lambda *a, **kw: (_ for _ in ()).throw(ValueError("Feature type 'Json' not found")))
+    monkeypatch.setattr(urllib.request, "urlopen", _dummy_urlopen)
+
+    rows = eval_bench_peft._load_bench_dataset("Nanthasit/sakthai-bench-v3")
+    assert len(rows) == 1
+    assert len(requested_urls) == 1
+    assert requested_urls[0].endswith("data/sakthai-bench-v3.jsonl")
+

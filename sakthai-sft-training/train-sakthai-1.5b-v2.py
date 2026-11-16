@@ -83,13 +83,15 @@ def to_text(ex):
 main = load_dataset(f"{HF_USER}/sakthai-combined-v7", data_files="data/train.jsonl", split="train")
 train_data = main.map(to_text, remove_columns=main.column_names)
 
-# v10 augmentation (repointed from missing v8; v10 is the latest existing Hub revision)
+# Dataset augmentation (default v10, with v12 support via AUGMENTED_DATASET env)
+AUGMENTED_DATASET = os.environ.get("AUGMENTED_DATASET", f"{HF_USER}/sakthai-combined-v10")
 try:
-    v10 = load_dataset(f"{HF_USER}/sakthai-combined-v10", data_files="data/train.jsonl", split="train")
-    v10_text = v10.map(to_text, remove_columns=v10.column_names)
-    train_data = concatenate_datasets([train_data, v10_text])
+    aug_ds = load_dataset(AUGMENTED_DATASET, data_files="data/train.jsonl", split="train")
+    aug_text = aug_ds.map(to_text, remove_columns=aug_ds.column_names)
+    train_data = concatenate_datasets([train_data, aug_text])
+    print(f"Loaded {len(aug_ds)} rows from {AUGMENTED_DATASET}")
 except Exception as e:
-    print("v10 unavailable:", e)
+    print(f"{AUGMENTED_DATASET} unavailable:", e)
 
 # irrelevance supplement
 try:

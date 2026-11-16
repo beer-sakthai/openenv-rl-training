@@ -41,6 +41,7 @@ import os
 from typing import Dict, List, Tuple
 
 DEFAULT_BASE_MODEL = "Nanthasit/sakthai-embedding-multilingual"
+GEMMA_BASE_MODEL = "Nanthasit/my-embedding-gemma"
 
 # Bilingual (Thai & English) triplets: (anchor_query, positive_tool_doc, negative_tool_doc)
 TOOL_RETRIEVAL_TRIPLETS: List[Tuple[str, str, str]] = [
@@ -161,8 +162,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--base-model",
+        "--model-id",
+        dest="base_model",
         default=os.environ.get("EMBED_BASE", DEFAULT_BASE_MODEL),
-        help=f"Base SentenceTransformer model ID (default: {DEFAULT_BASE_MODEL})",
+        help=f"Base SentenceTransformer model ID, e.g. {DEFAULT_BASE_MODEL} or {GEMMA_BASE_MODEL} (default: {DEFAULT_BASE_MODEL})",
     )
     parser.add_argument(
         "--output-dir",

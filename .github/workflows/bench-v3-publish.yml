@@ -1,0 +1,41 @@
+name: Weekly Benchmark v3 Evaluation
+on:
+  schedule: [{cron: "0 9 * * 1"}]  # Mondays at 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench-v3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: pip install huggingface_hub
+      - name: Authenticate Hugging Face CLI
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::The HF_TOKEN repository secret is not configured or is unavailable to this workflow."
+            exit 1
+          fi
+          hf auth login --token "$HF_TOKEN"
+
+      - name: Submit HF Jobs Benchmark v3 Evaluation
+        run: |
+          .github/scripts/hf-jobs-submit.sh \
+            hf jobs uv run --flavor a10g-small --timeout 1h \
+              -e SAK_MODELS=Nanthasit/sakthai-context-0.5b-tools,Nanthasit/sakthai-context-1.5b-merged-v2,Nanthasit/sakthai-coder-browser \
+              -e SAK_BENCH=Nanthasit/sakthai-bench-v3 \
+              -e SAK_UPLOAD_TO=Nanthasit/sakthai-bench-v3 \
+              --secrets HF_TOKEN \
+              sakthai-agentic-eval-train/scripts/eval_bench_peft.py
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
