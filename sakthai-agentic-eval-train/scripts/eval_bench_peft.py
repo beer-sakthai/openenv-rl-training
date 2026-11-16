@@ -23,13 +23,19 @@ import collections
 import gc
 import json
 import os
-import re
 import time
 from collections import Counter
 
 import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
+try:
+    from .pipeline_common import build_manifest, parse_tool_calls, render_prompt, tools_block
+except ImportError:
+    from pipeline_common import build_manifest, parse_tool_calls, render_prompt, tools_block
+
+_tools_block = tools_block
+parse_calls = parse_tool_calls
 
 BENCH = os.environ.get("SAK_BENCH", "Nanthasit/sakthai-bench-v2")
 MODELS = [m.strip() for m in os.environ.get("SAK_MODELS", "").split(",") if m.strip()]
@@ -40,119 +46,28 @@ DUMP_ROWS = int(os.environ.get("SAK_DUMP_ROWS", "0"))
 BATCH = int(os.environ.get("SAK_BATCH", "16"))
 FORCE_CPU = int(os.environ.get("SAK_FORCE_CPU", "0"))
 DTYPE = os.environ.get("SAK_DTYPE", "").strip()  # "" = auto per device
-assert MODELS, "set SAK_MODELS to a comma-separated list of model ids"
 
 _GLOBAL_TOK = None
-if TOKENIZER_ID:
-    _GLOBAL_TOK = AutoTokenizer.from_pretrained(TOKENIZER_ID)
-    if _GLOBAL_TOK.pad_token is None:
-        _GLOBAL_TOK.pad_token = _GLOBAL_TOK.eos_token
-    _GLOBAL_TOK.padding_side = "left"
 
 
-# ── Renderer: verbatim from eval_bench.py, unchanged ──────────────────────
-def _text(c):
-    return (
-        ""
-        if c is None
-        else (c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
-    )
+def load_global_tokenizer():
+    global _GLOBAL_TOK
+    if TOKENIZER_ID:
+        _GLOBAL_TOK = AutoTokenizer.from_pretrained(TOKENIZER_ID)
+        if _GLOBAL_TOK.pad_token is None:
+            _GLOBAL_TOK.pad_token = _GLOBAL_TOK.eos_token
+        _GLOBAL_TOK.padding_side = "left"
 
 
-def _tools_block(tools):
-    if not tools:
-        return ""
-    sigs = "\n".join(json.dumps(t, ensure_ascii=False) for t in tools)
-    return (
-        "\n\n# Tools\n\nYou may call one or more functions. Signatures are within "
-        "<tools></tools>:\n<tools>\n" + sigs + "\n</tools>\n\nFor each call return:\n"
-        '<tool_call>\n{"name": <name>, "arguments": <json>}\n</tool_call>'
-    )
+# Prompt rendering and tool-call parsing are shared with the Hermes evaluator.
 
-
-def _assistant_body(m):
-    parts = []
-    content = _text(m.get("content"))
-    if content:
-        parts.append(content)
-    for tc in m.get("tool_calls") or []:
-        fn = tc.get("function", tc)
-        a = fn.get("arguments", "{}")
-        if not isinstance(a, str):
-            a = json.dumps(a, ensure_ascii=False)
-        parts.append(
-            f'<tool_call>\n{{"name": "{fn.get("name", "")}", "arguments": {a}}}\n</tool_call>'
-        )
-    return "\n".join(parts)
-
-
-def _render_msg(m, tools_sys):
-    r = m.get("role")
-    if r == "system":
-        return (
-            "<|im_start|>system\n"
-            + _text(m.get("content"))
-            + _tools_block(tools_sys)
-            + "<|im_end|>\n"
-        )
-    if r == "user":
-        return "<|im_start|>user\n" + _text(m.get("content")) + "<|im_end|>\n"
-    if r == "tool":
-        return (
-            "<|im_start|>user\n<tool_response>\n"
-            + _text(m.get("content"))
-            + "\n</tool_response><|im_end|>\n"
-        )
-    if r == "assistant":
-        return "<|im_start|>assistant\n" + _assistant_body(m) + "<|im_end|>\n"
-    return ""
-
-
-def render_prompt(messages, tools):
-    out = []
-    if not (messages and messages[0].get("role") == "system") and tools:
-        out.append(
-            "<|im_start|>system\nYou are a helpful assistant."
-            + _tools_block(tools)
-            + "<|im_end|>\n"
-        )
-    for i, m in enumerate(messages):
-        out.append(
-            _render_msg(m, tools if (i == 0 and m.get("role") == "system") else None)
-        )
-    out.append("<|im_start|>assistant\n")
-    return "".join(out)
-
-
-_TC = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
-
-
-def parse_calls(text):
-    out = []
-    for m in _TC.findall(text):
-        try:
-            d = json.loads(m)
-        except Exception:
-            continue
-        if d.get("name"):
-            a = d.get("arguments")
-            if isinstance(a, str):
-                try:
-                    a = json.loads(a)
-                except Exception:
-                    a = {"__unparsed__": a}
-            out.append(
-                {"name": d["name"], "arguments": a if isinstance(a, dict) else {}}
-            )
-    return out
-
+CATS = ("simple", "parallel", "irrelevance_tools", "irrelevance_no_tools")
 
 def is_degenerate(raw):
-    s = "".join(raw.split())
-    if len(s) < 20:
+    compact = "".join(raw.split())
+    if len(compact) < 20:
         return False
-    return max(collections.Counter(s).values()) / len(s) >= 0.9
-
+    return max(Counter(compact).values()) / len(compact) >= 0.9
 
 # ── Scoring: verbatim from eval_bench.py, unchanged ────────────────────────
 def norm(v):
@@ -282,32 +197,30 @@ def classify_arg_errors(gold_calls, pred):
     return errors
 
 
-# ── Load bench rows once: verbatim from eval_bench.py, unchanged ──────────
-TEST = load_dataset(BENCH, split="test")
-CATS = ("simple", "parallel", "irrelevance_tools", "irrelevance_no_tools")
-
+# Load benchmark rows only when the CLI runs. Importing this module must remain
+# cheap and side-effect free for CPU-only tests.
 ROWS = []
-for ex in TEST:
-    _i = ex.get("turn_index")
-    if _i is None:
-        _i = next(
-            (i for i, mm in enumerate(ex["messages"]) if mm.get("role") == "assistant"),
-            None,
-        )
-    if _i is None:
-        continue
-    ROWS.append(
-        {
-            "prompt": render_prompt(ex["messages"][:_i], ex.get("tools") or None),
+
+def load_rows():
+    global ROWS
+    test = load_dataset(BENCH, split="test")
+    rows = []
+    for ex in test:
+        index = ex.get("turn_index")
+        if index is None:
+            index = next((i for i, message in enumerate(ex["messages"]) if message.get("role") == "assistant"), None)
+        if index is None:
+            continue
+        rows.append({
+            "prompt": render_prompt(ex["messages"][:index], ex.get("tools") or None),
             "cat": ex["category"],
             "gold_calls": ex.get("gold_calls") or [],
             "held_out": bool(ex.get("held_out_tool")),
             "multi_turn": bool(ex.get("multi_turn")),
             "in_v1": bool(ex.get("in_v1", True)),
-        }
-    )
-print(f"{len(ROWS)} bench rows, batch size {BATCH}")
-
+        })
+    ROWS = rows
+    print(f"{len(ROWS)} bench rows, batch size {BATCH}")
 
 def generate_all(m, tok):
     outs = [None] * len(ROWS)
@@ -515,6 +428,12 @@ def _build_and_print_summary(repo_id, t0, runtime, stats):
         err_summary[typ] = err_summary.get(typ, 0) + 1
 
     res = {
+        "manifest": build_manifest(
+            model=repo_id,
+            benchmark=BENCH,
+            renderer="handrolled",
+            max_steps=None,
+        ),
         "model": repo_id,
         "seconds": round(time.time() - t0, 1),
         "runtime": runtime,
@@ -603,58 +522,73 @@ def _get_tokenizer(repo_id):
     return tok
 
 
-results = []
-for repo in MODELS:
-    try:
-        results.append(evaluate(repo))
-    except Exception as e:
-        print(f"[FAILED {repo}] {type(e).__name__}: {e}")
-        results.append({"model": repo, "error": f"{type(e).__name__}: {e}"})
+def main():
+    if not MODELS:
+        raise SystemExit("set SAK_MODELS to a comma-separated list of model ids")
+    load_global_tokenizer()
+    load_rows()
+    results = []
+    for repo in MODELS:
+        try:
+            results.append(evaluate(repo))
+        except Exception as e:
+            print(f"[FAILED {repo}] {type(e).__name__}: {e}")
+            results.append({"model": repo, "error": f"{type(e).__name__}: {e}"})
 
-ok = [r for r in results if "error" not in r]
-if ok:
-    print("\n" + "=" * 78)
-    print(f"{'model':<46}{'sel':>8}{'args':>8}{'strict':>8}{'held':>8}")
-    for r in ok:
-        h = r["held_out_tools"]
-        print(
-            f"{r['model'][-45:]:<46}"
-            f"{r['overall_selection'] or 0:7.1f}%"
-            f"{r['overall_arguments'] or 0:7.1f}%"
-            f"{r['overall_strict'] or 0:7.1f}%"
-            f"{(100*h['pass']/h['total'] if h['total'] else 0):7.1f}%"
-        )
+    ok = [r for r in results if "error" not in r]
+    if ok:
+        print("\n" + "=" * 78)
+        print(f"{'model':<46}{'sel':>8}{'args':>8}{'strict':>8}{'held':>8}")
+        for r in ok:
+            h = r["held_out_tools"]
+            print(
+                f"{r['model'][-45:]:<46}"
+                f"{r['overall_selection'] or 0:7.1f}%"
+                f"{r['overall_arguments'] or 0:7.1f}%"
+                f"{r['overall_strict'] or 0:7.1f}%"
+                f"{(100*h['pass']/h['total'] if h['total'] else 0):7.1f}%"
+            )
 
-payload = {
-    "benchmark": BENCH,
-    "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    "scorer": "multiset-selection-v2",
-    "results": results,
-}
-with open("bench_results.json", "w") as f:
-    json.dump(payload, f, indent=2)
-print("\nwrote bench_results.json")
+    payload = {
+        "manifest": build_manifest(
+            model=",".join(MODELS),
+            benchmark=BENCH,
+            renderer="handrolled",
+            max_steps=None,
+        ),
+        "benchmark": BENCH,
+        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "scorer": "multiset-selection-v2",
+        "results": results,
+    }
+    with open("bench_results.json", "w") as f:
+        json.dump(payload, f, indent=2)
+    print("\nwrote bench_results.json")
 
-print("BENCH_RESULTS_JSON_BEGIN")
-print(json.dumps(payload, separators=(",", ":")))
-print("BENCH_RESULTS_JSON_END")
+    print("BENCH_RESULTS_JSON_BEGIN")
+    print(json.dumps(payload, separators=(",", ":")))
+    print("BENCH_RESULTS_JSON_END")
 
-if UPLOAD_TO:
-    try:
-        from huggingface_hub import HfApi
+    if UPLOAD_TO:
+        try:
+            from huggingface_hub import HfApi
 
-        name = f"results/{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
-        HfApi().upload_file(
-            path_or_fileobj="bench_results.json",
-            path_in_repo=name,
-            repo_id=UPLOAD_TO,
-            repo_type="dataset",
-            commit_message=f"bench results: {', '.join(m.split('/')[-1] for m in MODELS)}",
-        )
-        print(f"uploaded -> {UPLOAD_TO}/{name}")
-    except Exception as e:
-        print(f"[UPLOAD FAILED] {type(e).__name__}: {e}")
-        print(
-            "results are NOT lost — recover with tools/results_from_logs.py "
-            "(re-run with `--secrets HF_TOKEN` to upload from inside the job)"
-        )
+            name = f"results/{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+            HfApi().upload_file(
+                path_or_fileobj="bench_results.json",
+                path_in_repo=name,
+                repo_id=UPLOAD_TO,
+                repo_type="dataset",
+                commit_message=f"bench results: {', '.join(m.split('/')[-1] for m in MODELS)}",
+            )
+            print(f"uploaded -> {UPLOAD_TO}/{name}")
+        except Exception as e:
+            print(f"[UPLOAD FAILED] {type(e).__name__}: {e}")
+            print(
+                "results are NOT lost — recover with tools/results_from_logs.py "
+                "(re-run with `--secrets HF_TOKEN` to upload from inside the job)"
+            )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
