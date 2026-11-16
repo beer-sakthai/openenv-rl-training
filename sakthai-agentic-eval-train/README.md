@@ -25,10 +25,36 @@ agentic (multi-turn) tool use, built 2026-07-31. Everything here ran on **Huggin
 | `scripts/gen_sft_trajectories.py` | Generates + verifies 6 oracle SFT trajectories (each checked to earn reward 1.0 against the real grader before any GPU is spent). |
 | `scripts/sft_bootstrap.py` | SFT bootstrap (LoRA) on the oracle trajectories. `SFT_BASE`, `SFT_EPOCHS`, `SFT_REPEAT`, `SFT_PUSH_TO`. |
 | `scripts/grpo_train_pilot.py` | GRPO against the in-process env. Handles adapter **merge-in** (for vLLM) + **merge-out** (standalone push). `TRAIN_MODE=lora16\|lora64\|full`, `TRAIN_BASE`, `TRAIN_MAX_STEPS`, `TRAIN_MAX_COMPLETION`, `TRAIN_PUSH_TO`. |
+| `scripts/pipeline_common.py` | Shared tool schemas, renderer, parser, setting validation, and result provenance helpers used by the evaluators. |
 | `sakthai_grpo_colab.ipynb` | **Self-contained Colab/Kaggle notebook** — the whole GRPO pipeline (merge-in/out, QLoRA for 7B, `use_vllm=False` for a T4, bf16 save) for a **free sustained GPU**. This is the consolidated, latest version; prefer it for a real run. |
 | `FINDINGS.md` | Full write-up: baselines, the RL cold-start finding, the SFT tradeoff, all bugs found. |
 
 ## How to run
+
+### CPU-only validation
+
+The evaluator modules have explicit entrypoints. Importing them does not
+download a dataset, fetch the Hermes environment, load a model, or start an
+evaluation. Run the same lightweight checks used by CI before submitting a
+change:
+
+```bash
+uv run --with pytest --with datasets --with pydantic --with httpx \
+  pytest sakthai-agentic-eval-train/tests/ -q
+uv run --with ruff ruff check sakthai-agentic-eval-train
+```
+
+The benchmark and Hermes evaluators share their tool schemas, hand-rolled
+renderer, and tagged tool-call parser through `scripts/pipeline_common.py`.
+This prevents training/evaluation prompt-format drift. Set
+`SAK_ENV_REVISION` when evaluating a known Hermes dataset revision; result JSON
+now records the model, benchmark, renderer, limits, script revision, and UTC
+timestamp in a `manifest` object.
+
+The Hermes evaluator executes model-generated `terminal` commands in a
+temporary workspace. Run it only with trusted checkpoints on an ephemeral HF
+Jobs runner; it is not a substitute for container isolation on a persistent or
+shared machine.
 
 ### On HF Jobs (paid — needs a payment method on the account)
 ```bash

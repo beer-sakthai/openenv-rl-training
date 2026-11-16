@@ -49,223 +49,51 @@ import traceback
 from pathlib import Path
 
 import torch
-from huggingface_hub import snapshot_download
 from transformers import AutoModelForCausalLM, AutoTokenizer
+try:
+    from .pipeline_common import (
+        RENDER_MODES, SYSTEM_CONTENT, TOOLS, build_manifest, parse_tool_call,
+        render_prompt, tools_block, validate_choice, positive_int,
+    )
+except ImportError:
+    from pipeline_common import (
+        RENDER_MODES, SYSTEM_CONTENT, TOOLS, build_manifest, parse_tool_call,
+        render_prompt, tools_block, validate_choice, positive_int,
+    )
+
+_tools_block = tools_block
 
 MODELS = [m.strip() for m in os.environ.get("SAK_MODELS", "").split(",") if m.strip()]
 ENV_REPO = os.environ.get("SAK_ENV_REPO", "Nanthasit/hermes-tool-use-rl-env")
-MAX_STEPS = int(os.environ.get("SAK_MAX_STEPS", "12"))
+MAX_STEPS = positive_int("SAK_MAX_STEPS", os.environ.get("SAK_MAX_STEPS", "12"))
 FORCE_CPU = int(os.environ.get("SAK_FORCE_CPU", "0"))
 DUMP = int(os.environ.get("SAK_DUMP", "0"))
-assert MODELS, "set SAK_MODELS to a comma-separated list of model ids"
+HermesToolEnvironment = None
+HermesToolAction = None
+TASKS_BY_ID = {}
+TASK_IDS = []
 
-# ── Fetch the environment source and import it directly ───────────────────
-env_dir = Path(snapshot_download(ENV_REPO, repo_type="dataset"))
-sys.path.insert(0, str(env_dir))
-sys.path.insert(0, str(env_dir / "server"))
+def load_environment():
+    """Download and import the environment only when evaluation starts."""
+    global HermesToolEnvironment, HermesToolAction, TASKS_BY_ID, TASK_IDS
+    from huggingface_hub import snapshot_download
+    env_dir = Path(snapshot_download(ENV_REPO, repo_type="dataset"))
+    sys.path.insert(0, str(env_dir))
+    sys.path.insert(0, str(env_dir / "server"))
+    from hermes_tool_env import HermesToolEnvironment as environment
+    from models import HermesToolAction as action
+    from tasks import TASKS_BY_ID as tasks_by_id
+    HermesToolEnvironment = environment
+    HermesToolAction = action
+    TASKS_BY_ID = tasks_by_id
+    TASK_IDS = sorted(TASKS_BY_ID)
 
-from hermes_tool_env import HermesToolEnvironment  # noqa: E402
-from models import HermesToolAction  # noqa: E402
-from tasks import TASKS_BY_ID  # noqa: E402
-
-TASK_IDS = sorted(TASKS_BY_ID)
-
-
-# ── Renderer: copied verbatim from Nanthasit/sakthai-bench-v2's eval_bench.py
-# so these models see prompts in exactly the format they were trained/scored
-# on. Do not hand-roll a different tool-listing format here.
-def _text(c):
-    return (
-        ""
-        if c is None
-        else (c if isinstance(c, str) else json.dumps(c, ensure_ascii=False))
-    )
-
-
-def _tools_block(tools):
-    if not tools:
-        return ""
-    sigs = "\n".join(json.dumps(t, ensure_ascii=False) for t in tools)
-    return (
-        "\n\n# Tools\n\nYou may call one or more functions. Signatures are within "
-        "<tools></tools>:\n<tools>\n" + sigs + "\n</tools>\n\nFor each call return:\n"
-        '<tool_call>\n{"name": <name>, "arguments": <json>}\n</tool_call>'
-    )
-
-
-def _assistant_body(m):
-    parts = []
-    content = _text(m.get("content"))
-    if content:
-        parts.append(content)
-    for tc in m.get("tool_calls") or []:
-        fn = tc.get("function", tc)
-        a = fn.get("arguments", "{}")
-        if not isinstance(a, str):
-            a = json.dumps(a, ensure_ascii=False)
-        parts.append(
-            f'<tool_call>\n{{"name": "{fn.get("name", "")}", "arguments": {a}}}\n</tool_call>'
-        )
-    return "\n".join(parts)
-
-
-def _render_msg(m, tools_sys):
-    r = m.get("role")
-    if r == "system":
-        return (
-            "<|im_start|>system\n"
-            + _text(m.get("content"))
-            + _tools_block(tools_sys)
-            + "<|im_end|>\n"
-        )
-    if r == "user":
-        return "<|im_start|>user\n" + _text(m.get("content")) + "<|im_end|>\n"
-    if r == "tool":
-        return (
-            "<|im_start|>user\n<tool_response>\n"
-            + _text(m.get("content"))
-            + "\n</tool_response><|im_end|>\n"
-        )
-    if r == "assistant":
-        return "<|im_start|>assistant\n" + _assistant_body(m) + "<|im_end|>\n"
-    return ""
-
-
-def render_prompt(messages, tools):
-    out = []
-    if not (messages and messages[0].get("role") == "system") and tools:
-        out.append(
-            "<|im_start|>system\nYou are a helpful assistant."
-            + _tools_block(tools)
-            + "<|im_end|>\n"
-        )
-    for i, m in enumerate(messages):
-        out.append(
-            _render_msg(m, tools if (i == 0 and m.get("role") == "system") else None)
-        )
-    out.append("<|im_start|>assistant\n")
-    return "".join(out)
-
-
-_TC = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
-
-
-def parse_tool_call(text):
-    m = _TC.search(text)
-    if not m:
-        return None
-    try:
-        return json.loads(m.group(1))
-    except Exception:
-        return None
-
+# Prompt rendering, tool schemas, and parsing are shared with the benchmark
+# evaluator. Keeping one contract prevents train/eval format drift.
 
 def to_hermes_action(tool_call):
-    return HermesToolAction(
-        tool=tool_call["name"], **(tool_call.get("arguments") or {})
-    )
-
-
-SYSTEM_CONTENT = (
-    "You are a coding agent working in a sandboxed workspace. Use the "
-    "available tools to complete the task, then call submit when you "
-    "believe it is solved."
-)
-
-# OpenAI-function-schema form of the 5 real Hermes tools (select_task is
-# env-internal/harness-only, never offered to the model -- it's used once as
-# a free bootstrap step before the episode's first real turn).
-TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "terminal",
-            "description": "Run a shell command in the task workspace; returns combined stdout/stderr.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "Shell command to run.",
-                    }
-                },
-                "required": ["command"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read a file from the task workspace.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Relative path of the file to read.",
-                    }
-                },
-                "required": ["path"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "Write or overwrite a file in the task workspace.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Relative path of the file to write.",
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "Full content to write to the file.",
-                    },
-                },
-                "required": ["path", "content"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "patch",
-            "description": "Find-and-replace a unique substring in a file.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Relative path of the file to patch.",
-                    },
-                    "old_string": {
-                        "type": "string",
-                        "description": "Exact unique substring to replace.",
-                    },
-                    "new_string": {
-                        "type": "string",
-                        "description": "Replacement text.",
-                    },
-                },
-                "required": ["path", "old_string", "new_string"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "submit",
-            "description": "End the episode and grade the task. Call this only when you believe the task is solved.",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    },
-]
-
+    """Convert a parsed model tool call to the environment action model."""
+    return HermesToolAction(tool=tool_call["name"], **(tool_call.get("arguments") or {}))
 
 # ── Model loading: same bare-PEFT-adapter handling as eval_bench_peft.py ──
 def _peft_base_model(repo_id):
@@ -322,9 +150,7 @@ def load_model_and_tokenizer(repo_id):
     return m, tok
 
 
-RENDER_MODE = os.environ.get(
-    "SAK_RENDER", "handrolled"
-).strip()  # "handrolled" | "native"
+RENDER_MODE = validate_choice("SAK_RENDER", os.environ.get("SAK_RENDER", "handrolled"), RENDER_MODES)
 
 
 def make_step_fn(model, tok):
@@ -433,38 +259,50 @@ def evaluate(repo_id):
     }
 
 
-results = []
-for repo in MODELS:
-    try:
-        results.append(evaluate(repo))
-    except Exception as e:
-        tb = traceback.format_exc()
-        print(f"[FAILED {repo}] {type(e).__name__}: {e}\n{tb}")
-        results.append(
-            {"model": repo, "error": f"{type(e).__name__}: {e}", "traceback": tb}
+def main():
+    if not MODELS:
+        raise SystemExit("set SAK_MODELS to a comma-separated list of model ids")
+    load_environment()
+    results = []
+    for repo in MODELS:
+        try:
+            results.append(evaluate(repo))
+        except Exception as e:
+            tb = traceback.format_exc()
+            print(f"[FAILED {repo}] {type(e).__name__}: {e}\n{tb}")
+            results.append(
+                {"model": repo, "error": f"{type(e).__name__}: {e}", "traceback": tb}
+            )
+
+    print("\n" + "=" * 60)
+    print(f"{'model':<40}{'pass':>8}{'mean reward':>14}")
+    for r in results:
+        if "error" in r:
+            print(f"{r['model'][-39:]:<40}{'ERROR':>8}")
+            continue
+        print(
+            f"{r['model'][-39:]:<40}{r['pass_count']}/{r['total_tasks']:<6}"
+            f"{r['mean_reward']:13.2f}"
         )
 
-print("\n" + "=" * 60)
-print(f"{'model':<40}{'pass':>8}{'mean reward':>14}")
-for r in results:
-    if "error" in r:
-        print(f"{r['model'][-39:]:<40}{'ERROR':>8}")
-        continue
-    print(
-        f"{r['model'][-39:]:<40}{r['pass_count']}/{r['total_tasks']:<6}"
-        f"{r['mean_reward']:13.2f}"
-    )
+    payload = {
+        "manifest": build_manifest(
+            model=",".join(MODELS),
+            benchmark=ENV_REPO,
+            renderer=RENDER_MODE,
+            max_steps=MAX_STEPS,
+            environment_revision=os.environ.get("SAK_ENV_REVISION"),
+        ),
+        "results": results,
+    }
+    with open("hermes_env_results.json", "w") as f:
+        json.dump(payload, f, indent=2)
+    print("\nwrote hermes_env_results.json")
 
-payload = {
-    "benchmark": ENV_REPO,
-    "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    "max_steps": MAX_STEPS,
-    "results": results,
-}
-with open("hermes_env_results.json", "w") as f:
-    json.dump(payload, f, indent=2)
-print("\nwrote hermes_env_results.json")
+    print("HERMES_ENV_RESULTS_JSON_BEGIN")
+    print(json.dumps(payload, separators=(",", ":")))
+    print("HERMES_ENV_RESULTS_JSON_END")
 
-print("HERMES_ENV_RESULTS_JSON_BEGIN")
-print(json.dumps(payload, separators=(",", ":")))
-print("HERMES_ENV_RESULTS_JSON_END")
+
+if __name__ == "__main__":
+    raise SystemExit(main())
