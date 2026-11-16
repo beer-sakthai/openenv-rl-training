@@ -224,6 +224,7 @@ def _browsergym_dataset(n_episodes: int):
 
 
 BROWSERGYM_DEFAULT_MODEL = "Nanthasit/sakthai-context-7b-tools"
+BROWSERGYM_CODER_MODEL = "Nanthasit/sakthai-coder-browser"
 
 
 def _select(args: argparse.Namespace):
@@ -243,7 +244,11 @@ def _select(args: argparse.Namespace):
         ENVIRONMENT_FACTORY = _make_browsergym_factory(task, url)
         REWARD_FUNCS = [_browsergym_reward]
         TRAIN_DATASET = _browsergym_dataset
-        DEFAULT_MODEL = BROWSERGYM_DEFAULT_MODEL
+        browser_choice = getattr(args, "browsergym_model", "default")
+        if browser_choice == "coder":
+            DEFAULT_MODEL = BROWSERGYM_CODER_MODEL
+        else:
+            DEFAULT_MODEL = BROWSERGYM_DEFAULT_MODEL
     else:
         raise SystemExit(
             f"unknown --env {args.env!r}; choose 'simple', 'agent_tools', 'mcp', or 'browsergym'"
@@ -269,6 +274,12 @@ def parse_args():
         "--browsergym-url",
         default=os.environ.get("TRAIN_BROWSERGYM_URL", BROWSERGYM_SPACE_URL),
         help=f"BrowserGym Space URL (default: {BROWSERGYM_SPACE_URL})",
+    )
+    parser.add_argument(
+        "--browsergym-model",
+        choices=["default", "coder"],
+        default=os.environ.get("TRAIN_BROWSERGYM_MODEL", "default"),
+        help="Model choice for browsergym: 'default' (7B tools) or 'coder' (1.5B sakthai-coder-browser). Env: TRAIN_BROWSERGYM_MODEL",
     )
     parser.add_argument(
         "--model",

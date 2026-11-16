@@ -34,11 +34,14 @@ sys.modules["trl"] = mock.MagicMock()
 
 sys.path.append(os.path.abspath("openenv-custom-training"))
 from train import (  # noqa: E402
+    BROWSERGYM_CODER_MODEL,
+    BROWSERGYM_DEFAULT_MODEL,
     BROWSERGYM_SPACE_URL,
     BROWSERGYM_STEP_LIMIT,
     _browsergym_dataset,
     _browsergym_reward,
     _make_browsergym_factory,
+    _select,
 )
 
 
@@ -154,3 +157,21 @@ def test_browsergym_space_url_const():
     """
     assert "openenv-browsergym-env.hf.space" in BROWSERGYM_SPACE_URL
     assert "nanthasit" not in BROWSERGYM_SPACE_URL.lower()
+
+
+def test_browsergym_models_and_selection():
+    """Verify default and coder models in browsergym environment selection."""
+    import argparse
+
+    assert BROWSERGYM_DEFAULT_MODEL == "Nanthasit/sakthai-context-7b-tools"
+    assert BROWSERGYM_CODER_MODEL == "Nanthasit/sakthai-coder-browser"
+
+    # Default selection yields 7B
+    args_default = argparse.Namespace(env="browsergym", browsergym_model="default")
+    _, _, _, model = _select(args_default)
+    assert model == BROWSERGYM_DEFAULT_MODEL
+
+    # Coder selection yields 1.5B sakthai-coder-browser
+    args_coder = argparse.Namespace(env="browsergym", browsergym_model="coder")
+    _, _, _, coder_model = _select(args_coder)
+    assert coder_model == BROWSERGYM_CODER_MODEL

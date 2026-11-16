@@ -204,21 +204,27 @@ ROWS = []
 
 def _load_bench_dataset(bench_repo=None):
     """Load benchmark rows via datasets.load_dataset, falling back to raw JSONL
-    when Hub dataset card metadata triggers `ValueError: Feature type 'Json' not found`.
+    when Hub dataset card metadata triggers `ValueError: Feature type 'Json' not found`
+    or when evaluating custom benchmarks like sakthai-bench-v3.
     """
     repo = bench_repo or BENCH
-    try:
-        return load_dataset(repo, split="test")
-    except ValueError as exc:
-        if "Feature type" not in str(exc) and "Json" not in str(exc):
-            raise
-        import urllib.request
+    split_candidates = ["test", "train"] if "bench-v3" in repo else ["test"]
+    for split in split_candidates:
+        try:
+            return load_dataset(repo, split=split)
+        except Exception as exc:
+            if "Feature type" in str(exc) or "Json" in str(exc) or "split" in str(exc).lower():
+                pass
+            else:
+                raise
+    import urllib.request
 
-        url = f"https://huggingface.co/datasets/{repo}/resolve/main/data/test.jsonl"
-        print(f"  load_dataset schema failed ({exc}); falling back to raw JSONL: {url}")
-        with urllib.request.urlopen(url, timeout=30) as resp:
-            raw_lines = resp.read().decode("utf-8").strip().splitlines()
-        return [json.loads(line) for line in raw_lines if line.strip()]
+    filename = "data/sakthai-bench-v3.jsonl" if "bench-v3" in repo else "data/test.jsonl"
+    url = f"https://huggingface.co/datasets/{repo}/resolve/main/{filename}"
+    print(f"  load_dataset schema/split failed; falling back to raw JSONL: {url}")
+    with urllib.request.urlopen(url, timeout=30) as resp:
+        raw_lines = resp.read().decode("utf-8").strip().splitlines()
+    return [json.loads(line) for line in raw_lines if line.strip()]
 
 
 def load_rows():
