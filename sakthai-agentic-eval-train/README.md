@@ -26,6 +26,7 @@ agentic (multi-turn) tool use, built 2026-07-31. Everything here ran on **Huggin
 | `scripts/sft_bootstrap.py` | SFT bootstrap (LoRA) on the oracle trajectories. `SFT_BASE`, `SFT_EPOCHS`, `SFT_REPEAT`, `SFT_PUSH_TO`. |
 | `scripts/grpo_train_pilot.py` | GRPO against the in-process env. Handles adapter **merge-in** (for vLLM) + **merge-out** (standalone push). `TRAIN_MODE=lora16\|lora64\|full`, `TRAIN_BASE`, `TRAIN_MAX_STEPS`, `TRAIN_MAX_COMPLETION`, `TRAIN_PUSH_TO`. |
 | `scripts/pipeline_common.py` | Shared tool schemas, renderer, parser, setting validation, and result provenance helpers used by the evaluators. |
+| `scripts/benchmark_evaluation_manager_agent.py` | Deterministic CPU coverage benchmark for `.claude/agents/openenv-rl-training-evaluation-manager.md`. |
 | `sakthai_grpo_colab.ipynb` | **Self-contained Colab/Kaggle notebook** — the whole GRPO pipeline (merge-in/out, QLoRA for 7B, `use_vllm=False` for a T4, bf16 save) for a **free sustained GPU**. This is the consolidated, latest version; prefer it for a real run. |
 | `eval_sakthai_bench_colab.ipynb` | **Free Colab T4 benchmark notebook** — evaluates `-merged` and `-tools` PEFT checkpoints on `sakthai-bench-v2` via `eval_bench_peft.py` (with the `data/test.jsonl` fallback for `Feature type 'Json' not found`). |
 | `FINDINGS.md` | Full write-up: baselines, the RL cold-start finding, the SFT tradeoff, all bugs found. |
@@ -72,10 +73,11 @@ hf jobs uv run --flavor a100-large --secrets HF_TOKEN --timeout 60m \
 
 ### Free
 - **Colab / Kaggle** — the free way to do the *real* 7B GRPO (sustained GPU that HF Jobs and
-  ZeroGPU can't provide). GitHub only shows a static preview of the notebook — click to open it
-  in a runnable environment, then set a GPU runtime + `HF_TOKEN` and run:
-
-  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb) [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb)
+  ZeroGPU can't provide) and single-shot PEFT benchmark evaluation. GitHub only shows a static
+  preview of the notebooks — click to open in a runnable environment, then set a GPU runtime +
+  `HF_TOKEN` and run:
+  - **GRPO Training (`sakthai_grpo_colab.ipynb`)**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb) [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb)
+  - **PEFT Benchmark Eval (`eval_sakthai_bench_colab.ipynb`)**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/beer-sakthai/openenv-rl-training/blob/main/sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb)
 - **ZeroGPU Spaces** (built from these scripts):
   - Eval: <https://huggingface.co/spaces/Nanthasit/sakthai-agentic-eval>
   - SFT: <https://huggingface.co/spaces/Nanthasit/sakthai-sft-trainer> (private)

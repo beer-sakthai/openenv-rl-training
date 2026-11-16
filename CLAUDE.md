@@ -28,10 +28,12 @@ because ~115 pre-existing F541/F401/F841 hits sit mostly in files that must not 
 first, and never by reformatting a pinned snapshot.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
-`verify_grpo_contract.py`, and 38 pytest tests across the root contract file and both
-workspace suites. Four workflows dispatch `hf jobs uv run` to Hugging Face and need
-`HF_TOKEN` as a repo secret (`train`, `eval`, `lighteval`, `mcp-bench`); `monitor.yml`
-does not dispatch anything — it reads the Hub API and writes a job summary.
+`verify_grpo_contract.py`, and 57 pytest tests across the root contract file and both
+workspace suites; `benchmark-evaluation-manager-agent.yml` runs the evaluation manager
+agent rubric benchmark and regression tests on every push. Four workflows dispatch
+`hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret (`train`, `eval`,
+`lighteval`, `mcp-bench`); `monitor.yml` does not dispatch anything — it reads the Hub API
+and writes a job summary.
 
 Do not re-add the GitHub-suggested `pylint.yml` / `python-app.yml` / `python-package.yml` /
 `super-linter.yml` / `cache.yml` / `label.yml` / `manual.yml` templates — the first five
@@ -65,15 +67,16 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 
 | Path | What it is |
 |---|---|
-| `sakthai-sft-training/` | **SFT half.** QLoRA training scripts (0.5B / 1.5B / 7B; `train-sakthai-1.5b-v2.py`, `train_qwen.py`, `train-sakthai-cpu.py`), 10-cycle data-augmentation loop (`cycle-100-v2..v10.py`, `augment-*.py`, `audit-and-fix-safety-quality.py`), cross-model + MCP-Bench + lighteval evaluators (`eval-*.py`), `sakthai-cycle-bench/` (155-row BFCL harness), ops tooling (`scripts/ops/`, `scripts/eval/`), self-contained SFT Colab notebook (`sakthai-1.5b-colab.ipynb`), publishing helpers (`push-*.py`, `create-*.py`). Was `beer-sakthai/SakThai-Training` before 2026-08-21. |
-| `openenv-custom-training/` | **RL — custom environments.** Tier A (`env_simple_task.py`, inline plain Python), Tier B (`agent_tools/`, sandboxed OpenEnv server in Docker), and BrowserGym MiniWoB++ (`train.py --env browsergym`). Runners: `train.py` (single env), `multi_env.py` (TRL-native dict-form multi-env). |
+| `sakthai-sft-training/` | **SFT half.** QLoRA training scripts (0.5B / 1.5B / 7B; `train-sakthai-1.5b-v2.py`, `train_qwen.py`, `train-sakthai-cpu.py`), multilingual embedding trainer (`train-sakthai-embedding.py` via `MultipleNegativesRankingLoss`), 10-cycle data-augmentation loop (`cycle-100-v2..v10.py`, `augment-*.py`, `audit-and-fix-safety-quality.py`), cross-model + MCP-Bench + lighteval evaluators (`eval-*.py`, with `INCLUDE_EXTERNAL_BASELINES=1` and `USE_HF_ROUTER=1` in `eval-cross-model.py`), `sakthai-cycle-bench/` (155-row BFCL harness), ops tooling (`scripts/ops/`, `scripts/eval/`), self-contained SFT Colab notebook (`sakthai-1.5b-colab.ipynb`), publishing helpers (`push-*.py`, `create-*.py`). Was `beer-sakthai/SakThai-Training` before 2026-08-21. |
+| `openenv-custom-training/` | **RL — custom environments.** Tier A (`env_simple_task.py`, inline plain Python), Tier B (`agent_tools/`, sandboxed OpenEnv server in Docker), OpenEnv MCP tool discovery (`env_mcp_task.py`, `SakThaiMCPEnvironment` + `MCPTaskEnv` via `train.py --env mcp`), BrowserGym MiniWoB++ (`train.py --env browsergym`), and CPU heuristic policy baseline / GRPO reward-variance evaluator (`evaluate_baselines.py`). Runners: `train.py` (single env), `multi_env.py` (TRL-native dict-form multi-env). |
 | `openenv-multi-catalog-training/` | **RL — catalog run.** One ~0.6B model across all 8 `openenv/*` catalog envs (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in one GRPO run via a meta-environment class. `a2a_agent/` exposes the same 8 envs as [A2A protocol](https://a2a-protocol.org/) skills, independent of training. |
-| `sakthai-agentic-eval-train/` | **The RL eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval, agentic eval, SFT bootstrap, GRPO pilot), a self-contained Colab/Kaggle notebook, and `FINDINGS.md` — the durable empirical record. |
+| `sakthai-agentic-eval-train/` | **The RL eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval `eval_bench_peft.py`, agentic eval `eval_hermes_env.py`, SFT bootstrap, GRPO pilot), self-contained Colab/Kaggle notebooks (`sakthai_grpo_colab.ipynb`, `eval_sakthai_bench_colab.ipynb`), the evaluation manager agent benchmark (`scripts/benchmark_evaluation_manager_agent.py`), and `FINDINGS.md` — the durable empirical record. |
 | `browsergym-space/` | Dockerfile + Space card for a BrowserGym OpenEnv server. **Not deployed** — `Nanthasit/browsergym-env` no longer exists (404, verified 2026-09-16). `train.py --env browsergym` defaults to upstream [`openenv/browsergym_env`](https://huggingface.co/spaces/openenv/browsergym_env); redeploy from here and pass `--browsergym-url` to use your own. |
-| `.github/workflows/` | `verify-contracts.yml` (ruff + 38 CPU tests, runs in GH Actions); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
+| `.github/workflows/` | `verify-contracts.yml` (ruff + 57 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
+| `.claude/agents/` | Repository-specific Claude Code agents (`openenv-rl-training-evaluation-manager.md`). |
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
-| `docs/HF_HUB_IMPROVEMENTS.md`, `SECURITY.md` | 2026-07-30 Hub audit; token-hygiene checklist. |
-| `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py` | CPU-only contract checks, plus the `openenv` stub that lets the two workspace test suites collect here. Together with `.ruff.toml`, the only things runnable in this checkout without HF Jobs / a GPU. |
+| `docs/` | `docs/MODELS.md` (13-model portfolio reference), `docs/KNOWN_GAPS.yaml` (parseable gap index), `docs/evaluation-manager-agent.md` (agent guide), `docs/HF_HUB_IMPROVEMENTS.md` (2026-07-30 Hub audit), and root `SECURITY.md` (token-hygiene checklist). |
+| `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py` | CPU-only contract checks, plus the `openenv` stub (including `openenv.core.env_server.mcp_types` and `MCPEnvironment`) that lets the two workspace test suites collect here. Together with `.ruff.toml` and `openenv-custom-training/evaluate_baselines.py`, runnable in this checkout without HF Jobs / a GPU. |
 | `PLAN.md` | The open-work record. Resolved work moves to `CHANGELOG.md`; the parseable gap index is `docs/KNOWN_GAPS.yaml`. |
 | `CHANGELOG.md` | Landed work, newest first. One line per PR / sweep. |
 
@@ -88,7 +91,10 @@ python3 verify_grpo_contract.py          # drives SimpleGuessEnv; skips TRL when
 uv run --with datasets --with pytest --with pydantic --with httpx \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
-         openenv-custom-training/tests/    # 38 passed
+         openenv-custom-training/tests/    # 57 passed
+uv run --with datasets --with pydantic \
+  python3 openenv-custom-training/evaluate_baselines.py  # CPU baseline competition
+python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 ```
 
 Run the three suites in **one** pytest invocation, as CI does. They share `sys.modules`, and
@@ -323,8 +329,11 @@ translating env vars into CLI args. Preserve the pattern when adding a flag.
 `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb` is the consolidated, self-contained
 pipeline (install → auth → config → in-process env → merge-in → GRPO with `use_vllm=False`
 for a T4 → bf16 merge-out → 6-task eval). Prefer it over the as-run scripts for a real run.
-It is linked by Colab/Kaggle badges that point at `main` on GitHub — moving or renaming the
-notebook breaks those badges in both READMEs.
+`sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb` is the companion free T4 Colab
+notebook for running `eval_bench_peft.py` against `Nanthasit/sakthai-bench-v2` across both
+`-merged` models and bare PEFT `-tools` adapters.
+The GRPO notebook is linked by Colab/Kaggle badges that point at `main` on GitHub — moving
+or renaming it breaks those badges in both READMEs.
 
 ### Local Docker servers
 
@@ -359,10 +368,9 @@ The prose in this repo is unusually careful, and that is deliberate. Match it:
   `openenv==0.4.1` on 2026-07-31", "trl 1.9.2 source read". Never upgrade an unverified
   claim to a verified one, and never delete a "this was not run" caveat, unless you actually
   ran it in this session.
-- **Known-gaps sections are load-bearing.** `coding_env`'s placeholder task, `chat_env`'s
-  inferred action schema, unverified Docker image tags, the untested `a2a-sdk` method names —
-  each is flagged where it lives. If you fix one, remove its caveat; if you touch nearby
-  code, leave it.
+- **Known-gaps sections are load-bearing.** `chat_env`'s inferred action schema, unverified
+  Docker image tags, the untested `a2a-sdk` method names — each is flagged where it lives.
+  If you fix one, remove its caveat; if you touch nearby code, leave it.
 - Module docstrings do the explaining. `train_multi_env.py`, `agent_tools/README.md`, and
   `env_simple_task.py` are the reference examples: they state the contract, the caveats, and
   the reasoning, not just the API.
@@ -418,6 +426,24 @@ When you close one, delete both.
   `sakthai-sft-training/`. They are out of the lint gate on purpose; see the `.ruff.toml`
   header before widening it.
 
+**Resolved 2026-11-16** (Colab Drive notebooks & OpenEnv improvements, PR #232):
+
+- ~~`eval_bench_peft.py` crashed on Colab with `ValueError: Feature type 'Json' not found`~~ →
+  `_load_bench_dataset()` falls back to raw `data/test.jsonl`, and
+  `sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb` evaluates both `-merged` and
+  bare PEFT `-tools` models on free T4 GPUs.
+- ~~`coding_env` in `train_multi_env.py` and `a2a_agent/agent_executor.py` used a
+  `print(17 * 23)` placeholder task~~ → upgraded to a structured invoice-parsing function
+  task (`parse_and_sum_amounts` → `RESULT:5420:3`), closing `KNOWN_GAPS.yaml#coding-env-placeholder`.
+- ~~`_format_openspiel_obs` truncated `info_state` at 32 floats, cutting off row 9 (indices
+  45–49) of the 10×5 OpenSpiel Catch grid~~ → extended to `[:64]` with non-zero active
+  indices and multi-player `current_player_id` / `opponent_last_action` metadata.
+- Added `openenv-custom-training/env_mcp_task.py` (`SakThaiMCPEnvironment` + `MCPTaskEnv`,
+  `train.py --env mcp`), `openenv-custom-training/evaluate_baselines.py` (CPU policy
+  competition & GRPO `frac_reward_zero_std` check), `sakthai-sft-training/train-sakthai-embedding.py`
+  (`MultipleNegativesRankingLoss` multilingual embedding trainer), and external baseline /
+  HF Router support in `sakthai-sft-training/eval-cross-model.py`.
+
 **Resolved 2026-09-16** (repo-health pass):
 
 - ~~`sakthai-sft-training/push-all-to-hub.py` failed to parse~~ → unterminated module
@@ -430,7 +456,7 @@ When you close one, delete both.
 - ~~Two NameErrors in eval scripts (`del m`, missing `import collections`)~~ → fixed;
   both fired partway through a paid GPU job.
 - ~~27 workspace tests that no CI job ran~~ → root `conftest.py` stubs `openenv`;
-  `verify-contracts.yml` now runs 38 tests plus ruff.
+  `verify-contracts.yml` now runs 57 tests plus ruff.
 - ~~`monitor.yml` failed every week by design; `train.yml` used a nonexistent runner
   label; `mcp-bench.yml` called `hf` without installing it; `manual.yml` / `stale.yml`
   were unmodified starter templates~~ → fixed, or deleted in `manual.yml`'s case.

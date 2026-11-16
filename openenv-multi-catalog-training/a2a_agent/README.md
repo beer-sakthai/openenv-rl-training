@@ -55,8 +55,10 @@ python client_smoke_test.py --base-url http://localhost:9000/
 
 - `atari`'s observation is a RAM-byte text dump, not real pixels — same
   vision-mismatch caveat as the training script next door.
-- `coding`'s reward check is the same placeholder task (`17 * 23`) as
-  `../train_multi_env.py` — replace before using for anything real.
+- `coding`'s reward check evaluates the single structured invoice-parsing
+  task (`parse_and_sum_amounts` → `RESULT:5420:3`) matching
+  `../train_multi_env.py` — customize `CODING_TASK_PROMPT` /
+  `CODING_EXPECTED` if exposing a broader problem set.
 - No auth/rate-limiting — this exposes 8 sandboxed-ish environments (one,
   `coding`, executes arbitrary code) over plain HTTP with no access
   control. Don't expose this port publicly as-is.

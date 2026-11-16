@@ -4,16 +4,18 @@ Companion to the catalog-only workspace at `../openenv-multi-catalog-training/`.
 That workspace trains across the 8 `openenv/*` **catalog** environments; this
 one designs **custom** environments — the task and reward are yours.
 
-Two environment shapes live here:
+Four environment shapes live here:
 
-| Tier | File | When to use | Isolation |
+| Tier / Mode | File | When to use | Isolation |
 |------|------|-------------|-----------|
 | **A — inline logic** | `env_simple_task.py` | Task is safe plain Python (no exec of model-generated code) | None — runs in the training process |
 | **B — sandboxed server** | `agent_tools/` | Model's actions execute arbitrary/untrusted code (terminal, code-exec) | Real OpenEnv server in Docker |
+| **MCP — tool discovery** | `env_mcp_task.py` | Multi-step MCP tool discovery (`ListToolsAction`) and tool calling (`CallToolAction`) via `MCPEnvironment` | In-process or FastAPI `create_app` server |
+| **BrowserGym — web UI** | `train.py --env browsergym` | Interactive web navigation on MiniWoB++ tasks (`click-button`, etc.) | Remote OpenEnv Space (`openenv/browsergym_env`) |
 
-Everything is **design-only**: this machine has no GPU, nothing here has been
-run. Take the workspace to a GPU box (Kaggle, HF Jobs, a rented box) and run
-it there.
+Everything except the CPU contract checks and `evaluate_baselines.py` is
+**design-only**: this machine has no GPU, so training runs happen on a GPU box
+(Kaggle, Colab, HF Jobs, or a rented server).
 
 ## Layout
 
@@ -31,7 +33,7 @@ agent_tools/              Tier B: sandboxed OpenEnv server + client + TRL wrappe
 train.py                  entrypoint: --env {simple,agent_tools,mcp,browsergym}, configurable model & vLLM mode
 multi_env.py              Tier A + Tier B combined, TRL-native dict form
                           (environment_factory={"guess": ..., "agent_tools": ...})
-requirements.txt          pinned deps (written against openenv 0.4.1 / trl 1.9.2)
+requirements.txt          pinned deps (verified against openenv 0.12.0 / trl 1.17.1)
 ```
 
 ## The one decision that matters: inline vs. sandboxed
@@ -60,13 +62,19 @@ VRAM for both the policy and the (colocated) vLLM engine.
 ```bash
 pip install -r requirements.txt
 
+# CPU sanity check — compare heuristic policies & verify non-zero GRPO reward variance
+python evaluate_baselines.py
+
 # Tier A — no server needed
 python train.py --env simple --vllm-mode colocate
+
+# OpenEnv MCP tool-discovery & execution environment
+python train.py --env mcp --vllm-mode colocate
 
 # Tier B — start the sandbox server first (see agent_tools/README.md), then:
 python train.py --env agent_tools --vllm-mode colocate
 
-# Both at once
+# Both Tier A and Tier B at once
 python multi_env.py --vllm-mode colocate
 ```
 

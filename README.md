@@ -62,12 +62,12 @@ All assets are available on the Hugging Face Hub under [`Nanthasit`](https://hug
 
 Each subdirectory is an independent workspace:
 
-- **`sakthai-sft-training/`** — SFT training scripts, 10-cycle data augmentation loop (`cycle-100-v*.py`), and benchmark evaluators.
-- **`openenv-custom-training/`** — GRPO training runners (`train.py`, `multi_env.py`) supporting BrowserGym MiniWoB++ and custom sandboxed environments.
-- **`openenv-multi-catalog-training/`** — Multi-environment GRPO runner across 8 OpenEnv catalog environments.
-- **`sakthai-agentic-eval-train/`** — Empirical evaluations, Colab notebooks, and [`FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) (empirical record).
+- **`sakthai-sft-training/`** — SFT training scripts, multilingual embedding trainer (`train-sakthai-embedding.py`), 10-cycle data augmentation loop (`cycle-100-v*.py`), and benchmark evaluators (`eval-cross-model.py`, `eval-light.py`, `eval-mcp.py`).
+- **`openenv-custom-training/`** — GRPO training runners (`train.py`, `multi_env.py`, `evaluate_baselines.py`) supporting Tier A (`env_simple_task.py`), Tier B (`agent_tools/`), MCP tool discovery (`env_mcp_task.py`), and BrowserGym MiniWoB++.
+- **`openenv-multi-catalog-training/`** — Multi-environment GRPO runner across 8 OpenEnv catalog environments (`train_multi_env.py`) plus the A2A protocol server (`a2a_agent/`).
+- **`sakthai-agentic-eval-train/`** — Empirical evaluations (`eval_bench_peft.py`, `eval_hermes_env.py`), Colab notebooks (`sakthai_grpo_colab.ipynb`, `eval_sakthai_bench_colab.ipynb`), and [`FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) (empirical record).
 - **`browsergym-space/`** — Dockerfile and Space configuration for the BrowserGym OpenEnv server.
-- **`docs/`** — Architecture records, security policies, the tracked open gap index ([`KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml)), and the [evaluation manager agent guide](docs/evaluation-manager-agent.md).
+- **`docs/`** — Architecture records, model portfolio ([`MODELS.md`](docs/MODELS.md)), security policies, the tracked open gap index ([`KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml)), and the [evaluation manager agent guide](docs/evaluation-manager-agent.md).
 - **`.claude/agents/`** — Repository-specific Claude Code agents, including the [evaluation pipeline manager](.claude/agents/openenv-rl-training-evaluation-manager.md).
 - **`.github/workflows/`** — Free CI test runners (`verify-contracts.yml`, `codeql.yml`), the push-triggered evaluation manager benchmark, and Hugging Face Jobs dispatchers.
 
@@ -77,7 +77,7 @@ Each subdirectory is an independent workspace:
 
 ### Local Verification (CPU)
 
-Run linting and contract test suites locally:
+Run linting, contract test suites, and heuristic baseline checks locally:
 
 ```bash
 # 1. Bug-only lint check (syntax, undefined names, redefinitions)
@@ -86,11 +86,14 @@ uv run --with ruff ruff check .
 # 2. Verify GRPO environment contracts
 python3 verify_grpo_contract.py
 
-# 3. Run all contract and agent tests
+# 3. Run all contract and agent tests (57 passed in single invocation)
 uv run --with datasets --with pytest --with pydantic --with httpx \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/
+
+# 4. Run CPU heuristic baseline competition & GRPO reward-variance check
+uv run --with datasets --with pydantic python3 openenv-custom-training/evaluate_baselines.py
 ```
 
 ### Evaluation Manager Agent Benchmark
@@ -117,7 +120,7 @@ hf jobs uv run --detach --flavor a100-large --secrets HF_TOKEN --timeout 1h \
   openenv-custom-training/train.py --env browsergym --browsergym-task click-button
 ```
 
-*For interactive experimentation, use the self-contained Colab notebook: [`sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`](sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb).*
+*For interactive experimentation on free Colab T4 GPUs, use [`sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`](sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb) (end-to-end GRPO training) and [`sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb`](sakthai-agentic-eval-train/eval_sakthai_bench_colab.ipynb) (PEFT benchmark evaluation on `sakthai-bench-v2`).*
 
 ---
 
