@@ -15,12 +15,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
 - [ ] Repoint `augmented-output/push-augmented.py` at the Hub so the committed
       `.jsonl` payloads under `augmented-output/` and `safety-quality-fixes/` can be
       removed. Blocked on a push to the Hub first; see `KNOWN_GAPS.yaml#committed-dataset-payloads`.
-- [ ] Translate a subset of `.opencode/skills/` into Claude Code skills
-      (`.claude/skills/*/SKILL.md`) — `cycle-workflow`, `data-augmentation`, `training`,
-      `eval`, `troubleshooting` first.
-- [ ] Audit stale publish helpers. `push-v9-comprehensive.py` was never run;
-      `push-all-to-hub.py` was broken until 2026-09-16. If v9/v11 won't be pushed,
-      mark the scripts "deprecated — see KNOWN_GAPS.yaml" or delete them.
 
 ## Open — infra / dependencies
 
