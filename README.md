@@ -67,8 +67,9 @@ Each subdirectory is an independent workspace:
 - **`openenv-multi-catalog-training/`** — Multi-environment GRPO runner across 8 OpenEnv catalog environments.
 - **`sakthai-agentic-eval-train/`** — Empirical evaluations, Colab notebooks, and [`FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md) (empirical record).
 - **`browsergym-space/`** — Dockerfile and Space configuration for the BrowserGym OpenEnv server.
-- **`docs/`** — Architecture records, security policies, and the tracked open gap index ([`KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml)).
-- **`.github/workflows/`** — Free CI test runners (`verify-contracts.yml`, `codeql.yml`) and Hugging Face Jobs dispatchers.
+- **`docs/`** — Architecture records, security policies, the tracked open gap index ([`KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml)), and the [evaluation manager agent guide](docs/evaluation-manager-agent.md).
+- **`.claude/agents/`** — Repository-specific Claude Code agents, including the [evaluation pipeline manager](.claude/agents/openenv-rl-training-evaluation-manager.md).
+- **`.github/workflows/`** — Free CI test runners (`verify-contracts.yml`, `codeql.yml`), the push-triggered evaluation manager benchmark, and Hugging Face Jobs dispatchers.
 
 ---
 
@@ -85,12 +86,22 @@ uv run --with ruff ruff check .
 # 2. Verify GRPO environment contracts
 python3 verify_grpo_contract.py
 
-# 3. Run all 38 contract tests
+# 3. Run all contract and agent tests
 uv run --with datasets --with pytest --with pydantic --with httpx \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/
 ```
+
+### Evaluation Manager Agent Benchmark
+
+The repository includes a deterministic, CPU-only benchmark for the evaluation pipeline manager agent. It checks coverage of the single-shot, agentic, comparison, and remote-evaluation workflows, along with provenance and execution-safety guidance:
+
+```bash
+python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
+```
+
+Use `--json` for machine-readable output. The benchmark and its focused regression tests run automatically on every push through [`benchmark-evaluation-manager-agent.yml`](.github/workflows/benchmark-evaluation-manager-agent.yml). See the [agent configuration and extension guide](docs/evaluation-manager-agent.md) before adding a new evaluator or changing the rubric.
 
 ### Remote GPU Training (Hugging Face Jobs)
 
@@ -112,7 +123,7 @@ hf jobs uv run --detach --flavor a100-large --secrets HF_TOKEN --timeout 1h \
 
 ## CI & Project Status
 
-- **CI Status**: Contract tests, CodeQL, and PR auto-updates run on every push to `main`.
+- **CI Status**: Contract tests, the evaluation manager benchmark, CodeQL, and PR auto-updates run on every push to `main`.
 - **Known Items**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 - **Changelog**: Historical releases and completed PRs are tracked in [`CHANGELOG.md`](CHANGELOG.md).
 
