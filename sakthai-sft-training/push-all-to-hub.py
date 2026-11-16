@@ -2,7 +2,14 @@
 # /// script
 # dependencies = ["datasets", "huggingface_hub"]
 # ///
-"""Push all augmented datasets to Hugging Face Hub as sakthai-combined-v8."""
+"""
+Push all augmented datasets to Hugging Face Hub as sakthai-combined-v8.
+
+DEPRECATED — historical one-off publish helper expecting `training-data-ready.jsonl`
+which is not committed in-tree. `Nanthasit/sakthai-combined-v8` does not exist on the
+Hub and was superseded by `Nanthasit/sakthai-combined-v10`. Kept for historical
+reference only.
+"""
 
 from huggingface_hub import HfApi
 

@@ -16,6 +16,7 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 - **`openenv-custom-training/evaluate_baselines.py`** — CPU-runnable baseline policy competition (`AlwaysStay`/`AlwaysZero`, `Random`, `EpsilonGreedy`, `SmartHeuristic`) across `SimpleGuessEnv` and simulated 10×5 OpenSpiel Catch, reporting win rates, average steps, and GRPO group reward variance (`frac_reward_zero_std`).
 - **`sakthai-sft-training/train-sakthai-embedding.py`** — PEP 723 script for fine-tuning and evaluating `Nanthasit/sakthai-embedding-multilingual` with `SentenceTransformerTrainer` and `MultipleNegativesRankingLoss` on bilingual (Thai + English) tool-retrieval triplets.
 - **`openenv-multi-catalog-training/tests/test_a2a_agent.py`** — contract and lifecycle suite for `OpenEnvAgentExecutor`, testing `TaskUpdater` protocol methods (`submit`, `start_work`, `update_status`, `failed`, `cancel`), initial episode reset, `DataPart` action precedence, completion, and error rejection (closes `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`).
+- **`.claude/skills/` translation** — translated 5 high-value `.opencode/skills/` (`cycle-workflow`, `data-augmentation`, `training`, `eval`, `troubleshooting`) into native Claude Code skills with YAML frontmatter, execution workflows, and architectural guidance for SFT and OpenEnv RL pipelines.
 
 ### Fixed
 
@@ -28,6 +29,7 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 ### Changed
 
 - **Documentation audit and synchronization** — updated root `README.md`, `CLAUDE.md`, `openenv-custom-training/README.md`, `openenv-multi-catalog-training/README.md`, `openenv-multi-catalog-training/a2a_agent/README.md`, and `sakthai-agentic-eval-train/README.md` to reflect the 66 passed tests, `evaluate_baselines.py`, `eval_sakthai_bench_colab.ipynb` badges/links, MCP environment integration, and upgraded invoice-parsing task definitions.
+- **Audit of stale publish helpers** — audited `sakthai-sft-training/push-v9-comprehensive.py` and `sakthai-sft-training/push-all-to-hub.py`, marking both explicitly as archived/deprecated with docstring explanations covering the superseded Hub lineage (`v10`) and uncommitted historical files.
 
 ## 2026-11-13
 
