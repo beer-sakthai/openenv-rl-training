@@ -138,6 +138,12 @@ python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 
 When extending the agent, add a scenario term only when the wording represents a real repository contract. Update the benchmark tests when adding a new category, and avoid turning historical metric values into prompt requirements.
 
+## Continuous integration
+
+`.github/workflows/benchmark-evaluation-manager-agent.yml` runs on every push. It uses a pinned checkout, Python 3.11, and the repository’s hardened runner convention, then runs the JSON benchmark followed by the two focused regression-test modules. The workflow is CPU-only, requires no Hugging Face token, and does not start model evaluation or paid infrastructure.
+
+Keep this workflow path-filter-free so changes to the agent, benchmark, tests, documentation, or repository configuration all exercise the same coverage gate. If the benchmark contract changes, update the script and tests together and confirm the workflow still reports a nonzero exit code for missing required guidance.
+
 ## Pull request checklist
 
 Before opening a PR for an agent or guide change:

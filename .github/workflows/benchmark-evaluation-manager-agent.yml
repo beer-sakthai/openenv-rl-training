@@ -1,0 +1,28 @@
+name: Evaluation Manager Agent Benchmark
+on:
+  push:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - name: Install test runner
+        run: pip install uv
+      - name: Run evaluation manager benchmark
+        run: python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py --json
+      - name: Run evaluation manager regression tests
+        run: >-
+          uv run --with pytest pytest
+          sakthai-agentic-eval-train/tests/test_evaluation_manager_agent.py
+          sakthai-agentic-eval-train/tests/test_benchmark_evaluation_manager_agent.py -q
