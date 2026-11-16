@@ -42,12 +42,19 @@ DEFAULT_MODELS = [
     "Nanthasit/sakthai-context-1.5b-merged",
     "Nanthasit/sakthai-context-7b-merged",
 ]
+EXTERNAL_BASELINE_MODELS = [
+    "google/functiongemma-270m-it",
+]
+if os.environ.get("INCLUDE_EXTERNAL_BASELINES", "0") in ("1", "true", "yes"):
+    DEFAULT_MODELS = DEFAULT_MODELS + EXTERNAL_BASELINE_MODELS
 MODELS = [m.strip() for m in os.environ.get("MODELS", ",".join(DEFAULT_MODELS)).split(",") if m.strip()]
 SAMPLE = int(os.environ.get("SAMPLE", "0"))
 BATCH = int(os.environ.get("BATCH", "4"))
 MAX_NEW = int(os.environ.get("MAX_NEW", "256"))
 DUMP = int(os.environ.get("DUMP", "0"))
 OUT = os.environ.get("OUT", ".eval_results")
+USE_HF_ROUTER = os.environ.get("USE_HF_ROUTER", "0") in ("1", "true", "yes")
+HF_ROUTER_URL = os.environ.get("HF_ROUTER_URL", "https://router.huggingface.co/v1")
 
 URL = "https://huggingface.co/datasets/Nanthasit/sakthai-bench-v2/resolve/main/data/test.jsonl"
 print(f"Loading {URL} ...", flush=True)
@@ -148,34 +155,86 @@ def summarize(rows):
     return out
 
 
+def _generate_via_hf_router(repo_id, messages, tools=None):
+    """Remote inference via Hugging Face Router (`https://router.huggingface.co/v1`),
+    ported from `gemma-4-31B-it.ipynb` so evaluations can run when HF Jobs returns 402.
+    """
+    from urllib.request import Request
+
+    token = os.environ.get("HF_TOKEN", "")
+    if not token:
+        raise RuntimeError("USE_HF_ROUTER=1 requires HF_TOKEN in environment")
+    body = {
+        "model": repo_id,
+        "messages": messages,
+        "max_tokens": MAX_NEW,
+        "temperature": 0.0,
+    }
+    if tools:
+        body["tools"] = tools
+    req = Request(
+        f"{HF_ROUTER_URL.rstrip('/')}/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    choice = (data.get("choices") or [{}])[0].get("message") or {}
+    if choice.get("tool_calls"):
+        formatted = []
+        for tc in choice["tool_calls"]:
+            fn = tc.get("function") or {}
+            formatted.append(
+                f"<tool_call>{json.dumps({'name': fn.get('name', ''), 'arguments': fn.get('arguments', {})})}</tool_call>"
+            )
+        return "\n".join(formatted)
+    return choice.get("content") or ""
+
+
 def eval_repo(repo_id):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "hf-router" if USE_HF_ROUTER else ("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n{'=' * 70}\nModel: {repo_id}  device: {device}\n{'=' * 70}", flush=True)
-    tokenizer, model = load_model(repo_id)
+    tokenizer, model = (None, None) if USE_HF_ROUTER else load_model(repo_id)
     results = collections.defaultdict(lambda: {"sel": [], "args": [], "strict": []})
     held_results = collections.defaultdict(lambda: {"sel": [], "args": [], "strict": []})
     t0 = time.time()
     for i in range(0, N, BATCH):
         batch = TEST[i:i + BATCH]
-        prompts = []
-        for row in batch:
-            msgs = list(row.get("messages", []))
-            while msgs and msgs[-1].get("role") in ("assistant", "tool"):
-                msgs.pop()
-            prompts.append(tokenizer.apply_chat_template(
-                msgs, tools=row.get("tools") or None,
-                tokenize=False, add_generation_prompt=True,
-            ))
-        inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048).to(device)
-        with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=MAX_NEW,
-                do_sample=False,
-                pad_token_id=tokenizer.pad_token_id,
-            )
+        if USE_HF_ROUTER:
+            generations = []
+            for row in batch:
+                msgs = list(row.get("messages", []))
+                while msgs and msgs[-1].get("role") in ("assistant", "tool"):
+                    msgs.pop()
+                generations.append(_generate_via_hf_router(repo_id, msgs, row.get("tools") or None))
+        else:
+            prompts = []
+            for row in batch:
+                msgs = list(row.get("messages", []))
+                while msgs and msgs[-1].get("role") in ("assistant", "tool"):
+                    msgs.pop()
+                prompts.append(tokenizer.apply_chat_template(
+                    msgs, tools=row.get("tools") or None,
+                    tokenize=False, add_generation_prompt=True,
+                ))
+            inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=2048).to(device)
+            with torch.no_grad():
+                outputs = model.generate(
+                    **inputs,
+                    max_new_tokens=MAX_NEW,
+                    do_sample=False,
+                    pad_token_id=tokenizer.pad_token_id,
+                )
+            generations = [
+                tokenizer.decode(outputs[j][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+                for j in range(len(batch))
+            ]
         for j, row in enumerate(batch):
-            gen = tokenizer.decode(outputs[j][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+            gen = generations[j]
             pred_calls = parse_tool_calls(gen)
             gold_calls = row.get("gold_calls", [])
             category = row.get("category", "unknown")
@@ -216,9 +275,11 @@ def eval_repo(repo_id):
         h_n = sum(held[c]["n"] for c in held)
         print(f"  {'HELD-OUT':20s} {h_n:>5} {held_avg['selection']:>8.1f}% {held_avg['arguments']:>8.1f}% {held_avg['strict']:>8.1f}%", flush=True)
 
-    del model
-    gc.collect()
-    torch.cuda.empty_cache()
+    if model is not None:
+        del model
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     return {"summary": summary, "irrelevance": irr, "overall": overall,
             "held": held, "held_avg": held_avg}
 

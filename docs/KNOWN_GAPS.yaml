@@ -84,17 +84,6 @@ gaps:
     blocker: owner-decision
     verified_on: "2026-09-16"
 
-  - id: coding-env-placeholder
-    title: "coding_env task is a placeholder (print(17 * 23))"
-    location:
-      - "openenv-multi-catalog-training/train_multi_env.py"
-      - "openenv-multi-catalog-training/a2a_agent/"
-    impact: "Multi-catalog run trains on a trivially-solvable task; no real coding signal."
-    workaround: "Substring check for the expected number."
-    fix: "Pick a small real coding-tool-use task (fetch arg, modify, re-return) and swap in."
-    blocker: owner-decision
-    verified_on: "2026-09-16"
-
   - id: a2a-sdk-method-names-unverified
     title: "a2a_agent/ TaskUpdater method names not verified against a live SDK"
     location: "openenv-multi-catalog-training/a2a_agent/agent_executor.py"

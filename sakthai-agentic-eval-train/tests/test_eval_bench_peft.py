@@ -26,6 +26,7 @@ _original_load_dataset = datasets.load_dataset
 datasets.load_dataset = MagicMock()
 
 try:
+    from scripts import eval_bench_peft  # noqa: E402
     from scripts.eval_bench_peft import is_degenerate  # noqa: E402
 finally:
     for mod in _mock_modules:
@@ -61,3 +62,47 @@ def test_is_degenerate_with_spaces():
     # "A " * 20 -> 40 chars, but spaces are removed by "".join(raw.split())
     # So it becomes "A" * 20 which is degenerate
     assert is_degenerate("A " * 20)
+
+
+def test_load_rows_falls_back_to_jsonl_on_json_feature_error(monkeypatch):
+    """Regression guard for the Colab `Feature type 'Json' not found` crash."""
+    import io
+    import json
+    import urllib.request
+
+    def _raise_json_feature_error(*args, **kwargs):
+        raise ValueError("Feature type 'Json' not found. Available feature types: ['Value']")
+
+    sample_row = {
+        "messages": [
+            {"role": "user", "content": "Check the weather in Bangkok."},
+            {"role": "assistant", "content": "<tool_call>{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Bangkok\"}}</tool_call>"},
+        ],
+        "tools": [{"type": "function", "function": {"name": "get_weather", "parameters": {"type": "object"}}}],
+        "category": "simple",
+        "gold_calls": [{"name": "get_weather", "arguments": {"city": "Bangkok"}}],
+        "held_out_tool": False,
+        "multi_turn": False,
+        "in_v1": True,
+    }
+    payload = (json.dumps(sample_row) + "\n").encode("utf-8")
+
+    class _DummyResponse(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(eval_bench_peft, "load_dataset", _raise_json_feature_error)
+    monkeypatch.setattr(
+        urllib.request,
+        "urlopen",
+        lambda url, timeout=30: _DummyResponse(payload),
+    )
+
+    eval_bench_peft.load_rows()
+    assert len(eval_bench_peft.ROWS) == 1
+    assert eval_bench_peft.ROWS[0]["cat"] == "simple"
+    assert eval_bench_peft.ROWS[0]["gold_calls"][0]["name"] == "get_weather"
+

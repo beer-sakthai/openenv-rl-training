@@ -46,8 +46,6 @@ When a bullet lands, delete it here (not strike it) and add a line to CHANGELOG.
       steps on `Nanthasit/sakthai-context-7b-tools` (the only viable GRPO target in
       this family — settled in FINDINGS.md). Use `sakthai-agentic-eval-train/sakthai_grpo_colab.ipynb`;
       push to `Nanthasit/sakthai-context-7b-tools-grpo`. See `KNOWN_GAPS.yaml#grpo-proof-run-too-short`.
-- [ ] Replace `coding_env`'s placeholder task (`print(17 * 23)`) with a real
-      coding-tool-use task. See `KNOWN_GAPS.yaml#coding-env-placeholder`.
 - [ ] Execute `a2a_agent/` against a live `a2a-sdk` install and confirm `TaskUpdater`
       method names. See `KNOWN_GAPS.yaml#a2a-sdk-method-names-unverified`.
 - [ ] Dispatch a single `--env browsergym` episode against `openenv/browsergym_env`

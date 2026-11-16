@@ -234,6 +234,9 @@ def _select(args: argparse.Namespace):
     elif args.env == "agent_tools":
         from agent_tools.wrapper import (DEFAULT_MODEL, ENVIRONMENT_FACTORY,
                                          REWARD_FUNCS, TRAIN_DATASET)
+    elif args.env == "mcp":
+        from env_mcp_task import (DEFAULT_MODEL, ENVIRONMENT_FACTORY,
+                                  REWARD_FUNCS, TRAIN_DATASET)
     elif args.env == "browsergym":
         task = getattr(args, "browsergym_task", "click-test")
         url = getattr(args, "browsergym_url", BROWSERGYM_SPACE_URL)
@@ -243,7 +246,7 @@ def _select(args: argparse.Namespace):
         DEFAULT_MODEL = BROWSERGYM_DEFAULT_MODEL
     else:
         raise SystemExit(
-            f"unknown --env {args.env!r}; choose 'simple', 'agent_tools', or 'browsergym'"
+            f"unknown --env {args.env!r}; choose 'simple', 'agent_tools', 'mcp', or 'browsergym'"
         )
     return ENVIRONMENT_FACTORY, REWARD_FUNCS, TRAIN_DATASET, DEFAULT_MODEL
 
@@ -253,7 +256,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--env",
-        choices=["simple", "agent_tools", "browsergym"],
+        choices=["simple", "agent_tools", "mcp", "browsergym"],
         default=env_default,
         required=(env_default is None),
     )

@@ -16,7 +16,8 @@ harness that connects the two lives in [`../sakthai-agentic-eval-train/`](../sak
 | `train-sakthai-cpu.py` | 20-example CPU smoke test | `uv run train-sakthai-cpu.py` |
 | `train-sakthai-1.5b-v2.py` | QLoRA 1.5B on `sakthai-combined-v9`, ~3k examples | `hf jobs uv run --flavor a10g-small --timeout 6h --secrets HF_TOKEN train-sakthai-1.5b-v2.py` |
 | `train_qwen.py` | Generic Qwen2.5 QLoRA harness | HF Jobs |
-| `eval-cross-model.py` | Bench all Sak models against `sakthai-bench-v3`, push to `Nanthasit/eval_results` | HF Jobs `l4x1` |
+| `train-sakthai-embedding.py` | Multilingual embedding fine-tuning (`MultipleNegativesRankingLoss`) + semantic tool-retrieval evaluator (`Nanthasit/sakthai-embedding-multilingual`) | Local / HF Jobs `l4x1` |
+| `eval-cross-model.py` | Bench all Sak models (plus optional `google/functiongemma-270m-it` or `USE_HF_ROUTER=1`) against `sakthai-bench-v3`, push to `Nanthasit/eval_results` | HF Jobs `l4x1` / HF Router |
 | `eval-sakthai-1.5b.py`, `eval_sakthai_15b_v2_fixed.py` | 1.5B-specific evals | HF Jobs `l4x1` |
 | `eval-mcp.py`, `eval-light.py` | MCP-Bench + lighteval wrappers | HF Jobs `l4x1` |
 | `cycle-100-v*.py` (10 files) | Iterative data-augmentation cycles v2 → v10 | HF Jobs |

@@ -385,8 +385,6 @@ A parseable index of these items lives at [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GA
 the prose below remains authoritative for context, but automation should read the YAML.
 When you close one, delete both.
 
-- `coding_env`'s task in both `train_multi_env.py` and `a2a_agent/` is a placeholder
-  (`print(17 * 23)`) with a substring check for correctness.
 - No catalog Docker image tag in `run_servers.sh` has been verified live.
 - `a2a_agent/` has never been executed; the `TaskUpdater` method names were written from the
   published SDK pattern, not a live install.
