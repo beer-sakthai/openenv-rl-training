@@ -36,7 +36,7 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: ruff (syntax errors, undefined names, redefinitions)
+      - name: ruff (syntax errors, undefined names, redefinitions, unused imports/variables)
         run: uv run --with ruff ruff check --output-format=github .
 
       - name: verify_grpo_contract.py (CPU, no torch/trl required)
@@ -46,7 +46,8 @@ jobs:
       # them separately hid a mock leak between them (see tests/conftest notes).
       - name: pytest (contract + workspace suites)
         run: |
-          uv run --with datasets --with pytest --with pydantic --with httpx \
+          uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
             pytest test_browsergym_contract.py \
                    sakthai-agentic-eval-train/tests/ \
-                   openenv-custom-training/tests/ -v
+                   openenv-custom-training/tests/ \
+                   openenv-multi-catalog-training/tests/ -v

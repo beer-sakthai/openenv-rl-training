@@ -83,13 +83,13 @@ def to_text(ex):
 main = load_dataset(f"{HF_USER}/sakthai-combined-v7", data_files="data/train.jsonl", split="train")
 train_data = main.map(to_text, remove_columns=main.column_names)
 
-# v8 augmentation
+# v10 augmentation (repointed from missing v8; v10 is the latest existing Hub revision)
 try:
-    v8 = load_dataset(f"{HF_USER}/sakthai-combined-v8", data_files="data/train.jsonl", split="train")
-    v8_text = v8.map(to_text, remove_columns=v8.column_names)
-    train_data = concatenate_datasets([train_data, v8_text])
+    v10 = load_dataset(f"{HF_USER}/sakthai-combined-v10", data_files="data/train.jsonl", split="train")
+    v10_text = v10.map(to_text, remove_columns=v10.column_names)
+    train_data = concatenate_datasets([train_data, v10_text])
 except Exception as e:
-    print("v8 unavailable:", e)
+    print("v10 unavailable:", e)
 
 # irrelevance supplement
 try:

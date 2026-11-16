@@ -10,7 +10,7 @@ Categories:
 - irrelevance_tools: tools offered, model must not call
 - irrelevance_no_tools: no tools, model must not call
 """
-import json, random, glob, hashlib
+import json, random, glob
 from pathlib import Path
 
 random.seed(42)

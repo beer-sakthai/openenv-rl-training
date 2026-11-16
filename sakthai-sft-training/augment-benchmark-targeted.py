@@ -48,7 +48,6 @@ all_examples = []
 def batch1(n=30):
     cities = ["New York", "Paris", "Tokyo", "London", "Bangkok", "Berlin", "Rome", "Madrid", "Dubai", "Seoul",
               "Mumbai", "Sydney", "Toronto", "Moscow", "Singapore", "Hong Kong", "San Francisco", "Los Angeles"]
-    topics = ["AI", "climate", "sports", "technology", "health", "science", "music", "movies"]
     tickers = ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA", "AMD", "AMZN", "META"]
     examples = []
     for _ in range(n):
@@ -83,7 +82,6 @@ def batch2(n=20):
 def batch3(n=20):
     cities2 = random.sample(["Bangkok", "London", "Tokyo", "Paris", "Rome", "Berlin", "Dubai", "Seoul", "Mumbai", "Sydney"], 10)
     tickers2 = ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA"]
-    topics2 = ["AI", "climate", "sports", "tech"]
     examples = []
     for i in range(n):
         c1, c2 = cities2[i % len(cities2)], cities2[(i+3) % len(cities2)]

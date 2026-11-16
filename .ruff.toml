@@ -12,18 +12,24 @@
 # a2a_agent/agent_executor.py (F811), and two NameErrors in eval scripts that
 # only fire partway through a paid GPU job (F821).
 #
-# The cosmetic rules (F401 unused-import, F541 f-string-without-placeholders,
-# F841 unused-variable) are intentionally NOT selected: ~115 pre-existing hits,
-# mostly in the immutable snapshots. Adopting them means a dedicated cleanup
-# pass on the files that are safe to touch, not a flag flip here.
+# Rules enforced across all workspaces:
+#   E9   syntax errors that stop a file parsing at all
+#   F821 undefined name  -> NameError at runtime
+#   F811 redefinition of an unused name -> a merge that silently dropped code
+#   F401 unused import
+#   F841 unused variable
+#
+# Note: F541 (f-string without placeholders) stays off due to low signal.
 target-version = "py310"
 
 [lint]
-select = ["E9", "F821", "F811"]
+select = ["E9", "F821", "F811", "F401", "F841"]
 
 [lint.per-file-ignores]
+# Pinned cycle snapshots reproduce released dataset revisions byte-for-byte and must stay immutable
+"sakthai-sft-training/cycle-100-v*.py" = ["F401", "F841"]
 # Notebook cells re-import so each cell runs standalone — that is the point.
-"*.ipynb" = ["F811"]
+"*.ipynb" = ["F811", "F401", "F841"]
 # Scaffolder reference snippets are deliberately partial; they are templates
 # the skill emits, not runnable modules.
 ".claude/skills/**" = ["F821"]

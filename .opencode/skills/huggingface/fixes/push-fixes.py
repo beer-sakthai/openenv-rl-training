@@ -105,14 +105,14 @@ try:
                     try:
                         info = api.model_info(repo_id=repo_id)
                         downloads_map[repo_id] = info.downloads
-                    except Exception as e:
+                    except Exception:
                         pass
             elif "**Context 0.5B Merged**" in line:
                 if repo_id_05b not in downloads_map:
                     try:
                         info = api.model_info(repo_id=repo_id_05b)
                         downloads_map[repo_id_05b] = info.downloads
-                    except Exception as e:
+                    except Exception:
                         pass
         elif in_table and not line.strip().startswith('|'):
             in_table = False

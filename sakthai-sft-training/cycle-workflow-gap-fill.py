@@ -5,7 +5,6 @@ Closes 4 critical gaps: 78 missing tools, 0 safety, 160 Thai, 1248 multi-turn.
 """
 import json, random
 from pathlib import Path
-from huggingface_hub import hf_hub_download
 
 random.seed(42)
 OUT = Path("gap-fill-v8")

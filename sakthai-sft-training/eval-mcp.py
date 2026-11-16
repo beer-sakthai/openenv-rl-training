@@ -19,7 +19,7 @@ Commands:
   HUGGINGFACE_BASE_URL=http://localhost:8000/v1 python run_benchmark.py \\
     --models huggingface --tasks-file tasks/mcpbench_tasks_single_runner_format.json
 """
-import subprocess, sys, os
+import os
 
 MODEL = "Nanthasit/sakthai-plus-1.5b"
 MCP_BENCH_DIR = os.environ.get("MCP_BENCH_DIR", "./mcp-bench")

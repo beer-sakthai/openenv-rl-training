@@ -8,7 +8,6 @@ import json
 import re
 import time
 import urllib.request
-from collections import Counter
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer

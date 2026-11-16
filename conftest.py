@@ -221,8 +221,144 @@ def _install_openenv_stub():
     core.env_server = env_server
 
 
+def _install_a2a_and_catalog_stubs():
+    """Register lightweight stubs for `a2a` and catalog environments if absent."""
+    if "a2a" not in sys.modules:
+        try:
+            import a2a  # noqa: F401
+        except ImportError:
+            class AgentExecutor:
+                pass
+
+            class RequestContext:
+                def __init__(self, task_id="task_1", context_id="ctx_1", current_task=None, message=None):
+                    self.task_id = task_id
+                    self.context_id = context_id
+                    self.current_task = current_task
+                    self.message = message
+
+                def get_user_input(self):
+                    if self.message and hasattr(self.message, "parts") and self.message.parts:
+                        p = self.message.parts[0]
+                        return getattr(p, "text", str(p))
+                    return ""
+
+            class EventQueue:
+                def __init__(self):
+                    self.events = []
+
+                async def put(self, event):
+                    self.events.append(event)
+
+            class TaskUpdater:
+                def __init__(self, event_queue=None, task_id="task_1", context_id="ctx_1"):
+                    self.event_queue = event_queue
+                    self.task_id = task_id
+                    self.context_id = context_id
+                    self.state = None
+                    self.messages = []
+                    self.calls = []
+
+                async def submit(self):
+                    self.calls.append("submit")
+
+                async def start_work(self):
+                    self.calls.append("start_work")
+
+                async def update_status(self, state: str, message=None):
+                    self.calls.append(("update_status", state, message))
+                    self.state = state
+                    if message:
+                        self.messages.append(message)
+
+                async def failed(self, message=None):
+                    self.calls.append(("failed", message))
+                    self.state = "failed"
+                    if message:
+                        self.messages.append(message)
+
+                async def cancel(self):
+                    self.calls.append("cancel")
+                    self.state = "canceled"
+
+            class DataPart:
+                def __init__(self, data=None):
+                    self.data = data
+
+            class TextPart:
+                def __init__(self, text=""):
+                    self.text = text
+
+            class Message:
+                def __init__(self, parts=None, metadata=None):
+                    self.parts = parts or []
+                    self.metadata = metadata or {}
+
+            def new_agent_text_message(text: str, context_id=None, task_id=None):
+                return Message(parts=[TextPart(text)], metadata={"context_id": context_id, "task_id": task_id})
+
+            def _module(name, **attrs):
+                mod = types.ModuleType(name)
+                for key, value in attrs.items():
+                    setattr(mod, key, value)
+                sys.modules[name] = mod
+                return mod
+
+            _module("a2a")
+            _module("a2a.types", DataPart=DataPart, TextPart=TextPart, Message=Message)
+            _module("a2a.utils", new_agent_text_message=new_agent_text_message)
+            _module("a2a.server")
+            _module("a2a.server.events", EventQueue=EventQueue)
+            _module("a2a.server.tasks", TaskUpdater=TaskUpdater)
+            _module("a2a.server.agent_execution", AgentExecutor=AgentExecutor, RequestContext=RequestContext)
+
+    catalog_modules = [
+        ("echo_env", ["EchoEnv", "EchoAction"]),
+        ("textarena_env", ["TextArenaEnv", "TextArenaAction"]),
+        ("coding_env", ["CodingEnv", "CodeAction"]),
+        ("atari_env", ["AtariEnv", "AtariAction"]),
+        ("openspiel_env", ["OpenSpielEnv", "OpenSpielAction"]),
+        ("repl_env", ["REPLEnv", "REPLAction"]),
+    ]
+    for mod_name, classes in catalog_modules:
+        if mod_name not in sys.modules:
+            try:
+                __import__(mod_name)
+            except ImportError:
+                mod = types.ModuleType(mod_name)
+                for cls_name in classes:
+                    setattr(mod, cls_name, MagicMock(name=cls_name))
+                sys.modules[mod_name] = mod
+
+    if "envs.chat_env" not in sys.modules:
+        try:
+            __import__("envs.chat_env")
+        except ImportError:
+            envs_mod = sys.modules.get("envs") or types.ModuleType("envs")
+            sys.modules["envs"] = envs_mod
+            chat_mod = types.ModuleType("envs.chat_env")
+            chat_mod.ChatEnv = MagicMock(name="ChatEnv")
+            chat_mod.ChatAction = MagicMock(name="ChatAction")
+            sys.modules["envs.chat_env"] = chat_mod
+            envs_mod.chat_env = chat_mod
+
+    if "envs.sumo_rl_env" not in sys.modules:
+        try:
+            __import__("envs.sumo_rl_env")
+        except ImportError:
+            envs_mod = sys.modules.get("envs") or types.ModuleType("envs")
+            sys.modules["envs"] = envs_mod
+            sumo_mod = types.ModuleType("envs.sumo_rl_env")
+            sumo_mod.SumoRLEnv = MagicMock(name="SumoRLEnv")
+            sumo_mod.SumoAction = MagicMock(name="SumoAction")
+            sys.modules["envs.sumo_rl_env"] = sumo_mod
+            envs_mod.sumo_rl_env = sumo_mod
+
+
 try:
     import openenv  # noqa: F401
 except ImportError:
     _install_openenv_stub()
+
+_install_a2a_and_catalog_stubs()
 

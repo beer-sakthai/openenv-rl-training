@@ -3,7 +3,7 @@
 SakThai CPU training — Qwen2.5-0.5B + LoRA + completion-only loss.
 Auto-detects CPU/GPU. Designed to work on this local machine (no CUDA).
 """
-import os, torch
+import torch
 from datasets import load_dataset, concatenate_datasets
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import LoraConfig, get_peft_model

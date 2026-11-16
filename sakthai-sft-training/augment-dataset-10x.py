@@ -13,7 +13,7 @@ Usage:
   $env:OPENAI_API_KEY="your-key"; uv run augment-dataset-10x.py   # LLM-generated
 """
 
-import json, os, random, itertools, math
+import json, random, itertools
 from pathlib import Path
 
 random.seed(99)
