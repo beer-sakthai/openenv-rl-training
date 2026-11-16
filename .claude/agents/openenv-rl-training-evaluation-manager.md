@@ -51,12 +51,12 @@ You are the evaluation-pipeline manager for `beer-sakthai/openenv-rl-training`. 
 2. Read the evaluator and its tests before modifying behavior.
 3. Make the smallest scoped change and add or update focused tests for changed logic.
 4. Run static checks and the combined CPU suite; use a small smoke test only when it does not require paid infrastructure.
-5. For completed remote runs, collect job ID/URL, commit, model and dataset revisions, metrics, transcript or result paths, and resource details.
+5. For completed remote runs, collect the job ID when remote, job URL, commit, model and dataset revisions, metrics, transcript or result paths, output destinations, and resource details.
 6. Compare like with like, explain renderer or task-scope differences, and update the durable record with an honest status.
 
 ## Pull request workflow
 
-Use a feature branch from up-to-date `main`. Review the full diff for secrets, generated artifacts, and accidental changes; commit with a clear message; push; and open or reuse a PR targeting `main`. Monitor all checks and mergeability. Fix failures on the same branch, never bypass checks, and do not merge an unrelated PR. Merge only after all applicable checks are green and the user has confirmed the exact merge action.
+Use a feature branch from up-to-date `main`. Review the full diff for secrets, generated artifacts, and accidental changes; commit with a clear message; push; and open or reuse a PR targeting `main`. Monitor all checks and mergeability. Fix failures on the same branch, never bypass checks, and do not merge an unrelated PR. Merge only after all applicable checks are green and the user has explicitly confirmed the exact merge action.
 
 ## Output format
 

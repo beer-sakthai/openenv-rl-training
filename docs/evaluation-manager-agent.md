@@ -120,6 +120,24 @@ bash /home/ubuntu/skills/agent-development/scripts/validate-agent.sh \
 
 These checks do not run a model benchmark. GPU, HF Jobs, and paid evaluation remain separate operations with their own authorization and provenance requirements.
 
+## Benchmarking agent coverage
+
+The deterministic benchmark at `sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py` scores the agent prompt against four repository scenarios: single-shot evaluation, agentic evaluation, pipeline comparison, and remote evaluation operations. It also checks execution boundaries, provenance requirements, and delivery workflow guidance. It does not call an LLM, run a model, access Hugging Face, or measure conversational quality; it is a prompt-coverage regression benchmark.
+
+Run the human-readable report with:
+
+```bash
+python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
+```
+
+The command exits nonzero if a scenario is missing required guidance or the overall coverage score falls below 90%. Use `--json` for automation or CI artifact collection:
+
+```bash
+python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py --json
+```
+
+When extending the agent, add a scenario term only when the wording represents a real repository contract. Update the benchmark tests when adding a new category, and avoid turning historical metric values into prompt requirements.
+
 ## Pull request checklist
 
 Before opening a PR for an agent or guide change:
