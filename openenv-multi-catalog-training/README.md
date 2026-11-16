@@ -48,9 +48,9 @@ batch-to-batch and reads as noisy even when training is healthy.
 
 ## Known rough edges to fix before this is production-quality
 
-- `coding_env`'s task is a placeholder (print `17 * 23`) — swap
-  `CODING_TASK_PROMPT`/`CODING_EXPECTED` in `train_multi_env.py` for the
-  real coding task and a real correctness check.
+- `coding_env` uses a single fixed invoice-parsing function task (`parse_and_sum_amounts` →
+  `RESULT:5420:3`); swap `CODING_TASK_PROMPT` / `CODING_EXPECTED` in `train_multi_env.py`
+  (or pass task variants through the dataset) when scaling to a multi-problem coding suite.
 - `chat_env`'s action schema (`ChatAction.tokens`) was inferred from the
   Space README summary, not verified against running code — the
   tokenizer-bridging in `chat_reply()` is the first thing to check if that

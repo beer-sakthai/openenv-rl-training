@@ -40,7 +40,7 @@ jobs:
         run: uv run --with ruff ruff check --output-format=github .
 
       - name: verify_grpo_contract.py (CPU, no torch/trl required)
-        run: python3 verify_grpo_contract.py
+        run: uv run --with datasets python3 verify_grpo_contract.py
 
       # One invocation on purpose: the suites share sys.modules, and running
       # them separately hid a mock leak between them (see tests/conftest notes).

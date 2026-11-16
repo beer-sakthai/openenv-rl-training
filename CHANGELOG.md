@@ -22,6 +22,10 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 - **`openenv-multi-catalog-training/train_multi_env.py` & `a2a_agent/agent_executor.py`** — fixed `_format_openspiel_obs` truncation (`info_state[:32]` → `[:64]` with active non-zero indices and multi-player `current_player_id` / `opponent_last_action` fields) so the 50-cell Catch paddle row (indices 45–49) is no longer cut off; replaced `coding_env`'s `print(17 * 23)` placeholder task with a structured invoice-parsing function task (closes `KNOWN_GAPS.yaml#coding-env-placeholder`).
 - **`sakthai-sft-training/eval-cross-model.py`** — added optional `INCLUDE_EXTERNAL_BASELINES=1` (`google/functiongemma-270m-it`) and `USE_HF_ROUTER=1` (`https://router.huggingface.co/v1`) remote inference fallback when HF Jobs returns `402 Payment Required`.
 
+### Changed
+
+- **Documentation audit and synchronization** — updated root `README.md`, `CLAUDE.md`, `openenv-custom-training/README.md`, `openenv-multi-catalog-training/README.md`, `openenv-multi-catalog-training/a2a_agent/README.md`, and `sakthai-agentic-eval-train/README.md` to reflect the 57 passed tests, `evaluate_baselines.py`, `eval_sakthai_bench_colab.ipynb` badges/links, MCP environment integration, and upgraded invoice-parsing task definitions.
+
 ## 2026-11-13
 
 ### Changed

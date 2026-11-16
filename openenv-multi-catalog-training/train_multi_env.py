@@ -20,9 +20,10 @@ IMPORTANT CAVEATS — read before running:
    first thing to fix.
 3. coding_env and openspiel/atari/sumo have no notion of "the right
    answer" baked into a generic run — coding_env in particular returns only
-   stdout/stderr/exit_code, no reward. This script gives coding_env a fixed
-   toy task (an arithmetic result to print) purely so there's something to
-   score; swap TASK_ANSWER for whatever the real coding task should be.
+   stdout/stderr/exit_code, no reward. This script gives coding_env a
+   structured invoice-parsing function task (CODING_TASK_PROMPT /
+   CODING_EXPECTED) so there is a non-trivial correctness check to score;
+   swap those constants for whatever domain coding task you need.
 4. Each environment must be running as its own server (see run_servers.sh)
    before training starts, with SUPPORTS_CONCURRENT_SESSIONS handling left
    to each catalog image's defaults — verify concurrency headroom before
