@@ -74,6 +74,8 @@ class SimpleGuessEnv:
         Args:
             number: the integer you think the hidden number is (0..99).
         """
+        if self.done:
+            raise ValueError("Episode already ended.")
         if not (0 <= number <= 99):
             raise ValueError(f"{number} is out of range — guess an integer between 0 and 99.")
         self._attempts += 1

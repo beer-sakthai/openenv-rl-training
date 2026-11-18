@@ -14,7 +14,7 @@ harness that connects the two lives in [`../sakthai-agentic-eval-train/`](../sak
 | Script | What it does | Runner |
 |---|---|---|
 | `train-sakthai-cpu.py` | 20-example CPU smoke test | `uv run train-sakthai-cpu.py` |
-| `train-sakthai-1.5b-v2.py` | QLoRA 1.5B on `sakthai-combined-v9`, ~3k examples | `hf jobs uv run --flavor a10g-small --timeout 6h --secrets HF_TOKEN train-sakthai-1.5b-v2.py` |
+| `train-sakthai-1.5b-v2.py` | QLoRA 1.5B on `sakthai-combined-v10` (or `v12` via `AUGMENTED_DATASET`), ~3k examples | `hf jobs uv run --flavor a10g-small --timeout 6h --secrets HF_TOKEN train-sakthai-1.5b-v2.py` |
 | `train_qwen.py` | Generic Qwen2.5 QLoRA harness | HF Jobs |
 | `train-sakthai-embedding.py` | Multilingual embedding fine-tuning (`MultipleNegativesRankingLoss`) + semantic tool-retrieval evaluator (`Nanthasit/sakthai-embedding-multilingual`) | Local / HF Jobs `l4x1` |
 | `eval-cross-model.py` | Bench all Sak models (plus optional `google/functiongemma-270m-it` or `USE_HF_ROUTER=1`) against `sakthai-bench-v3`, push to `Nanthasit/eval_results` | HF Jobs `l4x1` / HF Router |
@@ -50,7 +50,7 @@ Cross-linked from `../sakthai-agentic-eval-train/FINDINGS.md`; do not restate nu
 
 ## Dataset + model handles on HF Hub
 
-- Training corpora: `Nanthasit/sakthai-combined-v7` (2,424) · `v8` (+538) · `v9` (all-cycle merge, +1,355) · `v12` (retrain-round-v2 rows).
+- Training corpora: `Nanthasit/sakthai-combined-v7` (2,424) · `v10` (latest stable Hub revision, ~5k) · `v12` (retrain-round-v2 rows; v8, v9, v11 not pushed to Hub).
 - Bench: `Nanthasit/sakthai-bench-v3` (155 balanced rows, regenerated weekly by `../.github/workflows/monitor.yml`).
 - Eval sink: `Nanthasit/eval_results`.
 - Runtime pin: `Nanthasit/sakthai-openenv-training` (dataset that pins `openenv==0.4.1` + TRL/transformers versions across both halves of the repo).

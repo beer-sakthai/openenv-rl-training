@@ -182,3 +182,50 @@ def test_extract_action_datapart_precedence():
 
     action = OpenEnvAgentExecutor._extract_action(context)
     assert action == data_payload
+
+
+@pytest.mark.anyio
+async def test_client_smoke_test_send():
+    from a2a_agent.client_smoke_test import send
+
+    client = MagicMock()
+    client.send_message = AsyncMock(return_value="resp_ok")
+
+    resp = await send(client, "ctx_1", "task_1", "hello echo", metadata={"env": "echo"})
+    assert resp == "resp_ok"
+    client.send_message.assert_awaited_once()
+    req = client.send_message.call_args[0][0]
+    assert req.message.role == "user"
+    assert req.message.context_id == "ctx_1"
+    assert req.message.task_id == "task_1"
+    assert req.message.metadata == {"env": "echo"}
+    assert req.message.parts[0].text == "hello echo"
+
+
+@pytest.mark.anyio
+async def test_client_smoke_test_main_roundtrip():
+    from a2a_agent.client_smoke_test import main
+
+    # Mock client and resolver
+    mock_card = MagicMock()
+    mock_card.name = "MockOpenEnvAgent"
+    mock_card.skills = ["echo", "coding"]
+
+    mock_resolver = MagicMock()
+    mock_resolver.get_agent_card = AsyncMock(return_value=mock_card)
+
+    mock_client = MagicMock()
+    # Step 1 response (reset)
+    r1 = MagicMock()
+    r1.root.result = MagicMock(context_id="ctx_main_1", id="task_main_1")
+    # Step 2 response (step)
+    r2 = MagicMock()
+
+    mock_client.send_message = AsyncMock(side_effect=[r1, r2])
+
+    with patch("a2a_agent.client_smoke_test.A2ACardResolver", return_value=mock_resolver), \
+         patch("a2a_agent.client_smoke_test.Client", return_value=mock_client):
+        await main("http://localhost:9000/")
+
+    assert mock_client.send_message.await_count == 2
+

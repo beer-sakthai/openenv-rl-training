@@ -27,9 +27,9 @@ syntax errors, undefined names, redefinitions, and unused imports/variables. The
 to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
-`verify_grpo_contract.py` (with datasets), and 66 pytest tests across the root contract file
-and all three workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
-and `openenv-multi-catalog-training/tests/`); `benchmark-evaluation-manager-agent.yml` runs the
+`verify_grpo_contract.py` (with datasets), and 108 pytest tests across the root contract file
+and all four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
+`openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`); `benchmark-evaluation-manager-agent.yml` runs the
 evaluation manager agent rubric benchmark and regression tests on every push. Four workflows dispatch
 `hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret (`train`, `eval`,
 `lighteval`, `mcp-bench`); `monitor.yml` does not dispatch anything — it reads the Hub API
@@ -72,7 +72,7 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `openenv-multi-catalog-training/` | **RL — catalog run.** One ~0.6B model across all 8 `openenv/*` catalog envs (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in one GRPO run via a meta-environment class. `a2a_agent/` exposes the same 8 envs as [A2A protocol](https://a2a-protocol.org/) skills, independent of training. |
 | `sakthai-agentic-eval-train/` | **The RL eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval `eval_bench_peft.py`, agentic eval `eval_hermes_env.py`, SFT bootstrap, GRPO pilot), self-contained Colab/Kaggle notebooks (`sakthai_grpo_colab.ipynb`, `eval_sakthai_bench_colab.ipynb`), the evaluation manager agent benchmark (`scripts/benchmark_evaluation_manager_agent.py`), and `FINDINGS.md` — the durable empirical record. |
 | `browsergym-space/` | Dockerfile + Space card for a BrowserGym OpenEnv server. **Not deployed** — `Nanthasit/browsergym-env` no longer exists (404, verified 2026-09-16). `train.py --env browsergym` defaults to upstream [`openenv/browsergym_env`](https://huggingface.co/spaces/openenv/browsergym_env); redeploy from here and pass `--browsergym-url` to use your own. |
-| `.github/workflows/` | `verify-contracts.yml` (ruff + 57 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
+| `.github/workflows/` | `verify-contracts.yml` (ruff + 94 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
 | `.claude/agents/` | Repository-specific Claude Code agents (`openenv-rl-training-evaluation-manager.md`). |
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
 | `docs/` | `docs/MODELS.md` (13-model portfolio reference), `docs/KNOWN_GAPS.yaml` (parseable gap index), `docs/evaluation-manager-agent.md` (agent guide), `docs/HF_HUB_IMPROVEMENTS.md` (2026-07-30 Hub audit), and root `SECURITY.md` (token-hygiene checklist). |
@@ -80,7 +80,7 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `PLAN.md` | The open-work record. Resolved work moves to `CHANGELOG.md`; the parseable gap index is `docs/KNOWN_GAPS.yaml`. |
 | `CHANGELOG.md` | Landed work, newest first. One line per PR / sweep. |
 
-`.gitattributes` at the root is Hugging Face's auto-generated LFS config, merged in from
+.gitattributes at the root is Hugging Face's auto-generated LFS config, merged in from
 a Space repo. Leave it alone.
 
 ## Running things locally (what actually works here)
@@ -92,13 +92,14 @@ uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/ \
-         openenv-multi-catalog-training/tests/    # 66 passed
+         openenv-multi-catalog-training/tests/ \
+         sakthai-sft-training/tests/    # 108 passed
 uv run --with datasets --with pydantic \
   python3 openenv-custom-training/evaluate_baselines.py  # CPU baseline competition
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 ```
 
-Run the four suites in **one** pytest invocation, as CI does. They share `sys.modules`, and
+Run the five suites in **one** pytest invocation, as CI does. They share `sys.modules`, and
 splitting them hides mock leaks between them — `test_eval_hermes_env.py` leaving a MagicMock
 at `sys.modules["torch"]` broke `Dataset` construction in the browsergym file, and only
 showed up once they ran together.

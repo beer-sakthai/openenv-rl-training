@@ -1,7 +1,7 @@
 repos:
-# Bug-only ruleset (see .ruff.toml): syntax errors, undefined names, and
-# redefinitions. Style rules stay off — the cycle-100-v*.py snapshots are
-# pinned artifacts and must not be reformatted.
+# Bug & hygiene ruleset (see .ruff.toml): syntax errors (E9), undefined names (F821),
+# redefinitions (F811), unused imports (F401), and unused variables (F841).
+# Pinned cycle snapshots and notebook cells are exempted in .ruff.toml.
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.16.7   # the version .ruff.toml was validated against
   hooks:

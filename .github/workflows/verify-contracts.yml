@@ -50,4 +50,5 @@ jobs:
             pytest test_browsergym_contract.py \
                    sakthai-agentic-eval-train/tests/ \
                    openenv-custom-training/tests/ \
-                   openenv-multi-catalog-training/tests/ -v
+                   openenv-multi-catalog-training/tests/ \
+                   sakthai-sft-training/tests/ -v

@@ -86,12 +86,13 @@ uv run --with ruff ruff check .
 # 2. Verify GRPO environment contracts
 uv run --with datasets python3 verify_grpo_contract.py
 
-# 3. Run all contract and agent tests (66 passed in single invocation)
+# 3. Run all contract and agent tests (108 passed in single invocation)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/ \
-         openenv-multi-catalog-training/tests/
+         openenv-multi-catalog-training/tests/ \
+         sakthai-sft-training/tests/
 
 # 4. Run CPU heuristic baseline competition & GRPO reward-variance check
 uv run --with datasets --with pydantic python3 openenv-custom-training/evaluate_baselines.py

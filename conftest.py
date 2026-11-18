@@ -290,12 +290,61 @@ def _install_a2a_and_catalog_stubs():
                     self.text = text
 
             class Message:
-                def __init__(self, parts=None, metadata=None):
+                def __init__(self, parts=None, metadata=None, role="user", message_id=None, context_id=None, task_id=None, **kwargs):
                     self.parts = parts or []
                     self.metadata = metadata or {}
+                    self.role = role
+                    self.message_id = message_id
+                    self.context_id = context_id
+                    self.task_id = task_id
+                    for k, v in kwargs.items():
+                        setattr(self, k, v)
 
             def new_agent_text_message(text: str, context_id=None, task_id=None):
                 return Message(parts=[TextPart(text)], metadata={"context_id": context_id, "task_id": task_id})
+
+            class Part:
+                def __init__(self, text="", data=None):
+                    self.text = text
+                    self.data = data
+
+            class SendMessageRequest:
+                def __init__(self, message=None):
+                    self.message = message
+
+            class AgentCard:
+                def __init__(self, name="OpenEnv Multi-Catalog Agent", skills=None):
+                    self.name = name
+                    self.skills = skills or ["echo", "sudoku", "coding", "chat", "atari", "openspiel", "repl", "sumo"]
+
+            class A2ACardResolver:
+                def __init__(self, http_client=None, base_url=""):
+                    self.http_client = http_client
+                    self.base_url = base_url
+
+                async def get_agent_card(self):
+                    return AgentCard()
+
+            class TaskResult:
+                def __init__(self, task_id="task_1", context_id="ctx_1"):
+                    self.id = task_id
+                    self.context_id = context_id
+
+            class RootResult:
+                def __init__(self, result=None):
+                    self.result = result or TaskResult()
+
+            class SendMessageResponse:
+                def __init__(self, root=None):
+                    self.root = root or RootResult()
+
+            class Client:
+                def __init__(self, http_client=None, agent_card=None):
+                    self.http_client = http_client
+                    self.agent_card = agent_card
+
+                async def send_message(self, request):
+                    return SendMessageResponse()
 
             def _module(name, **attrs):
                 mod = types.ModuleType(name)
@@ -305,7 +354,8 @@ def _install_a2a_and_catalog_stubs():
                 return mod
 
             _module("a2a")
-            _module("a2a.types", DataPart=DataPart, TextPart=TextPart, Message=Message)
+            _module("a2a.types", DataPart=DataPart, TextPart=TextPart, Part=Part, Message=Message, SendMessageRequest=SendMessageRequest)
+            _module("a2a.client", A2ACardResolver=A2ACardResolver, Client=Client)
             _module("a2a.utils", new_agent_text_message=new_agent_text_message)
             _module("a2a.server")
             _module("a2a.server.events", EventQueue=EventQueue)
@@ -355,10 +405,33 @@ def _install_a2a_and_catalog_stubs():
             envs_mod.sumo_rl_env = sumo_mod
 
 
+def _install_trl_stub():
+    """Register lightweight stubs for `trl` if not installed."""
+    if "trl" not in sys.modules:
+        try:
+            import trl  # noqa: F401
+        except ImportError:
+            class GRPOConfig:
+                def __init__(self, *args, **kwargs):
+                    for k, v in kwargs.items():
+                        setattr(self, k, v)
+
+            class GRPOTrainer:
+                def __init__(self, *args, **kwargs):
+                    for k, v in kwargs.items():
+                        setattr(self, k, v)
+
+            mod = types.ModuleType("trl")
+            mod.GRPOConfig = GRPOConfig
+            mod.GRPOTrainer = GRPOTrainer
+            sys.modules["trl"] = mod
+
+
 try:
     import openenv  # noqa: F401
 except ImportError:
     _install_openenv_stub()
 
 _install_a2a_and_catalog_stubs()
+_install_trl_stub()
 

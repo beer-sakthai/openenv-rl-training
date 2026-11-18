@@ -83,6 +83,8 @@ class AgentToolEnv:
         Args:
             command: the shell command line to execute.
         """
+        if self.done:
+            raise ValueError("Episode already ended.")
         return self._forward(self._client.run_command(command))
 
     def write_file(self, path: str, content: str) -> str:
@@ -92,6 +94,8 @@ class AgentToolEnv:
             path: file path relative to the workspace root.
             content: full file contents to write.
         """
+        if self.done:
+            raise ValueError("Episode already ended.")
         return self._forward(self._client.write_file(path, content))
 
     def read_file(self, path: str) -> str:
@@ -100,6 +104,8 @@ class AgentToolEnv:
         Args:
             path: file path relative to the workspace root.
         """
+        if self.done:
+            raise ValueError("Episode already ended.")
         return self._forward(self._client.read_file(path))
 
     # -- plumbing ------------------------------------------------------------
@@ -123,7 +129,7 @@ def reward_func(environments, **kwargs) -> list[float]:
     return [env.reward for env in environments]
 
 
-def build_dataset(n_episodes: int = 64) -> list:
+def build_dataset(n_episodes: int = 64):
     """Rows carry a `task` column the server uses to select the acceptance
     predicate; the model sees only `prompt` (which names the task)."""
     from datasets import Dataset

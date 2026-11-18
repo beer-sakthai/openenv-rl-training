@@ -31,7 +31,7 @@ async def send(client: Client, context_id: str | None, task_id: str | None, text
 
 
 async def main(base_url: str):
-    async with httpx.AsyncClient() as http_client:
+    async with httpx.AsyncClient(trust_env=False) as http_client:
         card = await A2ACardResolver(http_client, base_url=base_url).get_agent_card()
         print(f"connected to: {card.name} ({len(card.skills)} skills)")
 
