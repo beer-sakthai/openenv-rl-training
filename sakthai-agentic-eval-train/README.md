@@ -41,7 +41,7 @@ evaluation. Run the same lightweight checks used by CI before submitting a
 change:
 
 ```bash
-uv run --with pytest --with datasets --with pydantic --with httpx \
+uv run --with pytest --with datasets --with pydantic --with httpx --with anyio \
   pytest sakthai-agentic-eval-train/tests/ -q
 uv run --with ruff ruff check sakthai-agentic-eval-train
 ```

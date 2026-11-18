@@ -11,7 +11,14 @@ Hub and was superseded by `Nanthasit/sakthai-combined-v10`. Kept for historical
 reference only.
 """
 
+import os
+import sys
 from huggingface_hub import HfApi
+
+DATA_FILE = "training-data-ready.jsonl"
+if not os.path.exists(DATA_FILE):
+    print(f"Notice: '{DATA_FILE}' is not present. This script is archived and intended for reference only.")
+    sys.exit(0)
 
 api = HfApi()
 repo = "Nanthasit/sakthai-combined-v8"
@@ -21,7 +28,7 @@ api.create_repo(repo_id=repo, repo_type="dataset", exist_ok=True)
 
 # 2. Upload training-data-ready.jsonl (538 augmented examples)
 api.upload_file(
-    path_or_fileobj="training-data-ready.jsonl",
+    path_or_fileobj=DATA_FILE,
     path_in_repo="data/augmented.jsonl",
     repo_id=repo,
     repo_type="dataset",

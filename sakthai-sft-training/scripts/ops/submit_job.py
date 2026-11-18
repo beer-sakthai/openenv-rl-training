@@ -50,7 +50,7 @@ DEBUG_PATTERNS = [
     re.compile(r"\btest_job\.py\b"),
     re.compile(r"\bhello[_-]?world\b", re.IGNORECASE),
     re.compile(r"\bsmoke[_-]?test\.py\b"),   # smoke-tests should be cpu-basic too
-    re.compile(r"\bduckdb\s+-c\s+select\s+hello", re.IGNORECASE),
+    re.compile(r"\bduckdb\s+-c\s+[\"']?select\s+hello", re.IGNORECASE),
 ]
 
 

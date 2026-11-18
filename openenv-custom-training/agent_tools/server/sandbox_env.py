@@ -15,6 +15,7 @@ false sense of security; the policy will find a spelling you didn't block.
 """
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -122,6 +123,8 @@ class SandboxEnvironment(Environment):
         self._done = False
         # Fresh scratch dir per episode so one session's artifacts never leak
         # into another's grading.
+        if hasattr(self, "_workdir") and self._workdir.exists():
+            shutil.rmtree(self._workdir, ignore_errors=True)
         self._workdir = Path(tempfile.mkdtemp(prefix="opentrain-"))
         if (seed := TASKS[task_key].get("seed")) is not None:
             (self._workdir / "words.txt").write_text(seed)
@@ -197,3 +200,8 @@ class SandboxEnvironment(Environment):
             return f"error: no such file: {path}", False
         text = target.read_text()
         return text[:MAX_STDOUT] + ("…" if len(text) > MAX_STDOUT else ""), True
+
+    def close(self) -> None:
+        """Clean up the episode's scratch directory on session close."""
+        if hasattr(self, "_workdir") and self._workdir.exists():
+            shutil.rmtree(self._workdir, ignore_errors=True)

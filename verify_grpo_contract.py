@@ -57,7 +57,7 @@ def test_environment_contract(mod):
     import inspect
 
     # __init__ takes no arguments beyond self — TRL calls EnvironmentFactory().
-    params = [p for p in inspect.signature(mod.SimpleGuessEnv).parameters]
+    params = list(inspect.signature(mod.SimpleGuessEnv).parameters)
     if params:
         _fail(f"SimpleGuessEnv.__init__ must take no arguments, takes {params}")
 

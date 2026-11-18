@@ -167,15 +167,31 @@ class MultiCatalogEnv:
 
     def _format_atari_obs(self, obs) -> str:
         ram = getattr(obs, "screen", [])[:128]
-        return f"Atari RAM state ({len(ram)} bytes): {' '.join(map(str, ram))}. Legal actions: {obs.legal_actions}"
+        legal_actions = getattr(obs, "legal_actions", [])
+        return f"Atari RAM state ({len(ram)} bytes): {' '.join(map(str, ram))}. Legal actions: {legal_actions}"
 
     def _format_openspiel_obs(self, obs) -> str:
-        state = ",".join(f"{v:.2f}" for v in obs.info_state[:32])
-        return f"Game state (truncated): [{state}...]. Legal actions: {obs.legal_actions}. Phase: {obs.game_phase}"
+        info_state = getattr(obs, "info_state", []) or []
+        state = ",".join(f"{v:.2f}" for v in info_state[:64])
+        active_indices = [i for i, v in enumerate(info_state[:64]) if v != 0]
+        active_str = f" Active indices: {active_indices}." if active_indices else ""
+        current_player = getattr(obs, "current_player_id", None)
+        player_str = f" Player: {current_player}." if current_player is not None else ""
+        opponent_act = getattr(obs, "opponent_last_action", None)
+        opp_str = f" Opponent last action: {opponent_act}." if opponent_act is not None else ""
+        legal_actions = getattr(obs, "legal_actions", [])
+        game_phase = getattr(obs, "game_phase", "play")
+        return (
+            f"Game state (truncated): [{state}...].{active_str}{player_str}{opp_str} "
+            f"Legal actions: {legal_actions}. Phase: {game_phase}"
+        )
 
     def _format_sumo_obs(self, obs) -> str:
-        vec = ",".join(f"{v:.2f}" for v in obs.observation[:16])
-        return f"Traffic state (truncated): [{vec}...]. Action mask: {obs.action_mask}. Sim time: {obs.sim_time}"
+        raw_obs = getattr(obs, "observation", []) or []
+        vec = ",".join(f"{v:.2f}" for v in raw_obs[:16])
+        mask = getattr(obs, "action_mask", [])
+        sim_time = getattr(obs, "sim_time", 0)
+        return f"Traffic state (truncated): [{vec}...]. Action mask: {mask}. Sim time: {sim_time}"
 
     # -- per-environment tools ------------------------------------------------
     # Every public method below is discovered as a tool regardless of which
@@ -190,6 +206,8 @@ class MultiCatalogEnv:
         """
         if self.active != "echo":
             raise ValueError("echo_say is only valid during the echo task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["echo"].step(EchoAction(message=message))
         self.reward = 1.0 if result.observation.echoed_message == self._secret_phrase else 0.0
         self.done = result.observation.done or True
@@ -203,6 +221,8 @@ class MultiCatalogEnv:
         """
         if self.active != "sudoku":
             raise ValueError("sudoku_move is only valid during the sudoku task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["sudoku"].step(TextArenaAction(message=move))
         self.reward = result.observation.reward or 0.0
         self.done = result.observation.done
@@ -217,6 +237,8 @@ class MultiCatalogEnv:
         """
         if self.active != "coding":
             raise ValueError("coding_run is only valid during the coding task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["coding"].step(CodeAction(code=code))
         obs = result.observation
         self.reward = 1.0 if obs.exit_code == 0 and CODING_EXPECTED in obs.stdout else 0.0
@@ -233,6 +255,8 @@ class MultiCatalogEnv:
         """
         if self.active != "chat":
             raise ValueError("chat_reply is only valid during the chat task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         tokens = _tokenizer_for_chat()(message, return_tensors="pt")["input_ids"][0]
         result = self._clients["chat"].step(ChatAction(tokens=tokens))
         self.reward = getattr(result.observation, "reward", 0.0) or 0.0
@@ -247,6 +271,8 @@ class MultiCatalogEnv:
         """
         if self.active != "atari":
             raise ValueError("atari_press is only valid during the atari task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["atari"].step(
             AtariAction(action_id=action_id, game_name=ATARI_GAME, obs_type="ram")
         )
@@ -262,6 +288,8 @@ class MultiCatalogEnv:
         """
         if self.active != "openspiel":
             raise ValueError("openspiel_move is only valid during the openspiel task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["openspiel"].step(
             OpenSpielAction(action_id=action_id, game_name=OPENSPIEL_GAME)
         )
@@ -277,6 +305,8 @@ class MultiCatalogEnv:
         """
         if self.active != "repl":
             raise ValueError("repl_execute is only valid during the repl task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["repl"].step(REPLAction(code=code))
         self.reward = result.observation.reward or 0.0
         self.done = result.observation.done
@@ -290,6 +320,8 @@ class MultiCatalogEnv:
         """
         if self.active != "repl":
             raise ValueError("repl_finish is only valid during the repl task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["repl"].step(REPLAction(code="", is_final=True, final_answer=final_answer))
         self.reward = result.observation.reward or 0.0
         self.done = True
@@ -303,6 +335,8 @@ class MultiCatalogEnv:
         """
         if self.active != "sumo":
             raise ValueError("sumo_set_phase is only valid during the sumo task.")
+        if self.done:
+            raise ValueError("Episode already ended.")
         result = self._clients["sumo"].step(SumoAction(phase_id=phase_id))
         self.reward = result.observation.reward or 0.0
         self.done = result.observation.done
@@ -353,8 +387,9 @@ def build_dataset(n_per_env: int = 32) -> Dataset:
     }
     envs, rows = [], []
     for task, prompt in prompts.items():
-        envs += [task] * n_per_env
-        rows += [[{"role": "user", "content": prompt}]] * n_per_env
+        for _ in range(n_per_env):
+            envs.append(task)
+            rows.append([{"role": "user", "content": prompt}])
     return Dataset.from_dict({"prompt": rows, "env": envs})
 
 

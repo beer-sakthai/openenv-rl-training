@@ -42,7 +42,7 @@ SKILLS = [
     AgentSkill(
         id="coding",
         name="Coding sandbox",
-        description="Run Python code and see stdout/stderr/exit_code. Demo task: print 17 * 23.",
+        description="Run Python code and see stdout/stderr/exit_code. Task: parse and sum invoice amounts, printing 'TOTAL: 1420'.",
         tags=["code", "openenv"],
         examples=['metadata={"env": "coding"}'],
     ),
