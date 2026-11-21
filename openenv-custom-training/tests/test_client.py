@@ -43,7 +43,7 @@ def test_run_command_helper(mock_client):
     assert result == mock_client.step.return_value
 
 def test_write_file_helper(mock_client):
-    path = "/tmp/test.txt"
+    path = "workspace/test.txt"
     content = "hello world"
     result = mock_client.write_file(path, content)
 
@@ -56,7 +56,7 @@ def test_write_file_helper(mock_client):
     assert result == mock_client.step.return_value
 
 def test_read_file_helper(mock_client):
-    path = "/tmp/test.txt"
+    path = "workspace/test.txt"
     result = mock_client.read_file(path)
 
     mock_client.step.assert_called_once()

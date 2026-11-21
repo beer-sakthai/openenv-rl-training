@@ -77,8 +77,10 @@ def load_test_rows(dataset=None, sample=None):
         url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/sakthai-bench-v3.jsonl"
     else:
         url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/test.jsonl"
+    if not (url.startswith("https://") or url.startswith("http://")):
+        raise ValueError(f"Insecure URL scheme: {url!r}. Only HTTP/HTTPS are permitted.")
     print(f"Loading {url} ...", flush=True)
-    with urlopen(url) as f:
+    with urlopen(url) as f:  # nosec B310 - scheme validated above
         test = [json.loads(line) for line in f.read().decode().strip().splitlines()]
     if sample:
         random.seed(42)
@@ -194,8 +196,11 @@ def _generate_via_hf_router(repo_id, messages, tools=None):
     }
     if tools:
         body["tools"] = tools
+    router_endpoint = f"{HF_ROUTER_URL.rstrip('/')}/chat/completions"
+    if not (router_endpoint.startswith("https://") or router_endpoint.startswith("http://")):
+        raise ValueError(f"Insecure URL scheme in HF_ROUTER_URL: {router_endpoint!r}")
     req = Request(
-        f"{HF_ROUTER_URL.rstrip('/')}/chat/completions",
+        router_endpoint,
         data=json.dumps(body).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {token}",
@@ -203,7 +208,7 @@ def _generate_via_hf_router(repo_id, messages, tools=None):
         },
         method="POST",
     )
-    with urlopen(req, timeout=60) as resp:
+    with urlopen(req, timeout=60) as resp:  # nosec B310 - endpoint scheme validated above
         data = json.loads(resp.read().decode("utf-8"))
     choice = (data.get("choices") or [{}])[0].get("message") or {}
     if choice.get("tool_calls"):

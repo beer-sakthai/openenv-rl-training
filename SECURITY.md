@@ -57,4 +57,4 @@ If a token is exposed:
 2. Delete the compromised token immediately
 3. Create a new token with minimal required scopes
 4. Update all scripts, Secrets, and CI/CD configs with the new token
-5. If committed to Git: `git log --all -p | Select-String "hf_"` — then rotate any repo webhooks
+5. If committed to Git: `git log --all -p | grep -E "hf_[A-Za-z0-9]{34}"` — then rotate any repo webhooks and rewrite history with `git filter-repo`
