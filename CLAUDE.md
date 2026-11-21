@@ -27,7 +27,7 @@ syntax errors, undefined names, redefinitions, and unused imports/variables. The
 to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
-`verify_grpo_contract.py` (with datasets), and 108 pytest tests across the root contract file
+`verify_grpo_contract.py` (with datasets), and 130 pytest tests across the root contract file
 and all four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
 `openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`); `benchmark-evaluation-manager-agent.yml` runs the
 evaluation manager agent rubric benchmark and regression tests on every push. Four workflows dispatch
@@ -93,7 +93,7 @@ uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/ \
          openenv-multi-catalog-training/tests/ \
-         sakthai-sft-training/tests/    # 108 passed
+         sakthai-sft-training/tests/    # 130 passed
 uv run --with datasets --with pydantic \
   python3 openenv-custom-training/evaluate_baselines.py  # CPU baseline competition
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py

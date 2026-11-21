@@ -2,6 +2,7 @@
 
 import inspect
 import os
+import subprocess
 import sys
 from unittest.mock import MagicMock
 import pytest
@@ -176,3 +177,118 @@ def test_build_dataset():
     first_prompt = ds[0]["prompt"]
     assert isinstance(first_prompt, list)
     assert first_prompt[-1]["role"] == "user"
+
+
+def test_run_servers_script_dry_run_and_help():
+    """Verify run_servers.sh CLI flags for dry-run and help."""
+    script_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "run_servers.sh")
+    )
+    # --dry-run
+    proc_dry = subprocess.run(
+        ["bash", script_path, "--dry-run"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc_dry.returncode == 0
+    assert "Plan complete: 8 containers planned." in proc_dry.stdout
+    for c in ["openenv-echo", "openenv-sudoku", "openenv-coding", "openenv-chat",
+              "openenv-atari", "openenv-openspiel", "openenv-repl", "openenv-sumo"]:
+        assert c in proc_dry.stdout
+
+    # --help
+    proc_help = subprocess.run(
+        ["bash", script_path, "--help"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert proc_help.returncode == 0
+    assert "Usage:" in proc_help.stdout
+
+
+def test_multi_catalog_env_step_tools_execution():
+    """Verify tool execution, state progression, and reward forwarding for catalog tools."""
+    env = MultiCatalogEnv()
+
+    # echo_say
+    env.active = "echo"
+    env._secret_phrase = "the falcon flies at dawn"
+    echo_client = MagicMock()
+    echo_step = MagicMock()
+    echo_step.observation.echoed_message = "the falcon flies at dawn"
+    echo_step.observation.done = True
+    echo_client.step.return_value = echo_step
+    env._clients["echo"] = echo_client
+    out_echo = env.echo_say("the falcon flies at dawn")
+    assert out_echo == "the falcon flies at dawn"
+    assert env.reward == 1.0
+    assert env.done is True
+
+    # sudoku_move
+    env = MultiCatalogEnv()
+    env.active = "sudoku"
+    sudoku_client = MagicMock()
+    sudoku_step = MagicMock()
+    msg = MagicMock()
+    msg.content = "Board updated."
+    sudoku_step.observation.messages = [msg]
+    sudoku_step.observation.reward = 0.8
+    sudoku_step.observation.done = False
+    sudoku_client.step.return_value = sudoku_step
+    env._clients["sudoku"] = sudoku_client
+    out_sudoku = env.sudoku_move("1,1=4")
+    assert out_sudoku == "Board updated."
+    assert env.reward == 0.8
+    assert env.done is False
+
+    # repl_execute and repl_finish
+    env = MultiCatalogEnv()
+    env.active = "repl"
+    repl_client = MagicMock()
+    repl_step1 = MagicMock()
+    repl_step1.observation.result.stdout = "4\n"
+    repl_step1.observation.reward = 0.0
+    repl_step1.observation.done = False
+    repl_client.step.return_value = repl_step1
+    env._clients["repl"] = repl_client
+    out_exec = env.repl_execute("print(2+2)")
+    assert out_exec == "4\n"
+    assert env.reward == 0.0
+    assert env.done is False
+
+    repl_step2 = MagicMock()
+    repl_step2.observation.result.stdout = "Done"
+    repl_step2.observation.reward = 1.0
+    repl_step2.observation.done = True
+    repl_client.step.return_value = repl_step2
+    out_finish = env.repl_finish("4")
+    assert out_finish == "Done"
+    assert env.reward == 1.0
+    assert env.done is True
+
+    # sumo_set_phase
+    env = MultiCatalogEnv()
+    env.active = "sumo"
+    sumo_client = MagicMock()
+    sumo_step = MagicMock()
+    sumo_step.observation.observation = [0.1, 0.2, 0.3]
+    sumo_step.observation.action_mask = [1, 0, 0, 0]
+    sumo_step.observation.sim_time = 15
+    sumo_step.observation.reward = 0.5
+    sumo_step.observation.done = True
+    sumo_client.step.return_value = sumo_step
+    env._clients["sumo"] = sumo_client
+    out_sumo = env.sumo_set_phase(0)
+    assert "Traffic state (truncated):" in out_sumo
+    assert env.reward == 0.5
+    assert env.done is True
+
+
+def test_multi_catalog_env_reset_invalid():
+    """Verify reset raises ValueError for unknown env."""
+    env = MultiCatalogEnv()
+    with pytest.raises(ValueError, match="Unknown env routing value"):
+        env.reset(env="unsupported_environment")
+
