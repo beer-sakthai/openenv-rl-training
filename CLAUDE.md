@@ -76,7 +76,7 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `.github/workflows/` | `verify-contracts.yml` (ruff + 94 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
 | `.claude/agents/` | Repository-specific Claude Code agents (`openenv-rl-training-evaluation-manager.md`). |
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
-| `docs/` | `docs/MODELS.md` (13-model portfolio reference), `docs/KNOWN_GAPS.yaml` (parseable gap index), `docs/evaluation-manager-agent.md` (agent guide), `docs/HF_HUB_IMPROVEMENTS.md` (2026-07-30 Hub audit), and root `SECURITY.md` (token-hygiene checklist). |
+| `docs/` | `docs/MODELS.md` (18-model portfolio reference), `docs/KNOWN_GAPS.yaml` (parseable gap index), `docs/evaluation-manager-agent.md` (agent guide), `docs/HF_HUB_IMPROVEMENTS.md` (2026-07-30 Hub audit), and root `SECURITY.md` (token-hygiene checklist). |
 | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py` | CPU-only contract checks, plus the `openenv` stub (including `openenv.core.env_server.mcp_types` and `MCPEnvironment`) that lets the two workspace test suites collect here. Together with `.ruff.toml` and `openenv-custom-training/evaluate_baselines.py`, runnable in this checkout without HF Jobs / a GPU. |
 | `PLAN.md` | The open-work record. Resolved work moves to `CHANGELOG.md`; the parseable gap index is `docs/KNOWN_GAPS.yaml`. |
 | `CHANGELOG.md` | Landed work, newest first. One line per PR / sweep. |
