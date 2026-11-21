@@ -21,6 +21,11 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ### Fixed
 
+- **`sakthai-sft-training/eval-cross-model.py` & `sakthai-agentic-eval-train/scripts/eval_bench_peft.py`** — added strict URL scheme verification (`https://` / `http://` only) across dataset downloads and HF router completions, remediating CWE-22 / Bandit B310 unexpected scheme risks.
+- **`openenv-multi-catalog-training/a2a_agent/server.py`** — hardened default network binding from `0.0.0.0` to `127.0.0.1` with `A2A_HOST` / `A2A_PORT` environment variable support, remediating Bandit B104 unauthenticated public interface exposure.
+- **`openenv-custom-training/tests/test_client.py`** — replaced hardcoded `/tmp/test.txt` path with isolated workspace paths, remediating Bandit B108 insecure temp directory risks.
+- **`README.md`** — removed leftover merge conflict marker in benchmark section, updated test pass badges and tables to 148 passed tests across 5 workspace suites, and added Security Policy badge.
+- **`SECURITY.md`** — updated git emergency response token search command to portable bash `grep -E`.
 - **`sakthai-sft-training/eval-cross-model.py`** — decoupled top-level `urlopen` dataset downloading into lazy `load_test_rows()` function, eliminating import-time network I/O and enabling fully offline, deterministic unit testing on CPU runners.
 - **`.github/workflows/lighteval.yml`** — removed redundant runner-side `pip install lighteval torch transformers accelerate datasets` (~1–2 GB download), aligning with `train.yml` and `eval.yml` to only install `huggingface_hub` on the GitHub Actions runner VM while remote execution continues on Hugging Face H200 GPUs.
 - **`.github/workflows/benchmark-evaluation-manager-agent.yml`** — added `pull_request: branches: [main]` and `workflow_dispatch:` triggers to ensure the evaluation manager agent rubric benchmark and regression tests execute automatically on pull requests before merging.
@@ -32,7 +37,7 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 ### Changed
 
 - **`.github/workflows/verify-contracts.yml`** — added `openenv-custom-training/evaluate_baselines.py --episodes 5` automated gate and unified all 148 tests across 5 workspace suites.
-- **Test suite expansion & Documentation synchronization** — increased passing test coverage to 148 tests across all five workspace suites, updating `README.md` and `CLAUDE.md`.
+- **Test suite expansion & Documentation synchronization** — increased passing test coverage to 148 tests across all five workspace suites, adding comprehensive "Security & Quality Assurance" architecture documentation in `README.md` and updating `CLAUDE.md`.
 
 ## 2026-11-16
 

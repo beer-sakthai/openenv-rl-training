@@ -156,3 +156,12 @@ def test_summarize():
     assert abs(summary["simple"]["selection"] - 66.666) < 0.1
     assert abs(summary["simple"]["arguments"] - 33.333) < 0.1
     assert abs(summary["simple"]["strict"] - 33.333) < 0.1
+
+
+def test_generate_via_hf_router_insecure_scheme(monkeypatch):
+    import pytest
+
+    monkeypatch.setattr(ecm, "HF_ROUTER_URL", "ftp://evil.com")
+    monkeypatch.setenv("HF_TOKEN", "mock-token")
+    with pytest.raises(ValueError, match="Insecure URL scheme"):
+        ecm._generate_via_hf_router("dummy-model", [{"role": "user", "content": "hi"}])

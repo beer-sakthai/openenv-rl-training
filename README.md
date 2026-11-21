@@ -6,8 +6,9 @@ End-to-end training, alignment, and evaluation pipeline for the **SakThai** agen
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Tests](https://img.shields.io/badge/tests-130%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-149%20passed-brightgreen.svg)](tests)
 [![Linter](https://img.shields.io/badge/linter-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Security Policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Known Gaps](https://img.shields.io/badge/known%20gaps-6%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
@@ -67,7 +68,7 @@ This repository is organized into five **independent workspaces** (not an instal
 
 | Workspace | Purpose | Key Scripts & Entrypoints | Tests |
 | :--- | :--- | :--- | :--- |
-| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 18 tests (`tests/test_eval_scripts.py`, `test_ops_scripts.py`, `test_embedding_trainer.py`) |
+| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 36 tests (`tests/test_eval_cross_model.py`, `test_train_embedding.py`, `test_embedding_trainer.py`, `test_eval_scripts.py`, `test_ops_scripts.py`) |
 | **`openenv-custom-training/`** | Custom OpenEnv environments, heuristic baselines, MCP task env, BrowserGym, and GRPO training runners. | `train.py`, `multi_env.py`, `evaluate_baselines.py`, `env_simple_task.py`, `agent_tools/` | 47 tests (`tests/test_*.py`) |
 | **`openenv-multi-catalog-training/`** | Multi-environment GRPO runner across 8 OpenEnv catalog environments + A2A protocol agent. | `train_multi_env.py`, `run_servers.sh`, `a2a_agent/server.py`, `a2a_agent/client_smoke_test.py` | 24 tests (`tests/test_multi_catalog_env.py`, `test_a2a_agent.py`) |
 | **`sakthai-agentic-eval-train/`** | Empirical agentic evaluation harness, PEFT benchmark runner, Colab notebooks, and findings ledger. | `eval_bench_peft.py`, `eval_hermes_env.py`, `scripts/benchmark_evaluation_manager_agent.py` | 29 tests (`tests/test_*.py`) |
@@ -93,7 +94,7 @@ Every environment in this repo honours the TRL `environment_factory` contract:
 
 All test suites and contract checks are fully runnable on a standard CPU machine without local GPUs, Hugging Face tokens, or running Docker containers. The root [`conftest.py`](conftest.py) provides lightweight stubs (`openenv`, `trl`, `a2a`) when training packages are absent.
 
-### 1. Comprehensive Test Suite (148 Tests in Single Invocation)
+### 1. Comprehensive Test Suite (149 Tests in Single Invocation)
 
 Run all workspace test suites in one invocation (matching GitHub Actions CI):
 
@@ -111,17 +112,20 @@ uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
 Because [`conftest.py`](conftest.py) isolates stubs cleanly, any workspace test suite can also be executed independently:
 
 ```bash
-# Test SFT data governance and ops tooling (12 tests)
+# Test SFT data governance and cross-model eval tooling (36 tests)
 uv run --with datasets --with pytest --with pydantic pytest sakthai-sft-training/tests/
 
-# Test multi-catalog environment and A2A protocol agent (21 tests)
+# Test multi-catalog environment and A2A protocol agent (24 tests)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio pytest openenv-multi-catalog-training/tests/
 
-# Test custom environments, baselines, and sandboxes (34 tests)
+# Test custom environments, baselines, and sandboxes (47 tests)
 uv run --with datasets --with pytest --with pydantic pytest openenv-custom-training/tests/
 
 # Test agentic evaluation pipeline and evaluation manager (29 tests)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio pytest sakthai-agentic-eval-train/tests/
+
+# Test root contract suite (12 tests)
+uv run --with datasets --with pytest --with pydantic pytest test_browsergym_contract.py
 ```
 
 ### 3. Static Linter Check
@@ -156,11 +160,9 @@ Deterministic rubric benchmark evaluating the Claude Code agent configuration fo
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 ```
 
-<<<<<<< HEAD
----
-=======
 Use `--json` for machine-readable output. The benchmark and its focused regression tests run automatically on every pull request and push to `main` through [`benchmark-evaluation-manager-agent.yml`](.github/workflows/benchmark-evaluation-manager-agent.yml). See the [agent configuration and extension guide](docs/evaluation-manager-agent.md) before adding a new evaluator or changing the rubric.
->>>>>>> ca64ad4 (Add SFT test suites, baseline policy tests, and optimize CI workflows)
+
+---
 
 ## Operational Tooling & Scripts
 
@@ -222,12 +224,27 @@ hf jobs uv run --detach --flavor a100-large --secrets HF_TOKEN --timeout 1h \
 
 ---
 
+## Security & Quality Assurance
+
+This repository enforces multi-layered security controls and continuous quality gates across code, workflows, and execution environments:
+
+- **Least-Privilege Token Permissions**: All GitHub Actions workflows declare top-level read-only permissions (`permissions: contents: read`) with step-level least privilege to prevent token leakage or unauthorized repository mutations.
+- **StepSecurity Harden-Runner**: CI jobs run on egress-filtered and monitored runners (`step-security/harden-runner`) with policy store verification.
+- **Execution Sandbox Confinement**: The terminal sandbox environment (`openenv-custom-training/agent_tools/server/sandbox_env.py`) strictly confines filesystem mutations to per-episode temporary scratch workspaces (`_confine()`), prevents directory traversal / symlink escapes, restricts environment variables to safe defaults (`PATH`, `HOME`, `LANG`), and enforces strict timeouts (`CMD_TIMEOUT_S = 10`) and output caps.
+- **Safe Network & URL Validation**: Remote evaluators enforce strict URL scheme whitelist validation (`https://` and `http://` only), preventing unexpected schemes (`file://`, `ftp://`).
+- **Static Analysis & Security Audits**: Checked via Ruff (`E9`, `F821`, `F811`, `F401`, `F841`), Bandit (CWE scanning), CodeQL semantic analysis, OSSAR, and Bandit secret scanning.
+- **Deterministic Evaluation Rubrics**: The evaluation manager agent benchmark enforces reproducible evaluations and strictly forbids reporting unverified GPU operations or unrun HF Jobs.
+- **Detailed Security Policy**: Full token hygiene checklists, vulnerability reporting procedures, and emergency response guides are documented in [`SECURITY.md`](SECURITY.md).
+
+---
+
 ## Project Status & Governance
 
-- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, and all 130 pytest tests on every push and PR.
+- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, baseline competitions, and all 149 pytest tests across 5 workspace suites on every push and PR.
 - **Empirical Findings**: Benchmark evaluations and capacity observations are permanently recorded in [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
 - **Known Gaps**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 - **Changelog**: Release history and completed improvements are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+- **Security Policy**: Vulnerability disclosure and operational token checklists live in [`SECURITY.md`](SECURITY.md).
 
 ---
 

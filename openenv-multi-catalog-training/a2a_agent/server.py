@@ -15,6 +15,7 @@ not verified against a live install.
 """
 
 import argparse
+import os
 
 import uvicorn
 from a2a.server.apps import A2AStarletteApplication
@@ -99,8 +100,17 @@ def build_agent_card(base_url: str) -> AgentCard:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=9000)
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("A2A_HOST", "127.0.0.1"),
+        help="Host interface to bind (default: 127.0.0.1; set A2A_HOST=0.0.0.0 for containerized deployment)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("A2A_PORT", "9000")),
+        help="Port to listen on (default: 9000)",
+    )
     args = parser.parse_args()
 
     base_url = f"http://{args.host}:{args.port}/"
