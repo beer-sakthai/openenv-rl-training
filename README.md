@@ -40,7 +40,7 @@ This repository builds, aligns, and validates the machine learning models behind
 
 ## Published Models & Datasets
 
-All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). Beyond the core RL tool-calling pipeline, the ecosystem encompasses **13+ specialized models** spanning Coding, Vision, Speech, 128k Context, and Embeddings (detailed in [`docs/MODELS.md`](docs/MODELS.md)).
+All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). Beyond the core RL tool-calling pipeline, the ecosystem encompasses **18 verified models** spanning Coding, Vision, Speech, 128k Context, and Embeddings (detailed in [`docs/MODELS.md`](docs/MODELS.md)).
 
 ### Core Tool-Calling & RL Matrix
 
