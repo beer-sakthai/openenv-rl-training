@@ -109,10 +109,17 @@ class _BrowserGymTaskEnv:
     `StepResult` with `.observation`, `.reward`, `.done` — is the OpenEnv
     `EnvClient` contract that `agent_tools/client.py` documents, and
     `/openapi.json` on the upstream Space confirms the matching `/reset` and
-    `/step` routes exist. The BrowserGym *action* type remains the unverified
-    part: `BrowserGymAction(action=...)` is assumed below, as is the
-    observation text field. Diff both against the installed `browsergym_env`
-    package before spending GPU time.
+    `/step` routes exist. Those methods live on the *synchronous* wrapper the
+    base `EnvClient` exposes via `.sync()`, not on the raw client (an earlier
+    revision called `.reset()`/`.step()` on the raw `BrowserGymEnv`, which
+    returns coroutines, so every observation rendered as `"<coroutine ...>"`
+    and every reward was 0.0); `_open()` below mirrors `agent_tools/wrapper.py`
+    — `.sync()` then `__enter__()` — and `reset()` closes the prior session
+    before opening a new one so long runs do not leak server sessions. The
+    BrowserGym *action* type, the observation text field, and this exact
+    `.sync()` lifecycle all remain unverified against an installed
+    `browsergym_env`: `BrowserGymAction(action=...)` is assumed below. Diff
+    them against the package before spending GPU time.
     """
 
     def __init__(self, task_name: str, space_url: str):
@@ -123,6 +130,17 @@ class _BrowserGymTaskEnv:
         self.reward = 0.0
         self.done = False
 
+    def _close(self) -> None:
+        if self._client is not None:
+            try:
+                self._client.close()
+            except Exception:
+                try:
+                    self._client.__exit__(None, None, None)
+                except Exception:
+                    pass
+            self._client = None
+
     def _open(self):
         try:
             from browsergym_env import BrowserGymEnv
@@ -132,7 +150,7 @@ class _BrowserGymTaskEnv:
                 "Run: pip install git+https://github.com/huggingface/OpenEnv.git"
                 "#subdirectory=envs/browsergym_env"
             )
-        return BrowserGymEnv(
+        client = BrowserGymEnv(
             base_url=self._space_url,
             environment={
                 "BROWSERGYM_BENCHMARK": "miniwob",
@@ -140,8 +158,16 @@ class _BrowserGymTaskEnv:
                 "BROWSERGYM_HEADLESS": "true",
             },
         )
+        # `.reset()`/`.step()` live on the synchronous wrapper, same as
+        # `agent_tools/wrapper.py`; the raw client's are coroutines.
+        synced = client.sync()
+        synced.__enter__()
+        return synced
 
     def reset(self, **kwargs) -> str | None:
+        # Close the prior session before opening a new one so a long GRPO run
+        # does not leak one server session per episode.
+        self._close()
         self._steps = 0
         self.reward = 0.0
         self.done = False

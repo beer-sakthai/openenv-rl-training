@@ -175,3 +175,64 @@ def test_browsergym_models_and_selection():
     args_coder = argparse.Namespace(env="browsergym", browsergym_model="coder")
     _, _, _, coder_model = _select(args_coder)
     assert coder_model == BROWSERGYM_CODER_MODEL
+
+
+# -- client lifecycle (regression: sync wrapper + no session leak) ------------
+
+
+def _install_fake_browsergym(monkeypatch):
+    """Inject a fake `browsergym_env` module and return the list of opened
+    (raw_client, synced_client) pairs so a test can assert on the lifecycle."""
+    import types
+
+    opened = []
+
+    def _synced():
+        s = mock.MagicMock()
+        s.__enter__.return_value = s
+        obs = mock.MagicMock()
+        obs.observation.text = "the page"
+        s.reset.return_value = obs
+        return s
+
+    def BrowserGymEnv(**kwargs):
+        raw = mock.MagicMock()
+        synced = _synced()
+        raw.sync.return_value = synced
+        opened.append((raw, synced))
+        return raw
+
+    module = types.ModuleType("browsergym_env")
+    module.BrowserGymEnv = BrowserGymEnv
+    module.BrowserGymAction = lambda action: {"action": action}
+    monkeypatch.setitem(sys.modules, "browsergym_env", module)
+    return opened
+
+
+def test_browsergym_open_goes_through_the_sync_wrapper(monkeypatch):
+    """`.reset()`/`.step()` live on the `.sync()` wrapper, not the raw client;
+    calling them on the raw client returns coroutines and every reward is 0.0."""
+    opened = _install_fake_browsergym(monkeypatch)
+    env = _make_browsergym_factory("click-test", BROWSERGYM_SPACE_URL)()
+
+    obs = env.reset()
+
+    assert obs == "the page"
+    raw, synced = opened[-1]
+    raw.sync.assert_called_once()
+    synced.__enter__.assert_called_once()
+    synced.reset.assert_called_once()
+
+
+def test_browsergym_reset_closes_the_prior_session(monkeypatch):
+    """A long GRPO run resets once per episode; each reset must close the prior
+    client or server sessions leak until the concurrency limit is hit."""
+    opened = _install_fake_browsergym(monkeypatch)
+    env = _make_browsergym_factory("click-test", BROWSERGYM_SPACE_URL)()
+
+    env.reset()
+    _, first_synced = opened[-1]
+    env.reset()
+
+    first_synced.close.assert_called_once()
+    assert len(opened) == 2
