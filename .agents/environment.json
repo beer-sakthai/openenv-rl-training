@@ -1,0 +1,3 @@
+{
+  "install": "sed -i '/case \\$- in/,/esac/d' ~/.bashrc 2>/dev/null || true && (grep -qxF \"export SAKTHAI_OPENENV_ROOT=\\\"$PWD\\\"\" ~/.bashrc 2>/dev/null || echo \"export SAKTHAI_OPENENV_ROOT=\\\"$PWD\\\"\" >> ~/.bashrc) && uv run --with datasets --with pytest --with pydantic --with httpx --with anyio --with ruff python3 -c \"import datasets, pytest, pydantic, httpx, anyio\""
+}
