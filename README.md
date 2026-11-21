@@ -93,7 +93,7 @@ Every environment in this repo honours the TRL `environment_factory` contract:
 
 All test suites and contract checks are fully runnable on a standard CPU machine without local GPUs, Hugging Face tokens, or running Docker containers. The root [`conftest.py`](conftest.py) provides lightweight stubs (`openenv`, `trl`, `a2a`) when training packages are absent.
 
-### 1. Comprehensive Test Suite (130 Tests in Single Invocation)
+### 1. Comprehensive Test Suite (148 Tests in Single Invocation)
 
 Run all workspace test suites in one invocation (matching GitHub Actions CI):
 
@@ -156,7 +156,11 @@ Deterministic rubric benchmark evaluating the Claude Code agent configuration fo
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py
 ```
 
+<<<<<<< HEAD
 ---
+=======
+Use `--json` for machine-readable output. The benchmark and its focused regression tests run automatically on every pull request and push to `main` through [`benchmark-evaluation-manager-agent.yml`](.github/workflows/benchmark-evaluation-manager-agent.yml). See the [agent configuration and extension guide](docs/evaluation-manager-agent.md) before adding a new evaluator or changing the rubric.
+>>>>>>> ca64ad4 (Add SFT test suites, baseline policy tests, and optimize CI workflows)
 
 ## Operational Tooling & Scripts
 

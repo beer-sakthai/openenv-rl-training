@@ -27,13 +27,14 @@ syntax errors, undefined names, redefinitions, and unused imports/variables. The
 to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
-`verify_grpo_contract.py` (with datasets), and 130 pytest tests across the root contract file
-and all four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
-`openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`); `benchmark-evaluation-manager-agent.yml` runs the
-evaluation manager agent rubric benchmark and regression tests on every push. Four workflows dispatch
-`hf jobs uv run` to Hugging Face and need `HF_TOKEN` as a repo secret (`train`, `eval`,
-`lighteval`, `mcp-bench`); `monitor.yml` does not dispatch anything — it reads the Hub API
-and writes a job summary.
+`verify_grpo_contract.py` (with datasets), `openenv-custom-training/evaluate_baselines.py` (baseline
+competition & reward variance check), and 148 pytest tests across the root contract file and all
+four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
+`openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`);
+`benchmark-evaluation-manager-agent.yml` runs the evaluation manager agent rubric benchmark and
+regression tests on every pull request and push to `main`. Four workflows dispatch `hf jobs uv run`
+to Hugging Face and need `HF_TOKEN` as a repo secret (`train`, `eval`, `lighteval`, `mcp-bench`);
+`monitor.yml` does not dispatch anything — it reads the Hub API and writes a job summary.
 
 Do not re-add the GitHub-suggested `pylint.yml` / `python-app.yml` / `python-package.yml` /
 `super-linter.yml` / `cache.yml` / `label.yml` / `manual.yml` templates — the first five

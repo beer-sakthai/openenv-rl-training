@@ -63,18 +63,30 @@ USE_HF_ROUTER = os.environ.get("USE_HF_ROUTER", "0") in ("1", "true", "yes")
 HF_ROUTER_URL = os.environ.get("HF_ROUTER_URL", "https://router.huggingface.co/v1")
 
 BENCHMARK_DATASET = os.environ.get("BENCHMARK_DATASET", "Nanthasit/sakthai-bench-v2")
-if "bench-v3" in BENCHMARK_DATASET:
-    URL = f"https://huggingface.co/datasets/{BENCHMARK_DATASET}/resolve/main/data/sakthai-bench-v3.jsonl"
-else:
-    URL = f"https://huggingface.co/datasets/{BENCHMARK_DATASET}/resolve/main/data/test.jsonl"
-print(f"Loading {URL} ...", flush=True)
-with urlopen(URL) as f:
-    TEST = [json.loads(line) for line in f.read().decode().strip().splitlines()]
-if SAMPLE:
-    random.seed(42)
-    TEST = random.sample(TEST, min(SAMPLE, len(TEST)))
-N = len(TEST)
-print(f"Loaded {N} test rows", flush=True)
+TEST = []
+N = 0
+
+
+def load_test_rows(dataset=None, sample=None):
+    global TEST, N
+    if dataset is None:
+        dataset = os.environ.get("BENCHMARK_DATASET", "Nanthasit/sakthai-bench-v2")
+    if sample is None:
+        sample = SAMPLE
+    if "bench-v3" in dataset:
+        url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/sakthai-bench-v3.jsonl"
+    else:
+        url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/test.jsonl"
+    print(f"Loading {url} ...", flush=True)
+    with urlopen(url) as f:
+        test = [json.loads(line) for line in f.read().decode().strip().splitlines()]
+    if sample:
+        random.seed(42)
+        test = random.sample(test, min(sample, len(test)))
+    TEST = test
+    N = len(TEST)
+    print(f"Loaded {N} test rows", flush=True)
+    return TEST
 
 
 def parse_tool_calls(text):
@@ -206,6 +218,9 @@ def _generate_via_hf_router(repo_id, messages, tools=None):
 
 
 def eval_repo(repo_id):
+    global TEST, N
+    if not TEST:
+        load_test_rows()
     device = "hf-router" if USE_HF_ROUTER else ("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n{'=' * 70}\nModel: {repo_id}  device: {device}\n{'=' * 70}", flush=True)
     tokenizer, model = (None, None) if USE_HF_ROUTER else load_model(repo_id)
