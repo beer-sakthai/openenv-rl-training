@@ -9,6 +9,7 @@ if OPS_DIR not in sys.path:
     sys.path.insert(0, OPS_DIR)
 
 from smoke_test import (
+    _check_argparse_with_env,
     _check_pep723_header,
     _check_python_parses,
 )
@@ -97,4 +98,17 @@ def test_weekly_ops_report_bucket_script():
     assert _bucket_script(cmd_raw) == "python"
 
     assert _bucket_script([]) == "(empty)"
+
+
+def test_smoke_test_check_argparse_with_env(tmp_path):
+    script = tmp_path / "cli_tool.py"
+    script.write_text(
+        "import argparse, os\n"
+        "p = argparse.ArgumentParser()\n"
+        "p.add_argument('--foo', default=os.environ.get('FOO_VAL', 'bar'))\n"
+        "p.parse_args()\n"
+    )
+    # Testing that --help succeeds
+    _check_argparse_with_env(script, {"FOO_VAL": "custom"})
+
 

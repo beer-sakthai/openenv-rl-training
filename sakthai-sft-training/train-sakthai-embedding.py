@@ -96,6 +96,7 @@ TOOL_CATALOG_DOCS: Dict[str, str] = {
     "run_action": "run_action(action): Execute a BrowserGym web navigation action such as click('a12') or fill('a5', 'text').",
     "get_stock_price": "get_stock_price(ticker): Fetch real-time equity price and daily volume from the exchange.",
     "send_email": "send_email(recipient, subject, body): Send an electronic mail message to a contact.",
+    "translate_text": "translate_text(text, target_lang): Translate a passage between Thai and English.",
 }
 
 EVAL_QUERIES: List[Tuple[str, str]] = [

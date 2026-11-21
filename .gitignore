@@ -17,3 +17,9 @@ auth.json
 bench_results.json
 hermes_env_results.json
 cycle-100-output/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+

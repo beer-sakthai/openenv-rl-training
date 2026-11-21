@@ -7,6 +7,29 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ---
 
+## 2026-11-21
+
+### Added
+
+- **`openenv-custom-training/tests/test_multi_env.py`** — 2 contract and unit tests for `multi_env.py`, validating type-isolated reward functions (`guess_reward`, `agent_tools_reward`), dataset schema generation (`prompt`, `environment`, `target`, `task`), and reward function list registration.
+- **`openenv-custom-training/tests/test_agent_tools_wrapper.py`** — 6 contract and unit tests for `AgentToolEnv` in `agent_tools/wrapper.py`, covering 0-arg initialization, Google-style `Args:` docstrings, post-completion rejection on `run_command`/`write_file`/`read_file`, client step/result forwarding, `reward_func`, and `build_dataset`.
+- **`openenv-custom-training/tests/test_train_select.py`** — 6 unit tests covering `train.py` dispatch logic (`_select` across `simple`, `agent_tools`, `mcp`, and invalid environment rejection), boolean environment variable parsing (`_bool_env`), and fallback observation rendering (`_obs_text`).
+- **`openenv-multi-catalog-training/tests/test_multi_catalog_env.py` expansion** — 3 unit tests covering `run_servers.sh` CLI options (`--dry-run` and `--help`), step tools execution and state progression for `echo_say`, `sudoku_move`, `repl_execute`/`repl_finish`, and `sumo_set_phase`, and invalid reset routing validation, expanding the multi-catalog suite from 21 to 24 tests.
+- **`sakthai-sft-training/tests/test_embedding_trainer.py`** — 4 unit tests covering `train-sakthai-embedding.py`, verifying tool triplet integrity, catalog alignment, bilingual evaluation query distribution, dataset building (`build_triplet_dataset`), and CLI argument parsing (`parse_args`).
+- **`sakthai-sft-training/tests/test_ops_scripts.py` expansion** — added `test_smoke_test_check_argparse_with_env` to verify CLI `--help` preflight checks with environment variable injection.
+
+### Fixed
+
+- **`sakthai-sft-training/train-sakthai-embedding.py`** — registered missing `"translate_text"` in `TOOL_CATALOG_DOCS` to match training triplets.
+- **`openenv-multi-catalog-training/run_servers.sh`** — granted executable permissions (`chmod +x`).
+- **`.gitignore`** — added patterns for `.coverage`, `.coverage.*`, `htmlcov/`, `.pytest_cache/`, and `.ruff_cache/` to keep working tree clean during test and lint runs.
+- **Dependency upgrade** — merged Dependabot update (#241) bumping `openenv==0.13.0`, `trl==1.18.1`, and `transformers>=5.23.0` across custom and multi-catalog training requirements, closing superseded PRs #240 and #239.
+
+### Changed
+
+- **Test suite expansion** — increased passing test coverage from 108 to 130 tests across all five workspace suites, elevating code coverage to 70%.
+- **Documentation synchronization** — updated `README.md` test badge and architecture table, and updated `CLAUDE.md` to reflect 130 passed tests.
+
 ## 2026-11-17
 
 ### Added
