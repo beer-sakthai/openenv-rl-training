@@ -16,6 +16,7 @@ false sense of security; the policy will find a spelling you didn't block.
 
 import os
 import shutil
+import signal
 import subprocess
 import tempfile
 from pathlib import Path
@@ -117,6 +118,10 @@ class SandboxEnvironment(Environment):
 
     def reset(self, seed=None, episode_id=None, **kwargs) -> AgentToolObservation:
         task_key = kwargs.get("task_key", os.environ.get("DEFAULT_TASK_KEY", "answer_file"))
+        if task_key not in TASKS:
+            raise ValueError(
+                f"unknown task_key {task_key!r}; expected one of {sorted(TASKS)}"
+            )
         self._state = State(episode_id=str(uuid4()), step_count=0)
         self._task_key = task_key
         self._reward = 0.0
@@ -178,13 +183,28 @@ class SandboxEnvironment(Environment):
         if not command.strip():
             raise ValueError("empty command")
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
-        proc = subprocess.run(
-            ["bash", "-l"], input=command,
-            cwd=self._workdir, env=env, capture_output=True, text=True,
-            timeout=CMD_TIMEOUT_S,
+        # Own process group (start_new_session) so a timeout kills background
+        # children the command spawned (e.g. `sleep 999 &`), not just the bash
+        # parent, which would otherwise keep running in the container.
+        proc = subprocess.Popen(
+            ["bash", "-l"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, cwd=self._workdir, env=env, text=True,
+            start_new_session=True,
         )
-        stdout = proc.stdout[:MAX_STDOUT] + ("…" if len(proc.stdout) > MAX_STDOUT else "")
-        stderr = proc.stderr[:MAX_STDERR] + ("…" if len(proc.stderr) > MAX_STDERR else "")
+        try:
+            stdout_raw, stderr_raw = proc.communicate(input=command, timeout=CMD_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                proc.kill()
+            try:
+                proc.communicate(timeout=5)
+            except Exception:
+                pass
+            raise  # same TimeoutExpired contract; step() feeds it back to the model
+        stdout = stdout_raw[:MAX_STDOUT] + ("…" if len(stdout_raw) > MAX_STDOUT else "")
+        stderr = stderr_raw[:MAX_STDERR] + ("…" if len(stderr_raw) > MAX_STDERR else "")
         out = f"exit_code: {proc.returncode}\nstdout:\n{stdout or '(none)'}\nstderr:\n{stderr or '(none)'}"
         return out, proc.returncode == 0
 
