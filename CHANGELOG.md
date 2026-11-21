@@ -11,6 +11,7 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ### Added
 
+- **`sakthai-sft-training/tests/test_eval_cross_model.py` & `test_train_embedding.py`** — comprehensive unit test suite (18 tests) covering cross-model evaluation tool parsing (`<tool_call>` tags, JSON argument normalization, nested structures), argument and strict match scoring, percentage calculations, bilingual retrieval triplet integrity, and tool catalog schema validity.
 - **`openenv-custom-training/tests/test_multi_env.py`** — 2 contract and unit tests for `multi_env.py`, validating type-isolated reward functions (`guess_reward`, `agent_tools_reward`), dataset schema generation (`prompt`, `environment`, `target`, `task`), and reward function list registration.
 - **`openenv-custom-training/tests/test_agent_tools_wrapper.py`** — 6 contract and unit tests for `AgentToolEnv` in `agent_tools/wrapper.py`, covering 0-arg initialization, Google-style `Args:` docstrings, post-completion rejection on `run_command`/`write_file`/`read_file`, client step/result forwarding, `reward_func`, and `build_dataset`.
 - **`openenv-custom-training/tests/test_train_select.py`** — 6 unit tests covering `train.py` dispatch logic (`_select` across `simple`, `agent_tools`, `mcp`, and invalid environment rejection), boolean environment variable parsing (`_bool_env`), and fallback observation rendering (`_obs_text`).
@@ -20,6 +21,9 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ### Fixed
 
+- **`sakthai-sft-training/eval-cross-model.py`** — decoupled top-level `urlopen` dataset downloading into lazy `load_test_rows()` function, eliminating import-time network I/O and enabling fully offline, deterministic unit testing on CPU runners.
+- **`.github/workflows/lighteval.yml`** — removed redundant runner-side `pip install lighteval torch transformers accelerate datasets` (~1–2 GB download), aligning with `train.yml` and `eval.yml` to only install `huggingface_hub` on the GitHub Actions runner VM while remote execution continues on Hugging Face H200 GPUs.
+- **`.github/workflows/benchmark-evaluation-manager-agent.yml`** — added `pull_request: branches: [main]` and `workflow_dispatch:` triggers to ensure the evaluation manager agent rubric benchmark and regression tests execute automatically on pull requests before merging.
 - **`sakthai-sft-training/train-sakthai-embedding.py`** — registered missing `"translate_text"` in `TOOL_CATALOG_DOCS` to match training triplets.
 - **`openenv-multi-catalog-training/run_servers.sh`** — granted executable permissions (`chmod +x`).
 - **`.gitignore`** — added patterns for `.coverage`, `.coverage.*`, `htmlcov/`, `.pytest_cache/`, and `.ruff_cache/` to keep working tree clean during test and lint runs.
@@ -27,37 +31,8 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ### Changed
 
-- **Test suite expansion** — increased passing test coverage from 108 to 130 tests across all five workspace suites, elevating code coverage to 70%.
-- **Documentation synchronization** — updated `README.md` test badge and architecture table, and updated `CLAUDE.md` to reflect 130 passed tests.
-
-## 2026-11-17
-
-### Added
-
-- **`sakthai-sft-training/tests/test_eval_scripts.py`** — 7 unit tests covering `contamination_audit.py` (`_content_str`, `_first_user_prompt`, `_normalize`, `_hash`, `get_training_specs`, and `generate_report`) and `dataset_composition_stats.py` (`_num_tool_calls`, `classify_row` across `simple`, `parallel`, `irrelevance`, `multi_turn`, and `other`).
-- **`sakthai-sft-training/tests/test_ops_scripts.py`** — 5 unit tests covering `smoke_test.py` (`_check_python_parses`, `_check_pep723_header`), `submit_job.py` (`looks_like_debug` regex matching), and `weekly_ops_report.py` (`_fmt_duration`, `_bucket_script`).
-- **`openenv-multi-catalog-training/tests/test_a2a_agent.py` client smoke test coverage** — 2 unit tests covering `client_smoke_test.py` (`send` and `main` round-trip), bringing the A2A suite to 11 tests.
-- **`openenv-custom-training/tests/test_simple_guess_env.py`** — 8 contract and behavior unit tests for `SimpleGuessEnv` and `env_simple_task.py` covering 0-arg initialization, Google-style `Args:` docstrings, post-completion rejection, out-of-bounds parameter validation, attempt capping, bisection rollout, reward forwarding, and dataset construction.
-- **`openenv-custom-training/tests/test_evaluate_baselines.py`** — 8 unit tests for `evaluate_baselines.py` validating `_compute_frac_zero_std` edge cases and group variances, `PolicyResult.win_rate` calculation, simulated Catch environment mechanics, and policy action selection (`Random`, `AlwaysStay`, `SmartCatch`, `EpsilonGreedy`, `AlwaysZero`, `OptimalBisect`).
-- **`openenv-multi-catalog-training/tests/test_multi_catalog_env.py`** — 10 contract and lifecycle unit tests for `MultiCatalogEnv` in `train_multi_env.py`, validating tool schema docstrings (`Args:` blocks for `transformers.get_json_schema`), task routing isolation, post-completion call rejection, Catch paddle row preservation in `_format_openspiel_obs`, Atari RAM / SUMO formatting, per-task reward routing, and `build_dataset` generation.
-
-### Fixed
-
-- **`conftest.py` stub hardening** — added lightweight CPU stubs for `trl` (`GRPOConfig`, `GRPOTrainer`) and `a2a.client` (`A2ACardResolver`, `Client`), making all workspace test suites executable independently without ordering coupling on `test_browsergym_contract.py`.
-- **`openenv-multi-catalog-training/a2a_agent/server.py`** — aligned coding skill description with the `CODING_EXPECTED` invoice parse-and-sum contract.
-- **`openenv-multi-catalog-training/a2a_agent/client_smoke_test.py`** — added `trust_env=False` to `httpx.AsyncClient` to prevent broken environment proxy interference when connecting to localhost.
-- **`sakthai-sft-training/scripts/ops/submit_job.py`** — added optional quote matching to `duckdb -c 'select hello'` debug pattern to accurately detect quoted duckdb hello-world commands and downgrade GPU flavors.
-- **`openenv-multi-catalog-training/train_multi_env.py`** — upgraded `_format_openspiel_obs` from 32 to 64 floats with active non-zero index reporting and multi-player `current_player_id` / `opponent_last_action` metadata, preventing truncation of the Catch paddle row (indices 45–49); added safe attribute access in `_format_atari_obs` and `_format_sumo_obs`; added post-completion guards (`if self.done: raise ValueError(...)`) across all 9 tool methods; replaced shared list references in `build_dataset`.
-- **`openenv-custom-training/env_simple_task.py`** — added post-completion guard (`if self.done: raise ValueError(...)`) to `guess()` to match repo contract and prevent altering attempts or state after an episode finishes.
-- **`openenv-custom-training/agent_tools/wrapper.py`** — added post-completion guards to `run_command`, `write_file`, and `read_file` to reject actions immediately after episode termination; corrected return type annotation of `build_dataset`.
-- **`openenv-custom-training/agent_tools/server/sandbox_env.py`** — added explicit `close()` cleanup method and previous workspace cleanup in `reset()` using `shutil.rmtree`, preventing temporary scratch directory leakage in long-running container sessions.
-- **`sakthai-sft-training/push-all-to-hub.py`** — added explicit existence check for `training-data-ready.jsonl`, exiting cleanly with notice instead of raising an unhandled `FileNotFoundError`.
-- **`verify_grpo_contract.py`** — simplified list comprehension in parameter extraction to `list(...)`.
-
-### Changed
-
-- **`openenv-multi-catalog-training/run_servers.sh`** — added `--dry-run` / `-n`, `--status` / `-s`, and `--help` / `-h` flags for safe inspection and container verification without requiring an active Docker daemon.
-- **Repository documentation & CI synchronization** — updated `.github/workflows/verify-contracts.yml`, `README.md`, `CLAUDE.md`, `sakthai-sft-training/README.md`, `sakthai-agentic-eval-train/README.md`, and `.pre-commit-config.yaml` to reflect the 108 passed tests across 5 workspace suites, updated local test execution instructions, documented current ruff gate rules (`E9`, `F821`, `F811`, `F401`, `F841`), and clarified dataset Hub handles.
+- **`.github/workflows/verify-contracts.yml`** — added `openenv-custom-training/evaluate_baselines.py --episodes 5` automated gate and unified all 148 tests across 5 workspace suites.
+- **Test suite expansion & Documentation synchronization** — increased passing test coverage to 148 tests across all five workspace suites, updating `README.md` and `CLAUDE.md`.
 
 ## 2026-11-16
 

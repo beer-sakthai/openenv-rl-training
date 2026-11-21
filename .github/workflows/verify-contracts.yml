@@ -42,6 +42,9 @@ jobs:
       - name: verify_grpo_contract.py (CPU, no torch/trl required)
         run: uv run --with datasets python3 verify_grpo_contract.py
 
+      - name: evaluate_baselines.py (pre-training policy competition & GRPO reward variance)
+        run: uv run --with datasets python3 openenv-custom-training/evaluate_baselines.py --episodes 5
+
       # One invocation on purpose: the suites share sys.modules, and running
       # them separately hid a mock leak between them (see tests/conftest notes).
       - name: pytest (contract + workspace suites)
