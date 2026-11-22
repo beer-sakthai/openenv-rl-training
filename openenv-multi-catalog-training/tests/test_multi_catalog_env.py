@@ -292,3 +292,31 @@ def test_multi_catalog_env_reset_invalid():
     with pytest.raises(ValueError, match="Unknown env routing value"):
         env.reset(env="unsupported_environment")
 
+
+def test_multi_catalog_env_close_and_lifecycle():
+    """Verify MultiCatalogEnv _close, _close_all, __del__, and reset switching."""
+    env = MultiCatalogEnv()
+    mock_echo = MagicMock()
+    mock_sudoku = MagicMock()
+    env._clients["echo"] = mock_echo
+    env._clients["sudoku"] = mock_sudoku
+
+    # _close single client
+    env._close("echo")
+    assert env._clients["echo"] is None
+    mock_echo.close.assert_called_once()
+
+    # _close_all
+    env._clients["sudoku"] = mock_sudoku
+    env._close_all()
+    assert env._clients["sudoku"] is None
+    mock_sudoku.close.assert_called_once()
+
+    # __del__ calls _close_all
+    env2 = MultiCatalogEnv()
+    mock_chat = MagicMock()
+    env2._clients["chat"] = mock_chat
+    env2.__del__()
+    assert env2._clients["chat"] is None
+    mock_chat.close.assert_called_once()
+

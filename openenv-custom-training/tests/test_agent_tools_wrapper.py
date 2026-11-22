@@ -117,6 +117,15 @@ def test_agent_tools_reset_and_tools_forwarding():
     client.close.assert_called_once()
 
 
+def test_agent_tools_del_cleanup():
+    env = AgentToolEnv()
+    client = MagicMock()
+    env._client = client
+    env.__del__()
+    assert env._client is None
+    client.close.assert_called_once()
+
+
 def test_agent_tools_reward_func():
     """Verify reward_func extracts rewards from environment instances."""
     e1, e2 = AgentToolEnv(), AgentToolEnv()

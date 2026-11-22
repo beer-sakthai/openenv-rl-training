@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
 RENDER_MODES = ("handrolled", "native")
-TOOL_CALL_PATTERN = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
+TOOL_CALL_PATTERN = re.compile(r"<tool_call>\s*(.*?)\s*</tool_call>", re.DOTALL)
 
 SYSTEM_CONTENT = (
     "You are a coding agent working in a sandboxed workspace. Use the "
@@ -144,8 +144,12 @@ def parse_tool_calls(raw: str) -> list[dict[str, Any]]:
     """Parse all valid tagged tool calls from a model completion."""
     calls: list[dict[str, Any]] = []
     for match in TOOL_CALL_PATTERN.finditer(raw):
+        content = match.group(1).strip()
+        if content.startswith("```"):
+            content = re.sub(r"^```(?:json)?\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
         try:
-            data = json.loads(match.group(1))
+            data = json.loads(content)
         except json.JSONDecodeError:
             continue
         if not data.get("name"):

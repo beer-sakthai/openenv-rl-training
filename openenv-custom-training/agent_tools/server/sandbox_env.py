@@ -75,18 +75,18 @@ TASKS = {
 def _accepts(task_key: str, workdir: Path) -> bool:
     if task_key == "answer_file":
         p = workdir / "answer.txt"
-        return p.exists() and p.read_text().strip() == "42"
+        return p.exists() and p.read_text(encoding="utf-8").strip() == "42"
     if task_key == "count_lines":
         p = workdir / "out.txt"
         if not p.exists():
             return False
-        out = p.read_text().strip()
+        out = p.read_text(encoding="utf-8").strip()
         return out == "3"
     if task_key == "upper_copy":
         src, dst = workdir / "words.txt", workdir / "upper.txt"
         if not (src.exists() and dst.exists()):
             return False
-        return dst.read_text() == src.read_text().upper()
+        return dst.read_text(encoding="utf-8") == src.read_text(encoding="utf-8").upper()
     return False
 
 
@@ -132,7 +132,7 @@ class SandboxEnvironment(Environment):
             shutil.rmtree(self._workdir, ignore_errors=True)
         self._workdir = Path(tempfile.mkdtemp(prefix="opentrain-"))
         if (seed := TASKS[task_key].get("seed")) is not None:
-            (self._workdir / "words.txt").write_text(seed)
+            (self._workdir / "words.txt").write_text(seed, encoding="utf-8")
         prompt = TASKS[task_key]["prompt"]
         return AgentToolObservation(
             result=prompt, success=True, done=False, reward=0.0
@@ -211,17 +211,20 @@ class SandboxEnvironment(Environment):
     def _write_file(self, path: str, content: str) -> tuple[str, bool]:
         target = self._confine(path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content)
+        target.write_text(content, encoding="utf-8")
         return f"wrote {len(content)} bytes to {path}", True
 
     def _read_file(self, path: str) -> tuple[str, bool]:
         target = self._confine(path)
         if not target.exists():
             return f"error: no such file: {path}", False
-        text = target.read_text()
+        text = target.read_text(encoding="utf-8")
         return text[:MAX_STDOUT] + ("…" if len(text) > MAX_STDOUT else ""), True
 
     def close(self) -> None:
         """Clean up the episode's scratch directory on session close."""
         if hasattr(self, "_workdir") and self._workdir.exists():
             shutil.rmtree(self._workdir, ignore_errors=True)
+
+    def __del__(self) -> None:
+        self.close()

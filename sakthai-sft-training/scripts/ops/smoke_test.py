@@ -48,7 +48,7 @@ def _check_python_parses(path: Path) -> None:
     try:
         ast.parse(src)
     except SyntaxError as e:
-        raise SystemExit(f"[smoke] SYNTAX ERROR in {path}: {e}")
+        raise SystemExit(f"[smoke] SYNTAX ERROR in {path}: {e}") from e
     print(f"[smoke] OK: {path.name} parses as Python")
 
 

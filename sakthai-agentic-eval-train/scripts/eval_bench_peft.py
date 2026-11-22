@@ -221,7 +221,7 @@ def _load_bench_dataset(bench_repo=None):
 
     filename = "data/sakthai-bench-v3.jsonl" if "bench-v3" in repo else "data/test.jsonl"
     url = f"https://huggingface.co/datasets/{repo}/resolve/main/{filename}"
-    if not (url.startswith("https://") or url.startswith("http://")):
+    if not url.startswith(("https://", "http://")):
         raise ValueError(f"Insecure URL scheme: {url!r}. Only HTTP/HTTPS are permitted.")
     print(f"  load_dataset schema/split failed; falling back to raw JSONL: {url}")
     with urllib.request.urlopen(url, timeout=30) as resp:  # nosec B310 - scheme validated above
@@ -385,7 +385,7 @@ def _process_eval_rows(raws):
     slices = {"multi_turn": [0, 0], "single_turn": [0, 0], "in_v1": [0, 0]}
     all_errors = []
 
-    for row, raw in zip(ROWS, raws):
+    for row, raw in zip(ROWS, raws, strict=False):
         cat, gold_calls = row["cat"], row["gold_calls"]
         pred = parse_calls(raw)
         pred_names = [c["name"] for c in pred]

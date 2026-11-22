@@ -200,6 +200,13 @@ class MCPTaskEnv:
         self.reward = 0.0
         self.done = False
 
+    def _close(self) -> None:
+        if hasattr(self._env, "close"):
+            self._env.close()
+
+    def __del__(self) -> None:
+        self._close()
+
     def reset(self, **kwargs) -> str | None:
         self._steps = 0
         self.reward = 0.0

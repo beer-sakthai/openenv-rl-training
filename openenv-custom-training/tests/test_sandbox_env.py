@@ -100,3 +100,29 @@ def test_confine_escape(env):
 def test_confine_escape_absolute(env):
     with pytest.raises(ValueError, match="path escapes the sandbox workspace"):
         env._confine("/etc/passwd")
+
+
+def test_write_and_read_file_utf8(env):
+    path = "thai_sample.txt"
+    content = "สวัสดีชาวโลก 123 !@#"
+    msg, success = env._write_file(path, content)
+    assert success is True
+    assert "wrote" in msg
+
+    text, read_success = env._read_file(path)
+    assert read_success is True
+    assert text == content
+
+
+def test_sandbox_env_close_and_del_cleanup():
+    env = SandboxEnvironment()
+    workdir = env._workdir
+    assert workdir.exists()
+    env.close()
+    assert not workdir.exists()
+
+    env2 = SandboxEnvironment()
+    workdir2 = env2._workdir
+    assert workdir2.exists()
+    env2.__del__()
+    assert not workdir2.exists()

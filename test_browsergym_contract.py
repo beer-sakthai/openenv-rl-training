@@ -236,3 +236,13 @@ def test_browsergym_reset_closes_the_prior_session(monkeypatch):
 
     first_synced.close.assert_called_once()
     assert len(opened) == 2
+
+
+def test_browsergym_del_closes_session(monkeypatch):
+    """Verify __del__ hook closes any open BrowserGym session."""
+    opened = _install_fake_browsergym(monkeypatch)
+    env = _make_browsergym_factory("click-test", BROWSERGYM_SPACE_URL)()
+    env.reset()
+    _, synced = opened[-1]
+    env.__del__()
+    synced.close.assert_called_once()

@@ -89,7 +89,7 @@ def summarize(jobs: list[dict]) -> str:
         if isinstance(d, dict):
             dur = int(d.get("runningSecs") or 0)
         elif hasattr(d, "runningSecs"):
-            dur = int(getattr(d, "runningSecs") or 0)
+            dur = int(d.runningSecs or 0)
         if f in GPU_FLAVORS:
             gpu_seconds[f] += dur
 

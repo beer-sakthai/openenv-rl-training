@@ -109,15 +109,15 @@ def main():
     parser.add_argument("--n-per-env", type=int, default=TASKS_PER_ENV_DEFAULT)
     args = parser.parse_args()
 
-    grpo_kwargs = dict(
-        use_vllm=True,
-        vllm_mode=args.vllm_mode,
-        max_completion_length=args.max_completion_length,
-        num_generations=args.num_generations,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        chat_template_kwargs={"enable_thinking": False},
-        log_completions=True,
-    )
+    grpo_kwargs = {
+        "use_vllm": True,
+        "vllm_mode": args.vllm_mode,
+        "max_completion_length": args.max_completion_length,
+        "num_generations": args.num_generations,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "log_completions": True,
+    }
     if args.vllm_mode == "server":
         grpo_kwargs["vllm_server_host"] = args.vllm_server_host
         grpo_kwargs["vllm_server_port"] = args.vllm_server_port

@@ -77,7 +77,7 @@ def load_test_rows(dataset=None, sample=None):
         url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/sakthai-bench-v3.jsonl"
     else:
         url = f"https://huggingface.co/datasets/{dataset}/resolve/main/data/test.jsonl"
-    if not (url.startswith("https://") or url.startswith("http://")):
+    if not url.startswith(("https://", "http://")):
         raise ValueError(f"Insecure URL scheme: {url!r}. Only HTTP/HTTPS are permitted.")
     print(f"Loading {url} ...", flush=True)
     with urlopen(url) as f:  # nosec B310 - scheme validated above
@@ -94,8 +94,12 @@ def load_test_rows(dataset=None, sample=None):
 def parse_tool_calls(text):
     calls = []
     for m in re.finditer(r'<tool_call>\s*(.*?)\s*</tool_call>', text, re.DOTALL):
+        raw = m.group(1).strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
         try:
-            obj = json.loads(m.group(1))
+            obj = json.loads(raw)
             args = obj.get("arguments", {})
             if isinstance(args, str):
                 try:
@@ -197,7 +201,7 @@ def _generate_via_hf_router(repo_id, messages, tools=None):
     if tools:
         body["tools"] = tools
     router_endpoint = f"{HF_ROUTER_URL.rstrip('/')}/chat/completions"
-    if not (router_endpoint.startswith("https://") or router_endpoint.startswith("http://")):
+    if not router_endpoint.startswith(("https://", "http://")):
         raise ValueError(f"Insecure URL scheme in HF_ROUTER_URL: {router_endpoint!r}")
     req = Request(
         router_endpoint,

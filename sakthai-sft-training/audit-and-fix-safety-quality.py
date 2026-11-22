@@ -107,7 +107,7 @@ all_tools = ["get_weather","get_time","search_web","calculator","get_stock_price
              "translate_text","book_flight","send_email","get_news","get_restaurant_info",
              "set_reminder","get_directions"]
 
-for f, ln, name, tns in audit_results["tool_mismatch"]:
+for f, ln, _name, _tns in audit_results["tool_mismatch"]:
     # Read the file, fix the tools list, write back
     lines = []
     with open(f, encoding="utf-8") as fh:
@@ -307,7 +307,7 @@ for d in SCAN_DIRS:
     for f in sorted(glob.glob(f"{d}/*.jsonl")):
         if "all-" in Path(f).name: continue
         with open(f, encoding="utf-8") as fh:
-            for line_no, line in enumerate(fh, 1):
+            for _line_no, line in enumerate(fh, 1):
                 ex = json.loads(line)
                 msgs = ex.get("messages", [])
                 tools = ex.get("tools", [])

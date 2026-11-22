@@ -256,7 +256,7 @@ total = 0
 print("Gap-Filling Dataset Augmentation")
 print(f"Target: Close 0.5B(91.2%) → 1.5B(48.2%) gap")
 print("=" * 50)
-for name, gen_fn, count, desc in GENERATORS:
+for name, gen_fn, count, _desc in GENERATORS:
     batch = gen_fn(count)
     save(name, batch)
     all_examples.extend(batch)

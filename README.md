@@ -6,7 +6,7 @@ End-to-end training, alignment, and evaluation pipeline for the **SakThai** agen
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Tests](https://img.shields.io/badge/tests-149%20passed-brightgreen.svg)](tests)
+[![Tests](https://img.shields.io/badge/tests-169%20passed-brightgreen.svg)](tests)
 [![Linter](https://img.shields.io/badge/linter-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Security Policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Known Gaps](https://img.shields.io/badge/known%20gaps-6%20tracked-blue)](docs/KNOWN_GAPS.yaml)
@@ -112,19 +112,19 @@ uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
 Because [`conftest.py`](conftest.py) isolates stubs cleanly, any workspace test suite can also be executed independently:
 
 ```bash
-# Test SFT data governance and cross-model eval tooling (36 tests)
+# Test SFT data governance and cross-model eval tooling (37 tests)
 uv run --with datasets --with pytest --with pydantic pytest sakthai-sft-training/tests/
 
-# Test multi-catalog environment and A2A protocol agent (24 tests)
+# Test multi-catalog environment and A2A protocol agent (34 tests)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio pytest openenv-multi-catalog-training/tests/
 
-# Test custom environments, baselines, and sandboxes (47 tests)
+# Test custom environments, baselines, and sandboxes (53 tests)
 uv run --with datasets --with pytest --with pydantic pytest openenv-custom-training/tests/
 
-# Test agentic evaluation pipeline and evaluation manager (29 tests)
+# Test agentic evaluation pipeline and evaluation manager (30 tests)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio pytest sakthai-agentic-eval-train/tests/
 
-# Test root contract suite (12 tests)
+# Test root contract suite (15 tests)
 uv run --with datasets --with pytest --with pydantic pytest test_browsergym_contract.py
 ```
 
@@ -240,7 +240,7 @@ This repository enforces multi-layered security controls and continuous quality 
 
 ## Project Status & Governance
 
-- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, baseline competitions, and all 149 pytest tests across 5 workspace suites on every push and PR.
+- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, baseline competitions, and all 169 pytest tests across 5 workspace suites on every push and PR.
 - **Empirical Findings**: Benchmark evaluations and capacity observations are permanently recorded in [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
 - **Known Gaps**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 - **Changelog**: Release history and completed improvements are tracked in [`CHANGELOG.md`](CHANGELOG.md).

@@ -39,6 +39,20 @@ def test_parser_accepts_multiple_calls_and_nested_json():
     assert parse_tool_call(raw) == calls[0]
 
 
+def test_parser_accepts_markdown_code_fences():
+    raw = (
+        "<tool_call>\n"
+        "```json\n"
+        '{"name": "fetch", "arguments": {"url": "https://example.com"}}\n'
+        "```\n"
+        "</tool_call>"
+    )
+    calls = parse_tool_calls(raw)
+    assert len(calls) == 1
+    assert calls[0]["name"] == "fetch"
+    assert calls[0]["arguments"] == {"url": "https://example.com"}
+
+
 def test_validation_rejects_invalid_runtime_settings():
     assert validate_choice("renderer", "NATIVE", RENDER_MODES) == "native"
     assert positive_int("steps", "12") == 12

@@ -28,7 +28,7 @@ to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
 `verify_grpo_contract.py` (with datasets), `openenv-custom-training/evaluate_baselines.py` (baseline
-competition & reward variance check), and 149 pytest tests across the root contract file and all
+competition & reward variance check), and 169 pytest tests across the root contract file and all
 four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
 `openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`);
 `benchmark-evaluation-manager-agent.yml` runs the evaluation manager agent rubric benchmark and

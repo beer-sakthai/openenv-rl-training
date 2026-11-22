@@ -54,9 +54,9 @@ tokenized_valid = valid_dataset.map(
     tokenize_function, batched=True, remove_columns=valid_dataset.column_names,
 )
 
-model_kwargs = dict(
-    torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
-)
+model_kwargs = {
+    "torch_dtype": torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+}
 if torch.cuda.is_available():
     model_kwargs["device_map"] = "auto"
 

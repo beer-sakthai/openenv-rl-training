@@ -61,6 +61,20 @@ def test_parse_tool_calls_invalid_or_empty():
     assert ecm.parse_tool_calls("<tool_call></tool_call>") == []
 
 
+def test_parse_tool_calls_markdown_fences():
+    text = (
+        "<tool_call>\n"
+        "```json\n"
+        '{"name": "get_stock_price", "arguments": {"ticker": "PTT"}}\n'
+        "```\n"
+        "</tool_call>"
+    )
+    calls = ecm.parse_tool_calls(text)
+    assert len(calls) == 1
+    assert calls[0]["name"] == "get_stock_price"
+    assert calls[0]["arguments"] == {"ticker": "PTT"}
+
+
 def test_norm_args():
     # String JSON should be decoded
     assert ecm.norm_args('{"b": 2, "a": 1}') == {"a": 1, "b": 2}

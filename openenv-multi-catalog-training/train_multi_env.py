@@ -88,9 +88,9 @@ class MultiCatalogEnv:
     """
 
     def __init__(self):
-        self._clients = {k: None for k in (
+        self._clients = dict.fromkeys((
             "echo", "sudoku", "coding", "chat", "atari", "openspiel", "repl", "sumo",
-        )}
+        ))
         self.active = None
         self.reward = 0.0
         self.done = False
@@ -101,13 +101,26 @@ class MultiCatalogEnv:
             try:
                 client.close()
             except Exception:
-                pass
+                try:
+                    client.__exit__(None, None, None)
+                except Exception:
+                    pass
             self._clients[key] = None
 
+    def _close_all(self) -> None:
+        for k in list(self._clients.keys()):
+            self._close(k)
+
+    def __del__(self) -> None:
+        self._close_all()
+
     def reset(self, **kwargs) -> str | None:
+        prev = self.active
         self.active = kwargs.get("env", "echo")
         self.reward = 0.0
         self.done = False
+        if prev and prev != self.active:
+            self._close(prev)
         self._close(self.active)
 
         if self.active == "echo":
@@ -409,15 +422,15 @@ def main():
     parser.add_argument("--n-per-env", type=int, default=32)
     args = parser.parse_args()
 
-    grpo_kwargs = dict(
-        use_vllm=True,
-        vllm_mode=args.vllm_mode,
-        max_completion_length=args.max_completion_length,
-        num_generations=args.num_generations,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        chat_template_kwargs={"enable_thinking": False},
-        log_completions=True,
-    )
+    grpo_kwargs = {
+        "use_vllm": True,
+        "vllm_mode": args.vllm_mode,
+        "max_completion_length": args.max_completion_length,
+        "num_generations": args.num_generations,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "log_completions": True,
+    }
     if args.vllm_mode == "server":
         grpo_kwargs["vllm_server_host"] = args.vllm_server_host
         grpo_kwargs["vllm_server_port"] = args.vllm_server_port

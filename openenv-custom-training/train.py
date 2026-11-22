@@ -141,6 +141,9 @@ class _BrowserGymTaskEnv:
                     pass
             self._client = None
 
+    def __del__(self) -> None:
+        self._close()
+
     def _open(self):
         try:
             from browsergym_env import BrowserGymEnv
@@ -367,15 +370,15 @@ def main():
     model = args.model or default_model
     dataset: Dataset = dataset_builder(args.n_episodes)
 
-    grpo_kwargs = dict(
-        use_vllm=True,
-        vllm_mode=args.vllm_mode,
-        max_completion_length=args.max_completion_length,
-        num_generations=args.num_generations,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        chat_template_kwargs={"enable_thinking": args.enable_thinking},
-        log_completions=True,
-    )
+    grpo_kwargs = {
+        "use_vllm": True,
+        "vllm_mode": args.vllm_mode,
+        "max_completion_length": args.max_completion_length,
+        "num_generations": args.num_generations,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "chat_template_kwargs": {"enable_thinking": args.enable_thinking},
+        "log_completions": True,
+    }
     if args.vllm_mode == "server":
         grpo_kwargs["vllm_server_host"] = args.vllm_server_host
         grpo_kwargs["vllm_server_port"] = args.vllm_server_port

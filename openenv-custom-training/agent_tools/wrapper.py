@@ -45,6 +45,9 @@ class AgentToolEnv:
                     pass
             self._client = None
 
+    def __del__(self) -> None:
+        self._close()
+
     def _open(self) -> AgentToolClient:
         # Session per episode, so concurrency scales with the batch and stale
         # episodes release their slot on re-route (multi-environment pattern).

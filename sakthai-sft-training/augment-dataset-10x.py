@@ -173,7 +173,7 @@ def batch_edge_cases(n=30):
         ("book_flight", {"origin": "NYC", "destination": "LHR", "date": "2026-13-01"}),
         ("get_stock_price", {"ticker": "____"}),
     ]
-    tools_subset = [t for t in TOOLS if t["function"]["name"] in set(e[0] for e in edge_args)]
+    tools_subset = [t for t in TOOLS if t["function"]["name"] in {e[0] for e in edge_args}]
     batch = []
     for name, args in edge_args * (n // len(edge_args) + 1):
         tool = next(t for t in tools_subset if t["function"]["name"] == name)
@@ -199,7 +199,7 @@ def batch_thai(n=30):
         ("เวลาในโตเกียวกี่โมง", "get_time", {"location": "โตเกียว"}),
         ("สภาพอากาศในภูเก็ต", "get_weather", {"location": "ภูเก็ต"}),
     ]
-    tools_subset = [t for t in TOOLS if t["function"]["name"] in set(e[1] for e in thai_examples)]
+    tools_subset = [t for t in TOOLS if t["function"]["name"] in {e[1] for e in thai_examples}]
     batch = []
     for query, name, args in thai_examples * (n // len(thai_examples) + 1):
         batch.append({
@@ -225,7 +225,7 @@ def batch_argument_accuracy(n=30):
         ("get_weather", {"location": "St. Petersburg, Russia", "unit": "celsius"}),
         ("get_restaurant_info", {"name": "Pizza Hut", "location": "Times Square, NYC"}),
     ]
-    tools_subset = [t for t in TOOLS if t["function"]["name"] in set(e[0] for e in tricky)]
+    tools_subset = [t for t in TOOLS if t["function"]["name"] in {e[0] for e in tricky}]
     batch = []
     for name, args in tricky * (n // len(tricky) + 1):
         batch.append({

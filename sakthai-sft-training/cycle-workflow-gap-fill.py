@@ -39,7 +39,7 @@ all_examples = []
 # Gap 1: Missing tools (78 tools, 2 examples each = 156)
 print("Gap 1: Generating missing tool examples...")
 for tool in MISSING_TOOLS:
-    for sample_idx in range(2):
+    for _sample_idx in range(2):
         args = {"query": "test"} if tool in ["search_files","search_recipe","web_search","summarize_text","get_definition"] else \
                {"name": "test"} if tool in ["create_note","save_note","find_restaurant","get_movie_info","get_recipe"] else \
                {"text": "hello"} if tool in ["analyze_sentiment","translate_document","generate_image","summarize_text"] else \
