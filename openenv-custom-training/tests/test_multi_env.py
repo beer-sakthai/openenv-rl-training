@@ -2,9 +2,11 @@
 
 import os
 import sys
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import multi_env  # noqa: E402 — module object, needed to patch GRPOConfig/GRPOTrainer
 from agent_tools.wrapper import AgentToolEnv, TASK_KEYS
 from env_simple_task import SimpleGuessEnv
 from multi_env import (
@@ -58,3 +60,44 @@ def test_multi_env_build_dataset_schema_and_values():
         elif envs[i] == "agent_tools":
             assert targets[i] is None
             assert tasks[i] in TASK_KEYS
+
+
+def test_main_server_mode_wires_vllm_server_host_and_port(monkeypatch):
+    """Regression for the vllm_server_url crash (CLAUDE.md: GRPOConfig's
+    server-mode fields are vllm_server_host + vllm_server_port, not
+    vllm_server_url). main() must pass the real fields under --vllm-mode server."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "multi_env.py", "--vllm-mode", "server",
+            "--vllm-server-host", "gpu-box", "--vllm-server-port", "9001",
+            "--n-per-env", "1",
+        ],
+    )
+    mock_config = MagicMock()
+    monkeypatch.setattr(multi_env, "GRPOConfig", mock_config)
+    monkeypatch.setattr(multi_env, "GRPOTrainer", MagicMock())
+
+    multi_env.main()
+
+    kwargs = mock_config.call_args.kwargs
+    assert kwargs["vllm_server_host"] == "gpu-box"
+    assert kwargs["vllm_server_port"] == 9001
+    assert "vllm_server_url" not in kwargs
+
+
+def test_main_colocate_mode_omits_vllm_server_kwargs(monkeypatch):
+    """colocate mode (the default) must not pass vllm_server_host/port at all."""
+    monkeypatch.setattr(
+        sys, "argv", ["multi_env.py", "--vllm-mode", "colocate", "--n-per-env", "1"]
+    )
+    mock_config = MagicMock()
+    monkeypatch.setattr(multi_env, "GRPOConfig", mock_config)
+    monkeypatch.setattr(multi_env, "GRPOTrainer", MagicMock())
+
+    multi_env.main()
+
+    kwargs = mock_config.call_args.kwargs
+    assert "vllm_server_host" not in kwargs
+    assert "vllm_server_port" not in kwargs
