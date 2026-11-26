@@ -469,6 +469,23 @@ def _install_trl_stub():
             sys.modules["trl"] = mod
 
 
+def _install_uvicorn_stub():
+    """Register a lightweight stub for `uvicorn` if not installed.
+
+    a2a_agent/server.py does `import uvicorn` at module level (uvicorn.run()
+    is only called inside main(), never exercised by the test suite), so the
+    bare import must succeed even where the real ASGI server isn't installed
+    -- same reasoning as the trl stub above.
+    """
+    if "uvicorn" not in sys.modules:
+        try:
+            import uvicorn  # noqa: F401
+        except ImportError:
+            mod = types.ModuleType("uvicorn")
+            mod.run = MagicMock(name="uvicorn.run")
+            sys.modules["uvicorn"] = mod
+
+
 try:
     import openenv  # noqa: F401
 except ImportError:
@@ -476,4 +493,5 @@ except ImportError:
 
 _install_a2a_and_catalog_stubs()
 _install_trl_stub()
+_install_uvicorn_stub()
 
