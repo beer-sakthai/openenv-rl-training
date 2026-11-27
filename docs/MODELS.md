@@ -6,7 +6,7 @@ All public models, adapters, and datasets are hosted under the Hugging Face name
 
 ---
 
-## 1. Master Model Portfolio Matrix (18 Verified Hub Models)
+## 1. Master Model Portfolio Matrix (18 Verified Hub Models + 1 Planned RL Target)
 
 | Model Identifier | Base Architecture | Scale | Format | Primary Domain / Specialty | Key Capabilities & Targets | Hugging Face Link |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
