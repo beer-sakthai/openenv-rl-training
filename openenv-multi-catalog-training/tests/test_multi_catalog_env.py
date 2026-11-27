@@ -213,7 +213,23 @@ def test_multi_catalog_env_step_tools_execution():
     """Verify tool execution, state progression, and reward forwarding for catalog tools."""
     env = MultiCatalogEnv()
 
-    # echo_say
+    # echo_say — a non-terminal server response must not end the episode.
+    env = MultiCatalogEnv()
+    env.active = "echo"
+    env._secret_phrase = "the falcon flies at dawn"
+    echo_client = MagicMock()
+    echo_step = MagicMock()
+    echo_step.observation.echoed_message = "the falcon flies at dawn"
+    echo_step.observation.done = False
+    echo_client.step.return_value = echo_step
+    env._clients["echo"] = echo_client
+    out_echo = env.echo_say("the falcon flies at dawn")
+    assert out_echo == "the falcon flies at dawn"
+    assert env.reward == 1.0
+    assert env.done is False
+
+    # echo_say — a terminal server response ends the episode.
+    env = MultiCatalogEnv()
     env.active = "echo"
     env._secret_phrase = "the falcon flies at dawn"
     echo_client = MagicMock()
