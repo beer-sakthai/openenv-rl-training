@@ -2,31 +2,16 @@
 
 End-to-end training, alignment, and evaluation pipeline for the **SakThai** agent model family (tool-calling and agentic reasoning models based on Qwen2.5).
 
-[![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Evaluation benchmark](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/benchmark-evaluation-manager-agent.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/benchmark-evaluation-manager-agent.yml)
-[![HF checks](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml)
-[![CodeQL](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml)
-[![Tests](https://img.shields.io/badge/tests-171%20collected-brightgreen.svg)](#local-verification--testing-cpu)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
+[![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
+[![Tests](https://img.shields.io/badge/tests-160%20passed-brightgreen.svg)](tests)
 [![Linter](https://img.shields.io/badge/linter-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Security Policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Known Gaps](https://img.shields.io/badge/known%20gaps-6%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
-
-## Status at a glance
-
-| Area | Current status |
-| :--- | :--- |
-| **Scope** | SFT with QLoRA, GRPO with OpenEnv/TRL, agentic evaluation, and deployment-ready model artifacts |
-| **Verification** | 171 CPU-test cases collected across five suites, plus Ruff and contract checks |
-| **Continuous integration** | Contract, evaluation-manager, CodeQL, OSSAR, dependency-review, and read-only Hugging Face checks run through GitHub Actions |
-| **GPU execution** | Training and heavyweight evaluation run remotely through Hugging Face Jobs or the linked Colab notebooks; this checkout is CPU-verifiable |
-| **Release posture** | Research and training pipeline; known limitations are tracked in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) |
-
-The badges above are live views of the default branch. The test-count badge is the number of cases collected by the documented combined pytest command; run that command locally to verify the current checkout.
 
 ## What is this repository for?
 
@@ -83,12 +68,12 @@ This repository is organized into five **independent workspaces** (not an instal
 
 | Workspace | Purpose | Key Scripts & Entrypoints | Tests |
 | :--- | :--- | :--- | :--- |
-| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 36 tests (`tests/test_eval_cross_model.py`, `test_train_embedding.py`, `test_embedding_trainer.py`, `test_eval_scripts.py`, `test_ops_scripts.py`) |
-| **`openenv-custom-training/`** | Custom OpenEnv environments, heuristic baselines, MCP task env, BrowserGym, and GRPO training runners. | `train.py`, `multi_env.py`, `evaluate_baselines.py`, `env_simple_task.py`, `agent_tools/` | 47 tests (`tests/test_*.py`) |
-| **`openenv-multi-catalog-training/`** | Multi-environment GRPO runner across 8 OpenEnv catalog environments + A2A protocol agent. | `train_multi_env.py`, `run_servers.sh`, `a2a_agent/server.py`, `a2a_agent/client_smoke_test.py` | 24 tests (`tests/test_multi_catalog_env.py`, `test_a2a_agent.py`) |
-| **`sakthai-agentic-eval-train/`** | Empirical agentic evaluation harness, PEFT benchmark runner, Colab notebooks, and findings ledger. | `eval_bench_peft.py`, `eval_hermes_env.py`, `scripts/benchmark_evaluation_manager_agent.py` | 29 tests (`tests/test_*.py`) |
+| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 37 tests (`tests/test_eval_cross_model.py`, `test_train_embedding.py`, `test_embedding_trainer.py`, `test_eval_scripts.py`, `test_ops_scripts.py`) |
+| **`openenv-custom-training/`** | Custom OpenEnv environments, heuristic baselines, MCP task env, BrowserGym, and GRPO training runners. | `train.py`, `multi_env.py`, `evaluate_baselines.py`, `env_simple_task.py`, `agent_tools/` | 53 tests (`tests/test_*.py`) |
+| **`openenv-multi-catalog-training/`** | Multi-environment GRPO runner across 8 OpenEnv catalog environments + A2A protocol agent. | `train_multi_env.py`, `run_servers.sh`, `a2a_agent/server.py`, `a2a_agent/client_smoke_test.py` | 25 tests (`tests/test_multi_catalog_env.py`, `test_a2a_agent.py`) |
+| **`sakthai-agentic-eval-train/`** | Empirical agentic evaluation harness, PEFT benchmark runner, Colab notebooks, and findings ledger. | `eval_bench_peft.py`, `eval_hermes_env.py`, `scripts/benchmark_evaluation_manager_agent.py` | 30 tests (`tests/test_*.py`) |
 | **`browsergym-space/`** | Dockerfile and Space configuration for a BrowserGym OpenEnv server. | `Dockerfile`, `app.py` | Validated via contract |
-| **Repo Root & CI** | Root contract checks, CPU stub provider (`conftest.py`), and CI workflow definitions. | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py`, `.github/workflows/` | 12 contract tests |
+| **Repo Root & CI** | Root contract checks, CPU stub provider (`conftest.py`), and CI workflow definitions. | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py`, `.github/workflows/` | 15 contract tests |
 
 ---
 
@@ -109,7 +94,7 @@ Every environment in this repo honours the TRL `environment_factory` contract:
 
 All test suites and contract checks are fully runnable on a standard CPU machine without local GPUs, Hugging Face tokens, or running Docker containers. The root [`conftest.py`](conftest.py) provides lightweight stubs (`openenv`, `trl`, `a2a`) when training packages are absent.
 
-### 1. Comprehensive Test Suite (171 Tests in Single Invocation)
+### 1. Comprehensive Test Suite (160 Tests in Single Invocation)
 
 Run all workspace test suites in one invocation (matching GitHub Actions CI):
 
@@ -130,10 +115,10 @@ Because [`conftest.py`](conftest.py) isolates stubs cleanly, any workspace test 
 # Test SFT data governance and cross-model eval tooling (37 tests)
 uv run --with datasets --with pytest --with pydantic pytest sakthai-sft-training/tests/
 
-# Test multi-catalog environment and A2A protocol agent (30 tests)
+# Test multi-catalog environment and A2A protocol agent (25 tests)
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio pytest openenv-multi-catalog-training/tests/
 
-# Test custom environments, baselines, and sandboxes (59 tests)
+# Test custom environments, baselines, and sandboxes (53 tests)
 uv run --with datasets --with pytest --with pydantic pytest openenv-custom-training/tests/
 
 # Test agentic evaluation pipeline and evaluation manager (30 tests)
@@ -255,10 +240,7 @@ This repository enforces multi-layered security controls and continuous quality 
 
 ## Project Status & Governance
 
-- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs Ruff, contract verification, baseline competition, and all 171 pytest tests across five suites on every push and pull request.
-- **Evaluation gate**: [`.github/workflows/benchmark-evaluation-manager-agent.yml`](.github/workflows/benchmark-evaluation-manager-agent.yml) runs the deterministic evaluation-manager benchmark and regression tests on every push to `main` and pull request.
-- **Security and dependency gates**: CodeQL, OSSAR, and dependency-review workflows provide complementary static-analysis and dependency checks; their badges are shown in the status bar above.
-- **Hugging Face health**: [`.github/workflows/hf-no-cost-checks.yml`](.github/workflows/hf-no-cost-checks.yml) performs read-only CLI, authentication, and Hub-listing checks without starting paid jobs.
+- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, baseline competitions, and all 160 pytest tests across 5 workspace suites on every push and PR.
 - **Empirical Findings**: Benchmark evaluations and capacity observations are permanently recorded in [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
 - **Known Gaps**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 - **Changelog**: Release history and completed improvements are tracked in [`CHANGELOG.md`](CHANGELOG.md).
