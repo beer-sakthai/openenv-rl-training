@@ -40,7 +40,7 @@ This repository builds, aligns, and validates the machine learning models behind
 2. **Reinforcement Learning via GRPO** (`openenv-custom-training/`, `openenv-multi-catalog-training/`):
    - Takes the 7B SFT adapter and applies **Group Relative Policy Optimization (GRPO)** using TRL and [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv).
    - Trains agents on interactive multi-turn tasks (such as **BrowserGym MiniWoB++** for web automation and 8-domain catalog environments).
-   - Produces final RL-aligned checkpoints: [`Nanthasit/sakthai-context-7b-tools-grpo`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo).
+   - Targets final RL-aligned checkpoints at [`Nanthasit/sakthai-context-7b-tools-grpo`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo) — **not yet published**; the 40-step run was proof-of-signal only (see `docs/KNOWN_GAPS.yaml#grpo-proof-run-too-short`).
 
 ```text
 [ Data Augmentation ] ──> [ SFT (QLoRA) ] ──> [ 7B Base Adapter ] ──> [ GRPO + OpenEnv ] ──> [ Final Checkpoint ]
@@ -53,9 +53,9 @@ This repository builds, aligns, and validates the machine learning models behind
 
 ---
 
-## Published Models & Datasets
+## Published Models, Datasets & Training Targets
 
-All assets are available on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit). Beyond the core RL tool-calling pipeline, the ecosystem encompasses **18 verified models** spanning Coding, Vision, Speech, 128k Context, and Embeddings (detailed in [`docs/MODELS.md`](docs/MODELS.md)).
+Published models and datasets live on the Hugging Face Hub under [`Nanthasit`](https://huggingface.co/Nanthasit); the GRPO checkpoint in the matrix below is a training target, **not yet published**. Beyond the core RL tool-calling pipeline, the ecosystem encompasses **18 verified models** spanning Coding, Vision, Speech, 128k Context, and Embeddings (detailed in [`docs/MODELS.md`](docs/MODELS.md)).
 
 ### Core Tool-Calling & RL Matrix
 
@@ -64,7 +64,7 @@ All assets are available on the Hugging Face Hub under [`Nanthasit`](https://hug
 | [`sakthai-context-0.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) | Qwen2.5-0.5B | Fast tool routing; highest single-shot selection (**91.0%**) | 0/6 (Fails) | ❌ SFT-only |
 | [`sakthai-context-1.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) | Qwen2.5-1.5B | Balanced model for consumer GPUs (Colab T4, 4–8 GB VRAM) | 0/6 (Fails) | ⚠️ Not targeted |
 | [`sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) | Qwen2.5-7B | Flagship adapter; complex multi-step reasoning & tool calling | **3/6** (Passed) | ✅ **Primary target** |
-| `sakthai-context-7b-tools-grpo` | 7B + GRPO | Production RL checkpoint aligned on OpenEnv tasks | In-loop eval | 🎯 **Final output** |
+| `sakthai-context-7b-tools-grpo` | 7B + GRPO | RL checkpoint target — not yet published (40-step proof-of-signal only) | In-loop eval | 🎯 **Planned output** |
 
 ### Datasets
 
@@ -83,12 +83,12 @@ This repository is organized into five **independent workspaces** (not an instal
 
 | Workspace | Purpose | Key Scripts & Entrypoints | Tests |
 | :--- | :--- | :--- | :--- |
-| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 36 tests (`tests/test_eval_cross_model.py`, `test_train_embedding.py`, `test_embedding_trainer.py`, `test_eval_scripts.py`, `test_ops_scripts.py`) |
-| **`openenv-custom-training/`** | Custom OpenEnv environments, heuristic baselines, MCP task env, BrowserGym, and GRPO training runners. | `train.py`, `multi_env.py`, `evaluate_baselines.py`, `env_simple_task.py`, `agent_tools/` | 47 tests (`tests/test_*.py`) |
-| **`openenv-multi-catalog-training/`** | Multi-environment GRPO runner across 8 OpenEnv catalog environments + A2A protocol agent. | `train_multi_env.py`, `run_servers.sh`, `a2a_agent/server.py`, `a2a_agent/client_smoke_test.py` | 24 tests (`tests/test_multi_catalog_env.py`, `test_a2a_agent.py`) |
-| **`sakthai-agentic-eval-train/`** | Empirical agentic evaluation harness, PEFT benchmark runner, Colab notebooks, and findings ledger. | `eval_bench_peft.py`, `eval_hermes_env.py`, `scripts/benchmark_evaluation_manager_agent.py` | 29 tests (`tests/test_*.py`) |
+| **`sakthai-sft-training/`** | SFT QLoRA trainers (0.5B/1.5B/7B), embedding model, 10-cycle augmentation, eval scripts, and ops guardrails. | `train_qwen.py`, `train-sakthai-embedding.py`, `scripts/eval/`, `scripts/ops/` | 37 tests (`tests/test_eval_cross_model.py`, `test_train_embedding.py`, `test_embedding_trainer.py`, `test_eval_scripts.py`, `test_ops_scripts.py`) |
+| **`openenv-custom-training/`** | Custom OpenEnv environments, heuristic baselines, MCP task env, BrowserGym, and GRPO training runners. | `train.py`, `multi_env.py`, `evaluate_baselines.py`, `env_simple_task.py`, `agent_tools/` | 59 tests (`tests/test_*.py`) |
+| **`openenv-multi-catalog-training/`** | Multi-environment GRPO runner across 8 OpenEnv catalog environments + A2A protocol agent. | `train_multi_env.py`, `run_servers.sh`, `a2a_agent/server.py`, `a2a_agent/client_smoke_test.py` | 30 tests (`tests/test_multi_catalog_env.py`, `test_a2a_agent.py`) |
+| **`sakthai-agentic-eval-train/`** | Empirical agentic evaluation harness, PEFT benchmark runner, Colab notebooks, and findings ledger. | `eval_bench_peft.py`, `eval_hermes_env.py`, `scripts/benchmark_evaluation_manager_agent.py` | 30 tests (`tests/test_*.py`) |
 | **`browsergym-space/`** | Dockerfile and Space configuration for a BrowserGym OpenEnv server. | `Dockerfile`, `app.py` | Validated via contract |
-| **Repo Root & CI** | Root contract checks, CPU stub provider (`conftest.py`), and CI workflow definitions. | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py`, `.github/workflows/` | 12 contract tests |
+| **Repo Root & CI** | Root contract checks, CPU stub provider (`conftest.py`), and CI workflow definitions. | `verify_grpo_contract.py`, `test_browsergym_contract.py`, `conftest.py`, `.github/workflows/` | 15 contract tests |
 
 ---
 
@@ -156,7 +156,15 @@ uv run --with ruff ruff check .
 Drives `SimpleGuessEnv` through manual rollouts, verifies `environment_factory` structural compliance, checks reward calculations, and validates `GRPOConfig` schema compatibility:
 
 ```bash
-uv run --with datasets python3 verify_grpo_contract.py
+uv run --with datasets python3 verify_grpo_contract.py  # skips the GRPOConfig check without trl
+```
+
+```bash
+The same check with the GRPOConfig section enabled (requires CPU torch and trl):
+
+uv venv --clear .venv-verify && uv pip install --python .venv-verify --torch-backend cpu torch && \
+  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets && \
+  .venv-verify/bin/python verify_grpo_contract.py
 ```
 
 ### 5. Baseline Heuristic Competition & GRPO Reward Variance

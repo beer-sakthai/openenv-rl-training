@@ -223,7 +223,7 @@ class MultiCatalogEnv:
             raise ValueError("Episode already ended.")
         result = self._clients["echo"].step(EchoAction(message=message))
         self.reward = 1.0 if result.observation.echoed_message == self._secret_phrase else 0.0
-        self.done = result.observation.done or True
+        self.done = result.observation.done
         return result.observation.echoed_message
 
     def sudoku_move(self, move: str) -> str:

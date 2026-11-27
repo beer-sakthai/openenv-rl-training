@@ -167,17 +167,20 @@ verified (except where noted):
 
 ---
 
-## 5. Artifacts produced (all on the Hub)
+## 5. Artifacts produced
+
+Published to the Hub unless noted otherwise.
 
 - **Real eval numbers published**: model-index on all 3 `-tools` cards; corrected
   `.eval_results/sakthai-bench-v2.yaml` on each; `results/*.json` uploaded to both
   `sakthai-bench-v2` and `hermes-tool-use-rl-env`.
-- **`Nanthasit/sakthai-context-0.5b-tools-sft`** — the SFT bootstrap checkpoint (real,
-  useful; agentic 1/6, single-shot 77.8%).
-- **`sakthai-context-0.5b-tools-sft-grpo`** — pushed but **byte-identical to the SFT
-  model** (GRPO made zero updates); not useful, safe to delete.
+- **`Nanthasit/sakthai-context-0.5b-tools-sft-v2`** — the SFT bootstrap checkpoint (real,
+  useful; agentic 1/6, single-shot 77.8%). Republished under the `-v2` name; the original
+  `-sft` repo is gone.
+- **`sakthai-context-0.5b-tools-sft-grpo`** — trained but **byte-identical to the SFT
+  model** (GRPO made zero updates); not useful, safe to delete. Not published to the Hub.
 - **`sakthai-context-7b-tools-grpo`** — 40-step 7b GRPO (proof-of-signal only, saved
-  fp32/bloated; supersede with the long run above).
+  fp32/bloated; supersede with the long run above). Not published to the Hub.
 - **Working, verified pipeline scripts** (scratchpad): `eval_bench_peft.py`,
   `eval_hermes_env.py` (dual renderer), `gen_sft_trajectories.py`, `sft_bootstrap.py`,
   `grpo_train_pilot.py`.
