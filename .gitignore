@@ -23,3 +23,6 @@ htmlcov/
 .pytest_cache/
 .ruff_cache/
 
+# CI contract-check virtualenv (created by verify-contracts.yml)
+.venv-verify/
+
