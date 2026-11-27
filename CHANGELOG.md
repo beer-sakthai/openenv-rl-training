@@ -34,10 +34,12 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
   script, so the GRPOConfig check actually asserts something. The pytest environment is
   unchanged, because `conftest.py` prefers the real `trl` package over its permissive
   stub. The job timeout moves from 10 to 15 minutes to cover the install.
-- **Test Counts** — the suite collects 160 tests (root 15, agentic-eval 30, custom 53,
-  multi-catalog 25, SFT 37), measured 2026-11-26. README.md and CLAUDE.md stated 169,
+- **Test Counts** — the suite collects 171 tests (root 15, agentic-eval 30, custom 59,
+  multi-catalog 30, SFT 37), measured 2026-11-27. README.md and CLAUDE.md stated 169,
   149, 130, and 94 across six sites, and no two agreed. The 169 figure in the
   2026-11-21 entry above was never accurate: that commit already collected 160 tests.
+  PR #249 merged to `main` after this branch was cut and added 11 more (custom 53 → 59,
+  multi-catalog 25 → 30), so the counts above are the post-merge values.
 - **Published vs Targeted Checkpoints** — `Nanthasit/sakthai-context-7b-tools-grpo` and
   `Nanthasit/sakthai-context-0.5b-tools-sft` are not published (both return 401, and
   the author publishes no `-grpo` model). README.md, `docs/MODELS.md`, and FINDINGS.md

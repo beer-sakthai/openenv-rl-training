@@ -30,7 +30,7 @@ to stay byte-identical.
 
 CI (`.github/workflows/`): `verify-contracts.yml` runs entirely inside GitHub Actions — ruff,
 `verify_grpo_contract.py` (with datasets), `openenv-custom-training/evaluate_baselines.py` (baseline
-competition & reward variance check), and 160 pytest tests across the root contract file and all
+competition & reward variance check), and 171 pytest tests across the root contract file and all
 four workspace suites (`sakthai-agentic-eval-train/tests/`, `openenv-custom-training/tests/`,
 `openenv-multi-catalog-training/tests/`, and `sakthai-sft-training/tests/`);
 `benchmark-evaluation-manager-agent.yml` runs the evaluation manager agent rubric benchmark and
@@ -75,7 +75,7 @@ Two sibling repos under `beer-sakthai`. Know which one owns what before you go l
 | `openenv-multi-catalog-training/` | **RL — catalog run.** One ~0.6B model across all 8 `openenv/*` catalog envs (echo, sudoku, coding, chat, atari, openspiel, repl, sumo) in one GRPO run via a meta-environment class. `a2a_agent/` exposes the same 8 envs as [A2A protocol](https://a2a-protocol.org/) skills, independent of training. |
 | `sakthai-agentic-eval-train/` | **The RL eval + train pipeline that actually ran.** As-run HF Jobs scripts (bench eval `eval_bench_peft.py`, agentic eval `eval_hermes_env.py`, SFT bootstrap, GRPO pilot), self-contained Colab/Kaggle notebooks (`sakthai_grpo_colab.ipynb`, `eval_sakthai_bench_colab.ipynb`), the evaluation manager agent benchmark (`scripts/benchmark_evaluation_manager_agent.py`), and `FINDINGS.md` — the durable empirical record. |
 | `browsergym-space/` | Dockerfile + Space card for a BrowserGym OpenEnv server. **Not deployed** — `Nanthasit/browsergym-env` no longer exists (404, verified 2026-09-16). `train.py --env browsergym` defaults to upstream [`openenv/browsergym_env`](https://huggingface.co/spaces/openenv/browsergym_env); redeploy from here and pass `--browsergym-url` to use your own. |
-| `.github/workflows/` | `verify-contracts.yml` (ruff + 160 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
+| `.github/workflows/` | `verify-contracts.yml` (ruff + 171 CPU tests, runs in GH Actions); `benchmark-evaluation-manager-agent.yml` (CPU rubric benchmark); `train.yml`/`eval.yml`/`lighteval.yml`/`mcp-bench.yml` (dispatch to HF Jobs); `monitor.yml` (Hub API → job summary). |
 | `.claude/agents/` | Repository-specific Claude Code agents (`openenv-rl-training-evaluation-manager.md`). |
 | `.opencode/` | 25 slash-command specs (`command/hf-*.md`) + 35 workflow skills (`skills/*/SKILL.md`) — prompt library for the whole pipeline. Path-agnostic; no code depends on it. |
 | `docs/` | `docs/MODELS.md` (18-model portfolio reference), `docs/KNOWN_GAPS.yaml` (parseable gap index), `docs/evaluation-manager-agent.md` (agent guide), `docs/HF_HUB_IMPROVEMENTS.md` (2026-07-30 Hub audit), and root `SECURITY.md` (token-hygiene checklist). |
@@ -99,7 +99,7 @@ uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
          sakthai-agentic-eval-train/tests/ \
          openenv-custom-training/tests/ \
          openenv-multi-catalog-training/tests/ \
-         sakthai-sft-training/tests/    # 160 passed
+         sakthai-sft-training/tests/    # 171 passed
 uv run --with datasets --with pydantic \
   python3 openenv-custom-training/evaluate_baselines.py  # CPU baseline competition
 python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py

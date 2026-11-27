@@ -12,16 +12,35 @@
 
 - Python 3.11 (`requires-python >=3.11` for trl 1.18.1).
 - `trl` is pinned to exactly `1.18.1`, matching `openenv-custom-training/requirements.txt`. A guard that validates a different TRL than the training code will use is worthless.
-- `transformers>=5.2.0`, matching the same requirements file.
+- `transformers>=5.23.0`, matching the same requirements file. (`5.2.0` is the floor TRL itself enforces -- `GRPOTrainer` raises below it -- not the pin this repository uses.)
 - PyTorch is installed CPU-only via `uv pip install --torch-backend cpu torch`. `uv run --with` ignores `UV_TORCH_BACKEND` and silently resolves the CUDA wheel.
 - The pytest environment must NOT gain `trl`. `conftest.py` imports the real package when it is importable and falls back to a permissive stub only on ImportError; the real dataclass rejects unknown keyword arguments.
-- The pytest suite must remain at **160** tests. The echo test is extended, never duplicated, so the counts written into README.md and CLAUDE.md stay true.
+- The pytest suite must not gain tests from this plan's own changes. The echo test is extended, never duplicated, so the counts written into README.md and CLAUDE.md stay true.
 - Branch: `claude/track-a-verification-truthfulness`. Never commit to `main`.
 - Commit identity is scoped to this repository: `beer-sakthai <293853443+beer-sakthai@users.noreply.github.com>`.
 - Commit subjects follow Conventional Commits with the repository's optional scope style, and carry the trailer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 - The branch is never pushed. No push credentials exist in this environment.
 - Historical CHANGELOG entries are never rewritten. Corrections are added as new entries.
 - `TRAIN_PUSH_TO=...-grpo` occurrences are push targets and must not be edited.
+
+> **Amended 2026-11-27.** Two things changed after this plan was written, and both are
+> recorded here rather than silently absorbed:
+>
+> 1. **PR #249 merged to `main`** and added 11 tests (`openenv-custom-training` 53 -> 59,
+>    `openenv-multi-catalog-training` 25 -> 30), so the suite now collects **171**, not
+>    160. Every "160" quoted in this plan records the 2026-11-26 measurement of
+>    `a65fb23`, the tree the plan was written against. The branch was rebased onto
+>    `main` after that merge, and the live counts in README.md and CLAUDE.md carry the
+>    post-merge values (171 total; root 15, agentic-eval 30, custom 59, multi-catalog
+>    30, SFT 37), re-measured on the rebased tree.
+> 2. **The `transformers` pin was corrected from `5.2.0` to `5.23.0`.** `5.2.0` is the
+>    floor TRL itself enforces (see the explanatory comment in
+>    `openenv-custom-training/requirements.txt`); the requirements file pins
+>    `transformers>=5.23.0`, and the implementation matches it.
+> 3. **The branch was pushed and a pull request opened on 2026-11-27**, superseding the
+>    "never pushed" constraint above. That constraint recorded the state of the
+>    environment at planning time — no push credentials existed, so the only route to
+>    GitHub was the connected GitHub app, which became available for the save step.
 
 ---
 
@@ -345,7 +364,7 @@ with:
         run: |
           uv venv .venv-verify
           uv pip install --python .venv-verify --torch-backend cpu torch
-          uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.2.0" datasets
+          uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets
           .venv-verify/bin/python verify_grpo_contract.py
 ```
 
@@ -385,7 +404,7 @@ Run, from the repository root:
 export UV_INDEX_URL=https://pypi.org/simple UV_DEFAULT_INDEX=https://pypi.org/simple
 uv venv .venv-verify
 uv pip install --python .venv-verify --torch-backend cpu torch
-uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.2.0" datasets
+uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets
 .venv-verify/bin/python verify_grpo_contract.py
 ```
 
@@ -789,7 +808,7 @@ And in the same block, after the `verify_grpo_contract.py` line, add the full-de
 
 ```bash
 uv venv .venv-verify && uv pip install --python .venv-verify --torch-backend cpu torch && \
-  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.2.0" datasets && \
+  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets && \
   .venv-verify/bin/python verify_grpo_contract.py  # includes the GRPOConfig check
 ```
 
@@ -813,7 +832,7 @@ and add immediately after the existing OpenEnv RL Contract Verification block:
 The same check with the GRPOConfig section enabled (requires CPU torch and trl):
 
 uv venv .venv-verify && uv pip install --python .venv-verify --torch-backend cpu torch && \
-  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.2.0" datasets && \
+  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets && \
   .venv-verify/bin/python verify_grpo_contract.py
 ```
 

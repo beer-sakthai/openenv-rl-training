@@ -25,8 +25,9 @@ all three were confirmed by execution rather than by reading:
 
 The 169-test figure deserves particular note. It appears in the README badge, the
 README prose, three places in CLAUDE.md, and the 2026-11-21 CHANGELOG entry. The
-measured count is 160, and the commit that announced "expand test suite to 169 tests"
-already contained 160 tests. The number was never true at any commit.
+measured count was 160 at the time of writing (171 after PR #249 -- see section 3.5),
+and the commit that announced "expand test suite to 169 tests" already contained 160
+tests. The number was never true at any commit.
 
 ## 2. Scope
 
@@ -155,6 +156,13 @@ Measured 2026-11-26 by running the CI invocation on a pristine tree:
 | `sakthai-sft-training/tests/` | 37 |
 | **total** | **160** |
 
+> **Amended 2026-11-27.** PR #249 merged to `main` after this spec was written and
+> added 11 tests (`openenv-custom-training` 53 -> 59, `openenv-multi-catalog-training`
+> 25 -> 30), so the suite now collects **171**. The table above records the 2026-11-26
+> measurement of `a65fb23`, the tree this design was written against; the live counts in
+> README.md and CLAUDE.md carry the post-merge values (171 total; root 15, agentic-eval
+> 30, custom 59, multi-catalog 30, SFT 37), re-measured on the rebased branch.
+
 ## 4. Design
 
 ### 4.1 The episode-termination fix
@@ -208,13 +216,15 @@ count stays at 160 and the counts written into the documentation remain true.
         run: |
           uv venv .venv-verify
           uv pip install --python .venv-verify --torch-backend cpu torch
-          uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.2.0" datasets
+          uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets
           .venv-verify/bin/python verify_grpo_contract.py
 ```
 
 `trl` is pinned to `1.18.1` to match `openenv-custom-training/requirements.txt`. A
 guard that validates a different TRL than the training code will use is worthless.
-`transformers>=5.2.0` matches the same requirements file.
+`transformers>=5.23.0` matches the same requirements file. (`5.2.0` is the floor
+TRL itself enforces -- `GRPOTrainer` raises below it -- not the pin this repository
+uses; the requirements file pins `>=5.23.0`.)
 
 The pytest step is unchanged and deliberately does not gain trl (section 3.4).
 
