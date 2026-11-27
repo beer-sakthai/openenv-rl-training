@@ -12,7 +12,7 @@ All public models, adapters, and datasets are hosted under the Hugging Face name
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`sakthai-context-7b-tools`** | Qwen2.5-7B-Instruct | 7B | PEFT LoRA | **Flagship GRPO RL Base** | Solved 3/6 hermes tasks; non-zero reward variance (`~0.05`), gradient norms `0.25–0.49`. Targets: `k`, `q`, `o`, `v` | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) |
 | **`sakthai-context-7b-merged`** | Qwen2.5-7B-Instruct | 7B | Merged Safetensors + GGUF | Full Flagship Model & Local Q8_0 | Full precision `bfloat16` weights + bundled `gguf/sakthai-context-7b-merged-Q8_0.gguf` | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-7b-merged) |
-| **`sakthai-context-7b-tools-grpo`** | 7B + GRPO | 7B | Post-RL Checkpoint | Production Aligned Checkpoint | Designated target repo for RL training rollouts on OpenEnv environments | [🤗 Hub Target](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo) |
+| **`sakthai-context-7b-tools-grpo`** | 7B + GRPO | 7B | Post-RL Checkpoint | Planned Aligned Checkpoint — not yet published | Designated target repo for RL training rollouts on OpenEnv environments | [🤗 Target repo](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo) |
 | **`sakthai-context-7b-128k`** | Qwen2.5-7B-Instruct | 7B | Config / Adaptation | Extended Context Window | Extended **128,000-token context** RoPE frequency scaling via `yarn-128k-adapt.py` | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-7b-128k) |
 | **`sakthai-context-1.5b-merged`** | Qwen2.5-1.5B-Instruct | 1.5B | Merged Safetensors + GGUF | Core 1.5B Production Model | **780+ downloads**; default base for Tier A (`env_simple_task.py`) and Tier B (`agent_tools/`) | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-1.5b-merged) |
 | **`sakthai-context-1.5b-merged-v2`** | Qwen2.5-1.5B-Instruct | 1.5B | Merged Safetensors | Production v2 Checkpoint | Fine-tuned with rank-stabilized LoRA (rsLoRA) across all 7 linear targets; cross-model benchmarked | [🤗 Model Card](https://huggingface.co/Nanthasit/sakthai-context-1.5b-merged-v2) |
@@ -147,7 +147,7 @@ The models in this repository are orchestrated downstream by [`beer-sakthai/Sak-
 ```text
                                   ┌── sakthai-embedding-multilingual (Vector Memory)
                                   ├── sakthai-vision-7b (Screenshot / UI Parsing)
-[ Sak-Family-Agent ] ──orchestrates─┼── sakthai-context-7b-tools-grpo (Action / Tool Loop)
+[ Sak-Family-Agent ] ──orchestrates─┼── sakthai-context-7b-tools-grpo (Action / Tool Loop, planned)
                                   ├── sakthai-coder-1.5b (Code Execution Sandbox)
                                   └── sakthai-tts-model (Spoken Audio Output)
 ```

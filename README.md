@@ -25,7 +25,7 @@ This repository builds, aligns, and validates the machine learning models behind
 2. **Reinforcement Learning via GRPO** (`openenv-custom-training/`, `openenv-multi-catalog-training/`):
    - Takes the 7B SFT adapter and applies **Group Relative Policy Optimization (GRPO)** using TRL and [Hugging Face OpenEnv](https://github.com/huggingface/OpenEnv).
    - Trains agents on interactive multi-turn tasks (such as **BrowserGym MiniWoB++** for web automation and 8-domain catalog environments).
-   - Produces final RL-aligned checkpoints: [`Nanthasit/sakthai-context-7b-tools-grpo`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo).
+   - Targets final RL-aligned checkpoints at [`Nanthasit/sakthai-context-7b-tools-grpo`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools-grpo) — **not yet published**; the 40-step run was proof-of-signal only (see `docs/KNOWN_GAPS.yaml#grpo-proof-run-too-short`).
 
 ```text
 [ Data Augmentation ] ──> [ SFT (QLoRA) ] ──> [ 7B Base Adapter ] ──> [ GRPO + OpenEnv ] ──> [ Final Checkpoint ]
@@ -49,7 +49,7 @@ All assets are available on the Hugging Face Hub under [`Nanthasit`](https://hug
 | [`sakthai-context-0.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-0.5b-tools) | Qwen2.5-0.5B | Fast tool routing; highest single-shot selection (**91.0%**) | 0/6 (Fails) | ❌ SFT-only |
 | [`sakthai-context-1.5b-tools`](https://huggingface.co/Nanthasit/sakthai-context-1.5b-tools) | Qwen2.5-1.5B | Balanced model for consumer GPUs (Colab T4, 4–8 GB VRAM) | 0/6 (Fails) | ⚠️ Not targeted |
 | [`sakthai-context-7b-tools`](https://huggingface.co/Nanthasit/sakthai-context-7b-tools) | Qwen2.5-7B | Flagship adapter; complex multi-step reasoning & tool calling | **3/6** (Passed) | ✅ **Primary target** |
-| `sakthai-context-7b-tools-grpo` | 7B + GRPO | Production RL checkpoint aligned on OpenEnv tasks | In-loop eval | 🎯 **Final output** |
+| `sakthai-context-7b-tools-grpo` | 7B + GRPO | RL checkpoint target — not yet published (40-step proof-of-signal only) | In-loop eval | 🎯 **Planned output** |
 
 ### Datasets
 
