@@ -13,11 +13,18 @@ file):
    episodes by hand before spending GPU time" check from CLAUDE.md.
 3. `reward_func` returns one float per environment, read off `env.reward`.
 4. `GRPOConfig` accepts `vllm_server_host`/`vllm_server_port` (the fields that
-   actually exist; `vllm_server_url` crashes at construction).
+   actually exist) and rejects `vllm_server_url` (which crashes at
+   construction).
 
 Sections 1-3 need `datasets` (env_simple_task imports it at module level) and
 section 4 needs `trl`; each skips with a warning when its dependency is
 absent, so this stays runnable in a bare checkout.
+
+Section 4 builds a CPU-only `GRPOConfig`. Two constraints apply and both are
+load-bearing, not stylistic: `use_cpu=True` is required because transformers
+raises "Your setup doesn't support bf16/gpu" without it, and
+`per_device_train_batch_size` must be divisible by `num_generations`, so the
+batch size of 4 below pairs with the group size of 4.
 """
 
 import os
@@ -157,11 +164,28 @@ def test_grpo_config_contract():
             vllm_server_host="localhost",
             vllm_server_port=8000,
             learning_rate=5e-6,
-            per_device_train_batch_size=1,
+            per_device_train_batch_size=4,
+            num_generations=4,
             use_cpu=True,
         )
         assert config.vllm_server_host == "localhost"
         assert config.vllm_server_port == 8000
+
+        # The regression this check exists for: `vllm_server_url` is not a
+        # GRPOConfig field and crashes at construction.
+        try:
+            GRPOConfig(
+                output_dir="./tmp_checkpoints",
+                vllm_server_url="http://localhost:8000",
+                learning_rate=5e-6,
+                per_device_train_batch_size=4,
+                num_generations=4,
+                use_cpu=True,
+            )
+            _fail("GRPOConfig accepted vllm_server_url; that field must not exist")
+        except TypeError:
+            pass
+
         print("✅ GRPOConfig vLLM parameters compatibility passed.")
     except ImportError:
         print("⚠️  TRL package not installed in current env; skipping class instantiation test.")
