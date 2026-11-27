@@ -141,7 +141,15 @@ uv run --with ruff ruff check .
 Drives `SimpleGuessEnv` through manual rollouts, verifies `environment_factory` structural compliance, checks reward calculations, and validates `GRPOConfig` schema compatibility:
 
 ```bash
-uv run --with datasets python3 verify_grpo_contract.py
+uv run --with datasets python3 verify_grpo_contract.py  # skips the GRPOConfig check without trl
+```
+
+```bash
+The same check with the GRPOConfig section enabled (requires CPU torch and trl):
+
+uv venv --clear .venv-verify && uv pip install --python .venv-verify --torch-backend cpu torch && \
+  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets && \
+  .venv-verify/bin/python verify_grpo_contract.py
 ```
 
 ### 5. Baseline Heuristic Competition & GRPO Reward Variance

@@ -19,7 +19,9 @@ its own dependencies (via `requirements.txt` or a PEP 723 inline header) and is 
 with `python <script>.py`, `uv run`, or `hf jobs uv run`. The root `requirements.txt` is
 **not** an install manifest for the pipeline — it is only the CPU dev/test toolchain
 `verify-contracts.yml` installs (datasets, httpx, pydantic, pytest, ruff); its own header
-explains why unifying the workspaces' pinsets there does not resolve.
+explains why unifying the workspaces' pinsets there does not resolve. The GRPOConfig
+contract check additionally installs CPU-only torch and the pinned `trl` into a separate
+`.venv-verify/`, so the pytest environment keeps the `conftest.py` stubs.
 
 There **is** a linter config (`.ruff.toml`), selecting E9, F821, F811, F401, and F841:
 syntax errors, undefined names, redefinitions, and unused imports/variables. The immutable
@@ -88,7 +90,10 @@ a Space repo. Leave it alone.
 
 ```bash
 uv run --with ruff ruff check .          # E9 / F821 / F811 / F401 / F841; clean tree
-uv run --with datasets python3 verify_grpo_contract.py  # drives SimpleGuessEnv
+uv run --with datasets python3 verify_grpo_contract.py  # drives SimpleGuessEnv; skips the GRPOConfig check without trl
+uv venv --clear .venv-verify && uv pip install --python .venv-verify --torch-backend cpu torch && \
+  uv pip install --python .venv-verify "trl==1.18.1" "transformers>=5.23.0" datasets && \
+  .venv-verify/bin/python verify_grpo_contract.py  # includes the GRPOConfig check
 uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
   pytest test_browsergym_contract.py \
          sakthai-agentic-eval-train/tests/ \

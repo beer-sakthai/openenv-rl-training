@@ -7,6 +7,43 @@ When a gap closes, delete its PLAN.md / KNOWN_GAPS.yaml entry and add a line her
 
 ---
 
+## 2026-11-26
+
+### Fixed
+
+- **Echo Episode Termination** — `MultiCatalogEnv.echo_say` set
+  `self.done = result.observation.done or True`, which is unconditionally `True`
+  because Python's `or` yields the first truthy operand. The server's episode state
+  was discarded and every echo episode ended after a single tool call. Now
+  `self.done = result.observation.done`. The guarding test asserted `env.done is True`
+  against a mock already reporting `done = True`, so it passed under both the buggy
+  and the correct implementation; it now asserts the environment follows the server in
+  the non-terminal case, with a terminal case kept alongside.
+- **GRPOConfig Contract Check** — the fourth check in `verify_grpo_contract.py` never
+  executed in CI, because CI installs only `datasets` and the check skips when `trl` is
+  absent. Enabling it surfaced two further problems: `GRPOConfig` requires
+  `use_cpu=True` on a CPU box, and `per_device_train_batch_size` must be divisible by
+  `num_generations` (the script passed 1 against a default of 8). The check now
+  constructs with `per_device_train_batch_size=4, num_generations=4` and explicitly
+  asserts that `vllm_server_url` is rejected with `TypeError`.
+
+### Changed
+
+- **CI Contract Step** — `verify-contracts.yml` now installs CPU-only torch and the
+  pinned `trl==1.18.1` into a dedicated `.venv-verify/` before running the contract
+  script, so the GRPOConfig check actually asserts something. The pytest environment is
+  unchanged, because `conftest.py` prefers the real `trl` package over its permissive
+  stub. The job timeout moves from 10 to 15 minutes to cover the install.
+- **Test Counts** — the suite collects 160 tests (root 15, agentic-eval 30, custom 53,
+  multi-catalog 25, SFT 37), measured 2026-11-26. README.md and CLAUDE.md stated 169,
+  149, 130, and 94 across six sites, and no two agreed. The 169 figure in the
+  2026-11-21 entry above was never accurate: that commit already collected 160 tests.
+- **Published vs Targeted Checkpoints** — `Nanthasit/sakthai-context-7b-tools-grpo` and
+  `Nanthasit/sakthai-context-0.5b-tools-sft` are not published (both return 401, and
+  the author publishes no `-grpo` model). README.md, `docs/MODELS.md`, and FINDINGS.md
+  now mark them as targets or as unpublished artifacts. The SFT bootstrap is recorded
+  under its current `-v2` name. The `TRAIN_PUSH_TO` push targets are unchanged.
+
 ## 2026-11-21
 
 ### Added
