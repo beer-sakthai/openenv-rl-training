@@ -2,16 +2,31 @@
 
 End-to-end training, alignment, and evaluation pipeline for the **SakThai** agent model family (tool-calling and agentic reasoning models based on Qwen2.5).
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![CI](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/verify-contracts.yml)
-[![Tests](https://img.shields.io/badge/tests-171%20passed-brightgreen.svg)](tests)
+[![Evaluation benchmark](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/benchmark-evaluation-manager-agent.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/benchmark-evaluation-manager-agent.yml)
+[![HF checks](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/hf-no-cost-checks.yml)
+[![CodeQL](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/beer-sakthai/openenv-rl-training/actions/workflows/codeql.yml)
+[![Tests](https://img.shields.io/badge/tests-171%20collected-brightgreen.svg)](#local-verification--testing-cpu)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Hugging Face](https://img.shields.io/badge/🤗%20Models-SakThai%20Family-yellow)](https://huggingface.co/collections/Nanthasit/sakthai-model-family-6a64745450b12d421c1f9f02)
 [![Linter](https://img.shields.io/badge/linter-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Security Policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Known Gaps](https://img.shields.io/badge/known%20gaps-6%20tracked-blue)](docs/KNOWN_GAPS.yaml)
 
 ---
+
+## Status at a glance
+
+| Area | Current status |
+| :--- | :--- |
+| **Scope** | SFT with QLoRA, GRPO with OpenEnv/TRL, agentic evaluation, and deployment-ready model artifacts |
+| **Verification** | 171 CPU-test cases collected across five suites, plus Ruff and contract checks |
+| **Continuous integration** | Contract, evaluation-manager, CodeQL, OSSAR, dependency-review, and read-only Hugging Face checks run through GitHub Actions |
+| **GPU execution** | Training and heavyweight evaluation run remotely through Hugging Face Jobs or the linked Colab notebooks; this checkout is CPU-verifiable |
+| **Release posture** | Research and training pipeline; known limitations are tracked in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml) |
+
+The badges above are live views of the default branch. The test-count badge is the number of cases collected by the documented combined pytest command; run that command locally to verify the current checkout.
 
 ## What is this repository for?
 
@@ -248,7 +263,10 @@ This repository enforces multi-layered security controls and continuous quality 
 
 ## Project Status & Governance
 
-- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs ruff, contract verifications, baseline competitions, and all 171 pytest tests across 5 workspace suites on every push and PR.
+- **CI Workflow**: [`.github/workflows/verify-contracts.yml`](.github/workflows/verify-contracts.yml) runs Ruff, contract verification, baseline competition, and all 171 pytest tests across five suites on every push and pull request.
+- **Evaluation gate**: [`.github/workflows/benchmark-evaluation-manager-agent.yml`](.github/workflows/benchmark-evaluation-manager-agent.yml) runs the deterministic evaluation-manager benchmark and regression tests on every push to `main` and pull request.
+- **Security and dependency gates**: CodeQL, OSSAR, and dependency-review workflows provide complementary static-analysis and dependency checks; their badges are shown in the status bar above.
+- **Hugging Face health**: [`.github/workflows/hf-no-cost-checks.yml`](.github/workflows/hf-no-cost-checks.yml) performs read-only CLI, authentication, and Hub-listing checks without starting paid jobs.
 - **Empirical Findings**: Benchmark evaluations and capacity observations are permanently recorded in [`sakthai-agentic-eval-train/FINDINGS.md`](sakthai-agentic-eval-train/FINDINGS.md).
 - **Known Gaps**: Tracked issues, workarounds, and blockers are listed in [`docs/KNOWN_GAPS.yaml`](docs/KNOWN_GAPS.yaml).
 - **Changelog**: Release history and completed improvements are tracked in [`CHANGELOG.md`](CHANGELOG.md).
