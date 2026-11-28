@@ -1,0 +1,63 @@
+name: Full End-to-End Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-evaluation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    name: Full CPU evaluation suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          use-policy-store: true
+          api-key: ${{ secrets.STEP_SECURITY_API_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Run evaluation manager benchmark
+        run: python3 sakthai-agentic-eval-train/scripts/benchmark_evaluation_manager_agent.py --json
+
+      - name: Run evaluation manager regression tests
+        run: >-
+          uv run --with datasets --with pytest --with pydantic pytest
+          sakthai-agentic-eval-train/tests/test_benchmark_evaluation_manager_agent.py
+          sakthai-agentic-eval-train/tests/test_evaluation_manager_agent.py -q
+
+      - name: Run Ruff
+        run: uv run --with ruff ruff check --output-format=github .
+
+      - name: Verify OpenEnv RL contracts
+        run: uv run --with datasets python3 verify_grpo_contract.py
+
+      - name: Evaluate CPU baselines and reward variance
+        run: uv run --with datasets python3 openenv-custom-training/evaluate_baselines.py --episodes 5
+
+      - name: Run all CPU contract and workspace tests
+        run: |
+          uv run --with datasets --with pytest --with pydantic --with httpx --with anyio \
+            pytest test_browsergym_contract.py \
+                   sakthai-agentic-eval-train/tests/ \
+                   openenv-custom-training/tests/ \
+                   openenv-multi-catalog-training/tests/ \
+                   sakthai-sft-training/tests/ -v
